@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #FFFdf9;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-quran {
+  font-family: 'Amiri Quran', serif;
+}
