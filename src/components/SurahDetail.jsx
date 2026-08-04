@@ -27,20 +27,19 @@ export default function SurahDetail() {
   const [isMemorizationMode, setIsMemorizationMode] = useState(false);
   const [revealedAyahs, setRevealedAyahs] = useState([]); 
 
-  const recitersList = [
-    { id: "ar.abdulbasitmurattal", name: isAr ? "عبد الباسط (مرتل)" : "AbdulBaset (Murattal)" },
-    { id: "ar.abdulbasitmujawwad", name: isAr ? "عبد الباسط (مجود)" : "AbdulBaset (Mujawwad)" },
-    { id: "ar.alafasy", name: isAr ? "مشاري العفاسي" : "Mishary Alafasy" },
-    { id: "ar.husary", name: isAr ? "خليل الحصري" : "Al-Husary" },
-    { id: "ar.minshawi", name: isAr ? "المنشاوي (مرتل)" : "Al-Minshawi" },
-    { id: "ar.minshawimujawwad", name: isAr ? "المنشاوي (مجود)" : "Al-Minshawi (Muj)" },
-    { id: "ar.sudais", name: isAr ? "عبد الرحمن السديس" : "As-Sudais" },
-    { id: "ar.shuraym", name: isAr ? "سعود الشريم" : "Saud Al-Shuraim" },
-    { id: "ar.ajamy", name: isAr ? "أحمد العجمي" : "Ahmed Al-Ajmi" },
-    { id: "ar.hudhaify", name: isAr ? "علي الحذيفي" : "Ali Al-Hudhaify" },
-    { id: "ar.muhammadayoub", name: isAr ? "محمد أيوب" : "Muhammad Ayyoub" },
-    { id: "ar.muhammadjibreel", name: isAr ? "محمد جبريل" : "Muhammad Jibreel" }
-  ];
+const recitersList = [
+  { id: "ar.alafasy", name: isAr ? "مشاري العفاسي" : "Mishary Alafasy" },
+  { id: "ar.abdulsamad", name: isAr ? "عبد الباسط عبد الصمد" : "AbdulBaset AbdulSamad" },
+  { id: "ar.husary", name: isAr ? "خليل الحصري" : "Al-Husary" },
+  { id: "ar.husarymujawwad", name: isAr ? "الحصري (مجود)" : "Al-Husary (Mujawwad)" },
+  { id: "ar.abdurrahmaansudais", name: isAr ? "عبد الرحمن السديس" : "As-Sudais" },
+  { id: "ar.saoodshuraym", name: isAr ? "سعود الشريم" : "Saud Al-Shuraim" },
+  { id: "ar.ahmedajamy", name: isAr ? "أحمد العجمي" : "Ahmed Al-Ajmi" },
+  { id: "ar.hudhaify", name: isAr ? "علي الحذيفي" : "Ali Al-Hudhaify" },
+  { id: "ar.mahermuaiqly", name: isAr ? "ماهر المعيقلي" : "Maher Al Muaiqly" },
+  { id: "ar.abdullahbasfar", name: isAr ? "عبدالله بصفر" : "Abdullah Basfar" },
+  { id: "ar.shaatree", name: isAr ? "أبو بكر الشاطري" : "Abu Bakr Ash-Shaatree" },
+];
 
   const t = {
     play: isAr ? "تشغيل" : "Play",

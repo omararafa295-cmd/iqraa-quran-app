@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, useMemo } from "react";
 import axios from "axios";
-import { Radio as RadioIcon, PlayCircle, PauseCircle, Search, Activity } from "lucide-react";
+import { Radio as RadioIcon, PlayCircle, PauseCircle, Search, Activity, Star } from "lucide-react";
 import { AppContext } from "../App";
 
 export default function Radio() {
@@ -12,7 +12,8 @@ export default function Radio() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeRadio, setActiveRadio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+  const [activeLetter, setActiveLetter] = useState(null); // فلتر الحرف المختار
+
   const audioRef = useRef(null);
 
   const t = {
@@ -21,14 +22,18 @@ export default function Radio() {
     loading: isAr ? "جاري تحميل الإذاعات..." : "Loading radios...",
     nowPlaying: isAr ? "يتم التشغيل الآن" : "Now Playing",
     noResult: isAr ? "لا توجد إذاعة بهذا الاسم" : "No radio found",
+    featured: isAr ? "إذاعات مميزة" : "Featured Stations",
+    reciters: isAr ? "إذاعات القراء" : "Reciter Stations",
+    all: isAr ? "الكل" : "All",
   };
+
+  const featuredKeywords = ["رمضان", "الأطفال", "تجويد", "كامل", "القرآن الكريم", "تلاوات متنوعة", "قصار السور"];
 
   useEffect(() => {
     setLoading(true);
     axios.get(`https://mp3quran.net/api/v3/radios?language=${isAr ? 'ar' : 'eng'}`)
       .then((res) => {
-        // ترتيب الإذاعات أبجدياً ليسهل البحث
-        const sortedRadios = (res.data.radios || []).sort((a, b) => 
+        const sortedRadios = (res.data.radios || []).sort((a, b) =>
           a.name.localeCompare(b.name, isAr ? 'ar' : 'en')
         );
         setRadios(sortedRadios);
@@ -39,6 +44,34 @@ export default function Radio() {
         setLoading(false);
       });
   }, [isAr]);
+
+  const cleanName = (name) => name.replace(/^إذاعة\s+/, "").replace(/^Radio\s+/i, "").trim();
+
+  const { featured, byLetter, letters } = useMemo(() => {
+    const featuredList = [];
+    const reciterList = [];
+
+    radios.forEach((radio) => {
+      const isFeatured = featuredKeywords.some((kw) => radio.name.includes(kw));
+      if (isFeatured) {
+        featuredList.push(radio);
+      } else {
+        reciterList.push(radio);
+      }
+    });
+
+    const grouped = {};
+    reciterList.forEach((radio) => {
+      const clean = cleanName(radio.name);
+      const firstLetter = clean.charAt(0).toUpperCase();
+      if (!grouped[firstLetter]) grouped[firstLetter] = [];
+      grouped[firstLetter].push(radio);
+    });
+
+    const sortedLetters = Object.keys(grouped).sort((a, b) => a.localeCompare(b, isAr ? 'ar' : 'en'));
+
+    return { featured: featuredList, byLetter: grouped, letters: sortedLetters };
+  }, [radios, isAr]);
 
   const togglePlay = (radio) => {
     if (activeRadio?.id === radio.id) {
@@ -61,9 +94,41 @@ export default function Radio() {
     }
   };
 
-  const filteredRadios = radios.filter(r => 
-    r.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredRadios = searchQuery
+    ? radios.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : null;
+
+  const RadioCard = ({ radio }) => {
+    const isActive = activeRadio?.id === radio.id;
+    return (
+      <div
+        key={radio.id}
+        onClick={() => togglePlay(radio)}
+        className={`flex items-center justify-between p-3 rounded-2xl shadow-sm border cursor-pointer transition-all duration-200 transform hover:scale-[1.01] ${
+          isActive
+            ? (isDarkMode ? 'bg-gray-800 border-[#E6B981] shadow-[#E6B981]/10' : 'bg-[#FDFBF7] border-[#D4A373] shadow-[#D4A373]/10')
+            : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]')
+        }`}
+      >
+        <div className={`flex items-center gap-3 w-full truncate ${!isAr && 'flex-row-reverse'}`}>
+          <button className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-full transition-colors ${
+            isActive
+              ? 'bg-[#D4A373] text-white shadow-md'
+              : (isDarkMode ? 'bg-gray-900 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]')
+          }`}>
+            {isActive && isPlaying ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
+          </button>
+          <h3 className={`font-bold text-sm md:text-base truncate w-full ${isAr ? 'text-right' : 'text-left font-sans'} ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            {radio.name}
+          </h3>
+        </div>
+
+        {isActive && isPlaying && (
+          <Activity size={18} className={`shrink-0 mx-2 animate-pulse ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`} />
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -78,63 +143,95 @@ export default function Radio() {
       <audio ref={audioRef} onEnded={() => setIsPlaying(false)} onError={() => setIsPlaying(false)} />
 
       <div className="flex items-center justify-center gap-3 mb-8 mt-4">
-        <RadioIcon size={32} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
           {t.title}
         </h2>
       </div>
 
-      <div className="relative mb-8 max-w-xl mx-auto">
-        <input 
-          type="text" 
-          placeholder={t.search} 
-          value={searchQuery} 
-          onChange={(e) => setSearchQuery(e.target.value)} 
-          className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-colors ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'}`} 
+      <div className="relative mb-6 max-w-xl mx-auto">
+        <input
+          type="text"
+          placeholder={t.search}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-colors ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'}`}
         />
         <Search className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
       </div>
 
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {filteredRadios.length > 0 ? (
-          filteredRadios.map((radio) => {
-            const isActive = activeRadio?.id === radio.id;
-            return (
-              <div 
-                key={radio.id} 
-                onClick={() => togglePlay(radio)}
-                className={`flex items-center justify-between p-3 rounded-2xl shadow-sm border cursor-pointer transition-all duration-200 transform hover:scale-[1.01] ${
-                  isActive 
-                    ? (isDarkMode ? 'bg-gray-800 border-[#E6B981] shadow-[#E6B981]/10' : 'bg-[#FDFBF7] border-[#D4A373] shadow-[#D4A373]/10') 
-                    : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]')
+      {/* لو في بحث فعّال، نعرض نتيجة مسطّحة عادية */}
+      {searchQuery ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredRadios.length > 0 ? (
+            filteredRadios.map((radio) => <RadioCard key={radio.id} radio={radio} />)
+          ) : (
+            <div className={`col-span-full text-center py-10 font-medium ${!isAr && 'font-sans'} text-gray-500`}>
+              {t.noResult}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* شريط الحروف للتنقل السريع */}
+          <div className={`flex flex-wrap gap-2 mb-6 justify-center ${!isAr && 'font-sans'}`}>
+            <button
+              onClick={() => setActiveLetter(null)}
+              className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-colors ${
+                activeLetter === null
+                  ? 'bg-[#D4A373] text-white border-[#D4A373]'
+                  : (isDarkMode ? 'border-gray-700 text-gray-300' : 'border-[#F0EBE1] text-gray-600')
+              }`}
+            >
+              {t.all}
+            </button>
+            {letters.map((letter) => (
+              <button
+                key={letter}
+                onClick={() => setActiveLetter(letter)}
+                className={`w-9 h-9 rounded-full text-sm font-bold border transition-colors ${
+                  activeLetter === letter
+                    ? 'bg-[#D4A373] text-white border-[#D4A373]'
+                    : (isDarkMode ? 'border-gray-700 text-gray-300 hover:border-[#E6B981]' : 'border-[#F0EBE1] text-gray-600 hover:border-[#D4A373]')
                 }`}
               >
-                <div className={`flex items-center gap-3 w-full truncate ${!isAr && 'flex-row-reverse'}`}>
-                  <button className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-full transition-colors ${
-                    isActive 
-                      ? 'bg-[#D4A373] text-white shadow-md' 
-                      : (isDarkMode ? 'bg-gray-900 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]')
-                  }`}>
-                    {isActive && isPlaying ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
-                  </button>
-                  <h3 className={`font-bold text-sm md:text-base truncate w-full ${isAr ? 'text-right' : 'text-left font-sans'} ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                    {radio.name}
-                  </h3>
-                </div>
-                
-                {isActive && isPlaying && (
-                  <Activity size={18} className={`shrink-0 mx-2 animate-pulse ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`} />
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <div className={`col-span-full text-center py-10 font-medium ${!isAr && 'font-sans'} text-gray-500`}>
-            {t.noResult}
+                {letter}
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+
+          {/* الإذاعات المميزة - تظهر فقط لو مفيش فلتر حرف مختار */}
+          {featured.length > 0 && !activeLetter && (
+            <div className="mb-8">
+              <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
+                <Star size={18} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.featured}</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {featured.map((radio) => <RadioCard key={radio.id} radio={radio} />)}
+              </div>
+            </div>
+          )}
+
+          {/* إذاعات القراء مقسمة بالحروف */}
+          <div>
+            {!activeLetter && (
+              <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
+                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.reciters}</h3>
+              </div>
+            )}
+            {(activeLetter ? [activeLetter] : letters).map((letter) => (
+              <div key={letter} className="mb-6">
+                <div className={`text-sm font-bold mb-2 px-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                  {letter}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {byLetter[letter].map((radio) => <RadioCard key={radio.id} radio={radio} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* مشغل الراديو العائم */}
       {activeRadio && (
@@ -151,8 +248,8 @@ export default function Radio() {
                 <p className={`text-sm font-bold truncate ${isAr ? '' : 'font-sans'} ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{activeRadio.name}</p>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => togglePlay(activeRadio)}
               className={`p-2 rounded-full border-2 transition-all ${
                 isDarkMode ? 'border-[#E6B981] text-[#E6B981] hover:bg-[#E6B981] hover:text-gray-900' : 'border-[#D4A373] text-[#D4A373] hover:bg-[#D4A373] hover:text-white'

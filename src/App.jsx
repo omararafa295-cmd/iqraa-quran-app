@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
-import { BookOpen, Compass, Clock, Moon, Sun, SunMoon, Radio as RadioIcon, Mic, Download } from "lucide-react";
+import { BookOpen, Compass, Clock, Moon, Sun, SunMoon, Radio as RadioIcon, Mic, Download, Info } from "lucide-react";
 import SurahList from "./components/SurahList";
 import SurahDetail from "./components/SurahDetail";
 import JuzDetail from "./components/JuzDetail";
@@ -9,12 +9,32 @@ import Qibla from "./components/Qibla";
 import Azkar from "./components/Azkar";
 import Radio from "./components/Radio";
 import Memorize from "./components/Memorize";
+import DeveloperModal from './components/DeveloperModal';
+
+export function Header() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <>
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className="p-2 rounded-full transition-colors bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-[#D4A373]"
+        title="معلومات المطور"
+      >
+        <Info size={20} />
+      </button>
+
+      <DeveloperModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>
+  );
+}
 
 export const AppContext = createContext();
 
 const TopBar = () => {
   const { isDarkMode, setIsDarkMode, lang, setLang } = useContext(AppContext);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isAr = lang === 'ar';
 
   useEffect(() => {
@@ -37,7 +57,6 @@ const TopBar = () => {
   return (
     <div className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} z-50 flex items-center gap-3 transition-all`} dir="ltr">
       
-      {/* زرار تحميل التطبيق */}
       {deferredPrompt && (
         <button 
           onClick={handleInstall}
@@ -50,7 +69,16 @@ const TopBar = () => {
         </button>
       )}
 
-      {/* زرار تبديل اللغة */}
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-colors ${
+          isDarkMode ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"
+        }`}
+        title="معلومات المطور"
+      >
+        <Info size={20} />
+      </button>
+
       <button 
         onClick={() => setLang(isAr ? 'en' : 'ar')}
         className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md font-bold text-sm transition-colors ${
@@ -59,7 +87,6 @@ const TopBar = () => {
       >
         {isAr ? 'EN' : 'ع'}
       </button>
-
     
       <button 
         onClick={() => setIsDarkMode(!isDarkMode)}
@@ -69,6 +96,8 @@ const TopBar = () => {
       >
         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
       </button>
+
+      <DeveloperModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };
