@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, BookOpen, Layers, ArrowLeft, Loader2, Sparkles, Target, CheckCircle, Plus, Trash2, Calendar, BookMarked, AlertTriangle } from "lucide-react";
+import { Search, BookOpen, Layers, ArrowLeft, Loader2, Sparkles, Target, CheckCircle, Plus, Trash2, Calendar, AlertTriangle, CloudDownload, RefreshCw } from "lucide-react";
 import { AppContext } from "../App";
 
 const juzData = Array.from({ length: 30 }, (_, i) => ({
@@ -26,14 +26,19 @@ export default function SurahList() {
 
   const [khatma, setKhatma] = useState(() => JSON.parse(localStorage.getItem('khatmaPlan')) || null);
   const [showKhatmaModal, setShowKhatmaModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Modal تأكيد الحذف
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [khatmaDays, setKhatmaDays] = useState(30);
+
+  // حالات تحميل القرآن كاملاً
+  const [isDownloadingQuran, setIsDownloadingQuran] = useState(false);
+  const [quranProgress, setQuranProgress] = useState(0);
+  const [isQuranDownloaded, setIsQuranDownloaded] = useState(false);
 
   useEffect(() => {
     const savedLastRead = localStorage.getItem("lastRead");
-    if (savedLastRead) {
-      setLastRead(JSON.parse(savedLastRead));
-    }
+    if (savedLastRead) setLastRead(JSON.parse(savedLastRead));
+    
+    setIsQuranDownloaded(localStorage.getItem(`full_quran_text_downloaded_${isAr}`) === 'true');
 
     setLoading(true);
     setError(null);
@@ -41,12 +46,17 @@ export default function SurahList() {
     axios.get("https://api.alquran.cloud/v1/surah", { timeout: 10000 })
       .then((response) => {
         setSurahs(response.data.data || []);
+        localStorage.setItem('offline_surahs_list', JSON.stringify(response.data.data));
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching surahs:", err);
-        setSurahs([]);
-        setError(isAr ? "تعذر تحميل قائمة السور. يرجى التحقق من اتصالك." : "Failed to load Surahs. Check connection.");
+        const offlineList = localStorage.getItem('offline_surahs_list');
+        if (offlineList) {
+          setSurahs(JSON.parse(offlineList));
+        } else {
+          setSurahs([]);
+          setError(isAr ? "تعذر تحميل قائمة السور. تأكد من الإنترنت." : "Failed to load Surahs.");
+        }
         setLoading(false);
       });
   }, [isAr]);
@@ -93,13 +103,60 @@ export default function SurahList() {
     });
   };
 
-  // دوال الحذف الجديدة
   const deleteKhatma = () => setShowDeleteConfirm(true);
   
   const confirmDeleteKhatma = () => {
     setKhatma(null);
     localStorage.removeItem('khatmaPlan');
     setShowDeleteConfirm(false);
+  };
+
+  // دالة التحميل مع حل مشكلة التجميد (White Screen)
+  const downloadFullQuranText = async () => {
+    setIsDownloadingQuran(true);
+    setQuranProgress(0);
+    
+    // إعطاء المتصفح فرصة لعرض شريط التحميل قبل بدء العمل الشاق
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    try {
+      const mainEd = isAr ? "quran-simple" : "en.sahih";
+      const modalEd = isAr ? "ar.muyassar" : "quran-simple";
+
+      const [mainRes, modalRes] = await Promise.all([
+        axios.get(`https://api.alquran.cloud/v1/quran/${mainEd}`),
+        axios.get(`https://api.alquran.cloud/v1/quran/${modalEd}`)
+      ]);
+
+      const mainSurahs = mainRes.data.data.surahs;
+      const modalSurahs = modalRes.data.data.surahs;
+      const cache = await caches.open('quran-text-cache-v1');
+
+      for(let i = 0; i < 114; i++) {
+        const surahId = i + 1;
+        const mainUrl = `https://api.alquran.cloud/v1/surah/${surahId}${isAr ? "" : "/en.sahih"}`;
+        const modalUrl = `https://api.alquran.cloud/v1/surah/${surahId}${isAr ? "/ar.muyassar" : "/quran-simple"}`;
+
+        const mainResponse = new Response(JSON.stringify({ code: 200, status: "OK", data: mainSurahs[i] }), { headers: { 'Content-Type': 'application/json' } });
+        const modalResponse = new Response(JSON.stringify({ code: 200, status: "OK", data: modalSurahs[i] }), { headers: { 'Content-Type': 'application/json' } });
+
+        await cache.put(mainUrl, mainResponse);
+        await cache.put(modalUrl, modalResponse);
+
+        // تحديث النسبة المئوية والسماح للواجهة بالتحديث (تمنع الشاشة البيضاء)
+        if (i % 2 === 0 || i === 113) { 
+           setQuranProgress(Math.round(((i + 1) / 114) * 100));
+           await new Promise(resolve => setTimeout(resolve, 10)); // Yield to UI Thread
+        }
+      }
+      localStorage.setItem(`full_quran_text_downloaded_${isAr}`, 'true');
+      setIsQuranDownloaded(true);
+    } catch (e) {
+       console.error(e);
+       alert(isAr ? "حدث خطأ أثناء تحميل المصحف." : "Error downloading Quran.");
+    } finally {
+       setIsDownloadingQuran(false);
+    }
   };
 
   const t = {
@@ -112,13 +169,17 @@ export default function SurahList() {
     hizb: isAr ? "الحزب" : "Hizb",
     khatmaTitle: isAr ? "خطة الختمة" : "Khatma Plan",
     createPlan: isAr ? "ابدأ خطة جديدة" : "Start New Plan",
-    dailyGoal: isAr ? "الورد اليومي" : "Daily Goal",
-    pages: isAr ? "صفحات" : "Pages",
-    doneToday: isAr ? "أتممت الورد" : "Done Today",
+    dailyGoal: isAr ? "الورد" : "Goal",
+    pages: isAr ? "ص" : "Pg",
+    quranDownloadTitle: isAr ? "المصحف كاملاً" : "Full Quran",
+    quranDownloadDesc: isAr ? "حمل المصحف للقراءة بدون نت (~6MB)" : "Download text for offline (~6MB)",
+    downloadNow: isAr ? "تنزيل" : "Download",
+    downloading: isAr ? "جاري" : "Loading",
+    downloaded: isAr ? "تم التنزيل" : "Saved"
   };
 
   const percentage = khatma ? Math.round((khatma.pagesRead / 604) * 100) : 0;
-  const radius = 36;
+  const radius = 30;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
@@ -198,104 +259,104 @@ export default function SurahList() {
         </div>
       </div>
 
-      {/* 🌟 ويدجيت الختمة 🌟 */}
-      <div className={`max-w-2xl mx-auto mb-8 rounded-[2rem] overflow-hidden shadow-sm border transition-all ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#F0EBE1]'
-      }`}>
-        {!khatma ? (
-          <div className="flex items-center justify-between p-4 md:p-6">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]'}`}>
-                <Target size={24} />
+      {/* ويدجت الختمة وتحميل المصحف (في شبكة جنب بعض للموبايل) */}
+      <div className="max-w-2xl mx-auto mb-8 grid grid-cols-2 gap-3 md:gap-4">
+
+        {/* 1. ويدجت الختمة */}
+        <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full relative overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#F0EBE1]'}`}>
+          {!khatma ? (
+            <div className="flex flex-col items-center text-center h-full justify-between gap-2">
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]'}`}>
+                <Target size={22} />
               </div>
               <div>
-                <h3 className={`text-lg font-bold font-quran mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t.khatmaTitle}</h3>
-                <p className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <h3 className={`font-bold text-sm md:text-base font-quran mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t.khatmaTitle}</h3>
+                <p className={`text-[10px] md:text-xs font-medium leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {isAr ? 'نظم قراءتك واختم في مدة محددة' : 'Set a goal to finish the Quran'}
                 </p>
               </div>
+              <button 
+                onClick={() => setShowKhatmaModal(true)}
+                className={`w-full py-2.5 mt-2 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md hover:shadow-lg ${isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'}`}
+              >
+                {t.createPlan}
+              </button>
             </div>
-            <button 
-              onClick={() => setShowKhatmaModal(true)}
-              className={`px-5 py-2.5 rounded-full font-bold text-sm shrink-0 transition-all shadow-md hover:shadow-lg ${
-                isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'
-              }`}
-            >
-              {t.createPlan}
-            </button>
-          </div>
-        ) : (
-          <div className="p-5 md:p-6 flex flex-col sm:flex-row items-center gap-6">
-            
-            <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" className={isDarkMode ? "text-gray-700" : "text-gray-100"} />
-                <circle 
-                  cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"
-                  strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
-                  className={`transition-all duration-1000 ease-out ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`} 
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-2xl font-bold font-sans ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{percentage}%</span>
-              </div>
-            </div>
-
-            <div className={`flex-1 w-full flex flex-col ${isAr ? 'text-right' : 'text-left'}`}>
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className={`font-bold text-xl ${isAr ? 'font-quran' : 'font-sans'} mb-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
-                    {t.khatmaTitle} <span className="text-sm">({khatma.days} {isAr ? 'يوم' : 'Days'})</span>
-                  </h3>
-                  <div className={`flex items-center gap-2 text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <BookMarked size={14} /> <span>{t.dailyGoal}: {khatma.pagesPerDay} {t.pages}</span>
-                  </div>
+          ) : (
+            <div className="flex flex-col h-full justify-between">
+              <button onClick={deleteKhatma} className={`absolute top-3 ${isAr ? 'left-3' : 'right-3'} z-10 text-gray-400 hover:text-red-500 p-1.5 bg-red-50/0 hover:bg-red-50 rounded-lg transition-colors`}>
+                <Trash2 size={16} />
+              </button>
+              
+              <div className="flex items-center gap-2 mb-2">
+                <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" className={isDarkMode ? "text-gray-700" : "text-gray-100"} />
+                    <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className={`transition-all duration-1000 ease-out ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`} />
+                  </svg>
+                  <span className={`absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{percentage}%</span>
                 </div>
-                <button onClick={deleteKhatma} className="text-gray-400 hover:text-red-500 p-1 transition-colors bg-red-50/0 hover:bg-red-50 rounded-lg">
-                  <Trash2 size={18} />
-                </button>
+                <div className={`flex flex-col ${isAr ? 'text-right' : 'text-left'}`}>
+                  <h3 className={`font-bold text-xs md:text-sm font-quran mb-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.khatmaTitle}</h3>
+                  <span className={`text-[9px] md:text-[11px] font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t.dailyGoal}: {khatma.pagesPerDay} {t.pages}</span>
+                </div>
               </div>
 
-              <div className={`flex justify-between text-xs font-bold mb-4 pb-4 border-b ${isDarkMode ? 'text-gray-300 border-gray-700' : 'text-gray-600 border-gray-100'}`}>
-                <span>{isAr ? 'المقروء:' : 'Read:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{khatma.pagesRead}</span></span>
-                <span>{isAr ? 'المتبقي:' : 'Left:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{604 - khatma.pagesRead}</span></span>
+              <div className={`flex justify-between text-[9px] md:text-[11px] font-bold mb-3 pb-2 border-b ${isDarkMode ? 'text-gray-300 border-gray-700' : 'text-gray-600 border-gray-100'}`}>
+                <span>{isAr ? 'قرأت:' : 'Read:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{khatma.pagesRead}</span></span>
+                <span>{isAr ? 'متبقي:' : 'Left:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{604 - khatma.pagesRead}</span></span>
               </div>
 
               {khatma.pagesRead < 604 ? (
-                <div className="flex gap-2 w-full">
-                  <button 
-                    onClick={() => addPages(khatma.pagesPerDay)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
-                      isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#c7915b]'
-                    }`}
-                  >
-                    <CheckCircle size={16} /> {t.doneToday}
+                <div className="flex gap-1.5 w-full mt-auto">
+                  <button onClick={() => addPages(khatma.pagesPerDay)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-all shadow-sm ${isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#c7915b]'}`}>
+                    <CheckCircle size={14} /> {isAr ? 'ورد اليوم' : 'Done'}
                   </button>
-                  <button 
-                    onClick={() => addPages(5)}
-                    className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border ${
-                      isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    +5
-                  </button>
-                  <button 
-                    onClick={() => addPages(1)}
-                    className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border ${
-                      isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
+                  <button onClick={() => addPages(1)} className={`px-2.5 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-colors border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
                     +1
                   </button>
                 </div>
               ) : (
-                <div className={`text-center py-3 font-bold rounded-xl w-full ${isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-50 text-green-600'}`}>
-                  {isAr ? 'ما شاء الله! مبارك ختم القرآن الكريم 🎉' : 'Mashallah! Quran completed 🎉'}
+                <div className={`text-center py-2 text-[10px] md:text-xs font-bold rounded-xl w-full mt-auto ${isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-50 text-green-600'}`}>
+                  {isAr ? 'اكتملت الختمة 🎉' : 'Completed 🎉'}
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* 2. ويدجت تحميل المصحف */}
+        <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full justify-between items-center text-center ${isDarkMode ? 'bg-gray-800 border-[#E6B981]/30' : 'bg-[#FDFBF7] border-[#D4A373]/30'}`}>
+          <div className="flex flex-col items-center gap-2 mb-3 mt-1">
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-white text-[#D4A373] shadow-sm'}`}>
+              <CloudDownload size={22} />
+            </div>
+            <h3 className={`font-bold text-sm md:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t.quranDownloadTitle}</h3>
+            <p className={`text-[10px] md:text-[11px] font-medium leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {t.quranDownloadDesc}
+            </p>
           </div>
-        )}
+          
+          <div className="w-full mt-auto">
+            {isQuranDownloaded ? (
+              <span className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400`}>
+                <CheckCircle size={16} /> {t.downloaded}
+              </span>
+            ) : isDownloadingQuran ? (
+              <span className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-[#E6B981]' : 'bg-white border-[#F0EBE1] text-[#D4A373]'}`}>
+                <RefreshCw size={14} className="animate-spin" /> {t.downloading} {quranProgress}%
+              </span>
+            ) : (
+              <button 
+                onClick={downloadFullQuranText}
+                className={`w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs transition-colors shadow-sm ${isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#b58555]'}`}
+              >
+                {t.downloadNow}
+              </button>
+            )}
+          </div>
+        </div>
+
       </div>
 
       {/* 🌟 نافذة تأكيد إلغاء الخطة 🌟 */}

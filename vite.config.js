@@ -34,4 +34,24 @@ export default defineConfig({
       }
     })
   ],
-})
+  workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            // كاش لـ API القرآن (النصوص)
+            urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'quran-text-cache',
+              expiration: {
+                maxEntries: 114, // عدد سور القرآن
+                maxAgeSeconds: 60 * 60 * 24 * 365 // سنة كاملة
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
+      }
+    })

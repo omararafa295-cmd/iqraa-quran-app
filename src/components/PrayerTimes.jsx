@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { Search, MapPin, Sunrise, Sun, Sunset, Moon, Star, Clock3 } from "lucide-react";
+import { Search, MapPin, Sunrise, Sun, Sunset, Moon, Star, Clock3, Navigation } from "lucide-react";
 import { AppContext } from "../App";
 
 export default function PrayerTimes() {
   const { isDarkMode, lang } = useContext(AppContext);
   const isAr = lang === 'ar';
 
-  const [city, setCity] = useState("Cairo");
-  const [country, setCountry] = useState("Egypt");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [timings, setTimings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function PrayerTimes() {
   const t = {
     title: isAr ? "مواقيت الصلاة" : "Prayer Times",
     search: isAr ? "ابحث عن مدينتك (مثال: Alexandria)..." : "Search for your city...",
-    loading: isAr ? "جاري تحميل المواقيت..." : "Loading timings...",
+    loading: isAr ? "جاري تحديد الموقع والمواقيت..." : "Locating & loading timings...",
     prayers: {
       Fajr: isAr ? "الفجر" : "Fajr",
       Sunrise: isAr ? "الشروق" : "Sunrise",
@@ -27,9 +27,63 @@ export default function PrayerTimes() {
     }
   };
 
-  const fetchPrayerTimes = () => {
+ // 1. دالة ذكية للتعرف على موقع المستخدم وحفظه
+  const getUserLocation = () => {
     setLoading(true);
-    axios.get(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=5`)
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const res = await axios.get(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+            
+            const detectedCity = res.data.city || res.data.locality || "Cairo";
+            const detectedCountry = res.data.countryName || "Egypt";
+            
+            // حفظ الموقع في الذاكرة عشان يفتح طلقة المرة الجاية
+            localStorage.setItem("userCity", detectedCity);
+            localStorage.setItem("userCountry", detectedCountry);
+            
+            setCountry(detectedCountry);
+            setCity(detectedCity);
+          } catch (error) {
+            console.error("Error fetching location details:", error);
+            setCity("Cairo");
+            setCountry("Egypt");
+          }
+        },
+        (error) => {
+          console.warn("Geolocation permission denied or error:", error);
+          setCity("Cairo");
+          setCountry("Egypt");
+        }
+      );
+    } else {
+      setCity("Cairo");
+      setCountry("Egypt");
+    }
+  };
+
+  // التشغيل أول مرة تفتح فيها الصفحة (مع فحص الذاكرة أولاً)
+  useEffect(() => {
+    const savedCity = localStorage.getItem("userCity");
+    const savedCountry = localStorage.getItem("userCountry");
+    
+    if (savedCity && savedCountry) {
+      // لو مسجل موقعه قبل كده، اعرضه فوراً
+      setCity(savedCity);
+      setCountry(savedCountry);
+    } else {
+      // لو أول مرة يفتح الموقع، حدد موقعه
+      getUserLocation();
+    }
+  }, []);
+  // 2. دالة جلب المواقيت بناءً على المدينة والبلد
+  const fetchPrayerTimes = () => {
+    if (!city) return; // نمنع الجلب لو المدينة لسه فاضية
+    setLoading(true);
+    // استخدمنا encodeURIComponent عشان لو اسم المدينة فيه مسافات
+    axios.get(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=5`)
       .then((response) => {
         setTimings(response.data.data.timings);
         setLoading(false);
@@ -40,19 +94,21 @@ export default function PrayerTimes() {
       });
   };
 
+  // جلب المواقيت تلقائياً لما المدينة تتغير
   useEffect(() => {
     fetchPrayerTimes();
-  }, [city]);
+  }, [city, country]);
 
+  // 3. البحث اليدوي زي ما طلبت
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
       setCity(searchInput);
+      setCountry(""); // تفريغ البلد عشان الـ API يبحث عن المدينة براحته
       setSearchInput("");
     }
   };
 
-  
   const getNightPortions = (maghrib, fajr) => {
     if (!maghrib || !fajr) return null;
     let [mH, mM] = maghrib.split(':').map(Number);
@@ -109,9 +165,17 @@ export default function PrayerTimes() {
           />
           <Search className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
         </form>
+        
         <div className={`flex items-center justify-center gap-2 font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
           <MapPin size={20} />
-          <span>{city}, {country}</span>
+          <span>{city}{country ? `, ${country}` : ''}</span>
+          <button 
+            onClick={getUserLocation} 
+            className={`p-1.5 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+            title={isAr ? "تحديد موقعي الحالي" : "Locate Me"}
+          >
+            <Navigation size={16} />
+          </button>
         </div>
       </div>
 
@@ -131,7 +195,6 @@ export default function PrayerTimes() {
             ))}
           </div>
 
-         
           {nightTimes && (
             <div className={`p-6 rounded-3xl shadow-lg border relative overflow-hidden ${
               isDarkMode ? 'bg-gradient-to-br from-gray-900 to-[#1a1c23] border-[#E6B981]/30' : 'bg-gradient-to-br from-[#2a1f18] to-[#1e1510] border-[#D4A373]'
