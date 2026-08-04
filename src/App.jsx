@@ -116,27 +116,27 @@ const BottomNav = () => {
       <div className="flex justify-between items-center p-1.5 max-w-md mx-auto px-2" dir={isAr ? "rtl" : "ltr"}>
         <Link to="/" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <BookOpen size={20} />
-          <span className="text-[9px] font-bold">القرآن</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القرآن' : 'Quran'}</span>
         </Link>
         <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <RadioIcon size={20} />
-          <span className="text-[9px] font-bold">الراديو</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الراديو' : 'Radio'}</span>
         </Link>
         <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <Mic size={20} />
-          <span className="text-[9px] font-bold">التسميع</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'التسميع' : 'Memorize'}</span>
         </Link>
         <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <SunMoon size={20} />
-          <span className="text-[9px] font-bold">الأذكار</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأذكار' : 'Azkar'}</span>
         </Link>
         <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <Clock size={20} />
-          <span className="text-[9px] font-bold">المواقيت</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'المواقيت' : 'Prayers'}</span>
         </Link>
         <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
           <Compass size={20} />
-          <span className="text-[9px] font-bold">القبلة</span>
+          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القبلة' : 'Qibla'}</span>
         </Link>
       </div>
     </div>

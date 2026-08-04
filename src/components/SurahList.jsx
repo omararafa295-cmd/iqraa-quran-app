@@ -111,12 +111,10 @@ export default function SurahList() {
     setShowDeleteConfirm(false);
   };
 
-  // دالة التحميل مع حل مشكلة التجميد (White Screen)
   const downloadFullQuranText = async () => {
     setIsDownloadingQuran(true);
     setQuranProgress(0);
     
-    // إعطاء المتصفح فرصة لعرض شريط التحميل قبل بدء العمل الشاق
     await new Promise(resolve => setTimeout(resolve, 50));
 
     try {
@@ -143,10 +141,9 @@ export default function SurahList() {
         await cache.put(mainUrl, mainResponse);
         await cache.put(modalUrl, modalResponse);
 
-        // تحديث النسبة المئوية والسماح للواجهة بالتحديث (تمنع الشاشة البيضاء)
         if (i % 2 === 0 || i === 113) { 
            setQuranProgress(Math.round(((i + 1) / 114) * 100));
-           await new Promise(resolve => setTimeout(resolve, 10)); // Yield to UI Thread
+           await new Promise(resolve => setTimeout(resolve, 10)); 
         }
       }
       localStorage.setItem(`full_quran_text_downloaded_${isAr}`, 'true');
@@ -156,6 +153,35 @@ export default function SurahList() {
        alert(isAr ? "حدث خطأ أثناء تحميل المصحف." : "Error downloading Quran.");
     } finally {
        setIsDownloadingQuran(false);
+    }
+  };
+
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsAppInstalled(true);
+    }
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setIsAppInstalled(true);
+      }
     }
   };
 
@@ -196,7 +222,6 @@ export default function SurahList() {
         }
       `}</style>
 
-      {/* الهيرو سكشن الفخم */}
       <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl ${
         isDarkMode 
           ? 'bg-gradient-to-b from-gray-900 via-[#1e1814] to-gray-900 border border-gray-700' 
@@ -259,10 +284,34 @@ export default function SurahList() {
         </div>
       </div>
 
-      {/* ويدجت الختمة وتحميل المصحف (في شبكة جنب بعض للموبايل) */}
-      <div className="max-w-2xl mx-auto mb-8 grid grid-cols-2 gap-3 md:gap-4">
+      {!isAppInstalled && deferredPrompt && (
+        <div className={`max-w-2xl mx-auto mb-6 p-4 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm border ${
+          isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-[#E6B981]/30' : 'bg-gradient-to-r from-[#FDFBF7] to-white border-[#D4A373]/30'
+        }`}>
+          <div className="flex items-center gap-4 text-center md:text-start">
+            <img src="/icon-192.png" alt="App Icon" className="w-14 h-14 rounded-2xl shadow-sm hidden sm:block" />
+            <div className="flex flex-col">
+              <h3 className={`font-bold text-base md:text-lg mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                {isAr ? 'تثبيت تطبيق اقرأ' : 'Install Iqraa App'}
+              </h3>
+              <p className={`text-[11px] md:text-xs font-medium leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {isAr ? 'قم بتثبيت التطبيق على هاتفك ليعمل بدون إنترنت كبرنامج أساسي.' : 'Install the app on your phone to work offline as a native app.'}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={handleInstallApp}
+            className={`w-full md:w-auto shrink-0 px-6 py-3 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md ${
+              isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#b58555]'
+            }`}
+          >
+            {isAr ? 'تثبيت التطبيق' : 'Install App'}
+          </button>
+        </div>
+      )}
 
-        {/* 1. ويدجت الختمة */}
+      <div className="max-w-2xl mx-auto mb-8 grid grid-cols-2 gap-3 md:gap-4">
+    
         <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full relative overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#F0EBE1]'}`}>
           {!khatma ? (
             <div className="flex flex-col items-center text-center h-full justify-between gap-2">
@@ -325,7 +374,6 @@ export default function SurahList() {
           )}
         </div>
 
-        {/* 2. ويدجت تحميل المصحف */}
         <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full justify-between items-center text-center ${isDarkMode ? 'bg-gray-800 border-[#E6B981]/30' : 'bg-[#FDFBF7] border-[#D4A373]/30'}`}>
           <div className="flex flex-col items-center gap-2 mb-3 mt-1">
             <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-white text-[#D4A373] shadow-sm'}`}>
@@ -359,7 +407,6 @@ export default function SurahList() {
 
       </div>
 
-      {/* 🌟 نافذة تأكيد إلغاء الخطة 🌟 */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)}>
           <div className={`w-full max-w-sm p-6 rounded-[2rem] shadow-2xl transform transition-all ${isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white"}`} onClick={e => e.stopPropagation()}>
@@ -386,7 +433,6 @@ export default function SurahList() {
         </div>
       )}
 
-      {/* نافذة إعداد الخطة */}
       {showKhatmaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowKhatmaModal(false)}>
           <div 
@@ -447,7 +493,6 @@ export default function SurahList() {
         </div>
       )}
 
-      {/* شريط البحث */}
       <div className="relative mb-8 max-w-2xl mx-auto">
         <input 
           type="text" 
