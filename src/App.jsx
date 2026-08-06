@@ -10,6 +10,8 @@ import Azkar from "./components/Azkar";
 import Radio from "./components/Radio";
 import Memorize from "./components/Memorize";
 import DeveloperModal from './components/DeveloperModal';
+import UpdateBanner from './components/UpdateBanner';
+import { sendKhatmaReminderNotification } from './utils/notificationHelper';
 
 export function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,10 +153,18 @@ export default function App() {
     localStorage.setItem("darkMode", isDarkMode);
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const khatma = JSON.parse(localStorage.getItem('khatmaPlan'));
+    if (khatma) {
+      sendKhatmaReminderNotification(khatma, lang === 'ar');
+    }
+  }, [lang]);
+
   return (
     <AppContext.Provider value={{ isDarkMode, setIsDarkMode, lang, setLang }}>
       <div className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FFFdf9] text-gray-900"}`}>
         <Router>
+          <UpdateBanner />
           <TopBar />
           <Routes>
             <Route path="/" element={<SurahList />} />
