@@ -257,7 +257,7 @@ const startKhatma = async () => {
           </div>
           
           <h1 className={`text-4xl md:text-5xl font-quran mb-9 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
-            {isAr ? 'القرآن الكريم' : 'The Holy Quran'}
+            {isAr ? 'القرآن الكريم' : 'The Noble Quran'}
           </h1>
           
           <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
