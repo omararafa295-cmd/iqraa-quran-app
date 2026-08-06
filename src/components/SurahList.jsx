@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, BookOpen, Layers, ArrowLeft, Loader2, Sparkles, Target, CheckCircle, Plus, Trash2, Calendar, AlertTriangle, CloudDownload, RefreshCw } from "lucide-react";
 import { AppContext } from "../App";
+import { requestNotificationPermission } from '../utils/notificationHelper';
 
 const juzData = Array.from({ length: 30 }, (_, i) => ({
   id: i + 1,
@@ -82,8 +83,7 @@ export default function SurahList() {
     return normalizedName.includes(normalizedQuery) || 
            surah.englishName.toLowerCase().includes(searchQuery.toLowerCase());
   });
-
-  const startKhatma = () => {
+const startKhatma = async () => {
     const plan = {
       days: khatmaDays,
       pagesPerDay: Math.ceil(604 / khatmaDays),
@@ -93,6 +93,9 @@ export default function SurahList() {
     setKhatma(plan);
     localStorage.setItem('khatmaPlan', JSON.stringify(plan));
     setShowKhatmaModal(false);
+
+    
+    await requestNotificationPermission();
   };
 
   const addPages = (num) => {
