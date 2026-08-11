@@ -247,7 +247,7 @@ const startKhatma = async () => {
     
 <div className="relative mb-3 mt-1 flex items-center justify-center w-full">
   <img 
-    src="/images/golden-quran.png" 
+    src="/images/golden-quran.webp" 
     alt="القرآن الكريم" 
     className="w-48 sm:w-56 md:w-72 lg:w-80 h-auto max-h-[220px] md:max-h-[300px] object-contain animate-quran-hero cursor-pointer transition-transform duration-300 hover:scale-105 drop-shadow-[0_10px_25px_rgba(230,185,129,0.5)]"
   />
