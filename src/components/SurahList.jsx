@@ -225,67 +225,63 @@ const startKhatma = async () => {
         }
       `}</style>
 
-      <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl ${
-        isDarkMode 
-          ? 'bg-gradient-to-b from-gray-900 via-[#1e1814] to-gray-900 border border-gray-700' 
-          : 'bg-gradient-to-b from-[#e3b88d] via-[#d6a575] to-[#c7915b]'
-      }`}>
-        <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-          <div className="w-[200%] h-[200%] animate-[spin_60s_linear_infinite]" 
-               style={{ background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.08) 30deg, transparent 60deg, rgba(255,255,255,0.08) 90deg, transparent 120deg, rgba(255,255,255,0.08) 150deg, transparent 180deg, rgba(255,255,255,0.08) 210deg, transparent 240deg, rgba(255,255,255,0.08) 270deg, transparent 300deg, rgba(255,255,255,0.08) 330deg, transparent 360deg)' }}>
-          </div>
-        </div>
+      <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl transition-all duration-500 ${
+  isDarkMode 
+    ? 'bg-gradient-to-b from-gray-950 via-[#18120c] to-gray-950 border border-gray-800' 
+    : 'bg-gradient-to-b from-[#dfaa77] via-[#d6a575] to-[#ba824e]'
+}`}>
 
-        <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[70px] animate-pulse pointer-events-none ${
-          isDarkMode ? 'bg-[#E6B981]/20' : 'bg-white/30'
-        }`} style={{ animationDuration: '4s' }}></div>
-        
-        <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
-          <div className="relative mb-6 mt-2 flex items-center justify-center w-24 h-24 md:w-28 md:h-28" style={{ animation: 'float 6s ease-in-out infinite' }}>
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#D4A373] to-white blur-[20px] opacity-60 animate-pulse" style={{ animationDuration: '3s' }}></div>
-            <div className={`absolute w-20 h-20 md:w-24 md:h-24 border border-white/20 rounded-full animate-[spin_10s_linear_infinite] border-t-white/80`}></div>
-            <div className={`absolute w-24 h-24 md:w-28 md:h-28 border border-white/10 rounded-full animate-[spin_15s_linear_reverse_infinite] border-b-white/60`}></div>
-            <div className="absolute w-12 h-12 md:w-14 md:h-14 animate-[spin_25s_linear_infinite]">
-              <div className={`absolute inset-0 border-[1.5px] ${isDarkMode ? 'border-[#E6B981]' : 'border-white'} rounded-sm opacity-80`}></div>
-              <div className={`absolute inset-0 rotate-45 border-[1.5px] ${isDarkMode ? 'border-[#E6B981]' : 'border-white'} rounded-sm opacity-80`}></div>
-            </div>
-            <div className="absolute w-6 h-6 md:w-8 md:h-8 animate-[spin_12s_linear_reverse_infinite]">
-              <div className={`absolute inset-0 rotate-45 bg-gradient-to-tr ${isDarkMode ? 'from-[#D4A373] to-[#E6B981]' : 'from-white/80 to-white'} shadow-[0_0_15px_rgba(255,255,255,0.6)] rounded-sm`}></div>
-            </div>
-            <div className="absolute w-2 h-2 md:w-3 md:h-3 bg-white rounded-full shadow-[0_0_15px_#fff] animate-ping" style={{ animationDuration: '1.5s' }}></div>
-            <div className="absolute w-1 h-1 md:w-1.5 md:h-1.5 bg-white rounded-full"></div>
-          </div>
-          
-          <h1 className={`text-4xl md:text-5xl font-quran mb-9 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
-            {isAr ? 'القرآن الكريم' : 'The Holy Quran'}
-          </h1>
-          
-          <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
-            isDarkMode ? 'bg-black/30 border-[#E6B981]/20' : 'bg-white/10 border-white/30'
-          }`}>
-            <p className={`text-sm md:text-lg font-medium leading-loose ${isDarkMode ? 'text-[#f4e6d3]' : 'text-white'} ${isAr ? 'font-sans' : 'font-serif'}`}>
-              {isAr 
-                ? "« كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ وَلِيَتَذَكَّرَ أُولُو الْأَلْبَابِ »" 
-                : '"A blessed Book which We have revealed to you, that they might reflect upon its verses"'}
-            </p>
-          </div>
+<div 
+  className={`absolute inset-0 bg-center bg-cover bg-no-repeat pointer-events-none transition-all duration-500 ${
+    isDarkMode 
+      ? 'opacity-35 mix-blend-screen brightness-125 contrast-110' 
+      : 'opacity-20 mix-blend-overlay'
+  }`}
+  style={{ backgroundImage: `url('/images/mosque-bg.jpg')` }}
+></div>
+  <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[90px] pointer-events-none ${
+    isDarkMode ? 'bg-[#E6B981]/25' : 'bg-white/40'
+  }`}></div>
 
-          {lastRead && (
-            <Link 
-              to={`/surah/${lastRead.id}`} 
-              state={{ targetPage: lastRead.page }}
-              className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] ${
-                isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
-              }`}
-            >
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              <Sparkles size={16} className="relative z-10 animate-pulse" />
-              <span className="relative z-10">{t.continue}: {isAr ? `سورة ${lastRead.name.replace('سُورَةُ ', '')}` : `Surah ${lastRead.englishName || lastRead.name}`}</span>
-              {isAr ? <ArrowLeft size={16} className="relative z-10" /> : <ArrowLeft size={16} className="rotate-180 relative z-10" />}
-            </Link>
-          )}
-        </div>
-      </div>
+  <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
+    
+<div className="relative mb-3 mt-1 flex items-center justify-center w-full">
+  <img 
+    src="/images/golden-quran.png" 
+    alt="القرآن الكريم" 
+    className="w-48 sm:w-56 md:w-72 lg:w-80 h-auto max-h-[220px] md:max-h-[300px] object-contain animate-quran-hero cursor-pointer transition-transform duration-300 hover:scale-105 drop-shadow-[0_10px_25px_rgba(230,185,129,0.5)]"
+  />
+</div>
+
+    <h1 className={`text-4xl md:text-5xl font-quran mb-6 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
+      {isAr ? 'القرآن الكريم' : 'The Noble Quran'}
+    </h1>
+
+    <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
+      isDarkMode ? 'bg-black/40 border-[#E6B981]/20' : 'bg-white/15 border-white/30'
+    }`}>
+      <p className={`text-sm md:text-lg font-medium leading-loose ${isDarkMode ? 'text-[#f4e6d3]' : 'text-white'}`}>
+        « كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ وَلِيَتَذَكَّرَ أُولُو الْأَلْبَابِ »
+      </p>
+    </div>
+
+    {lastRead && (
+      <Link 
+        to={`/surah/${lastRead.id}`} 
+        state={{ targetPage: lastRead.page }}
+        className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 shadow-xl ${
+          isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
+        }`}
+      >
+        <Sparkles size={16} className="animate-pulse" />
+        <span>
+          {isAr ? `متابعة القراءة: سورة ${lastRead.name.replace('سُورَةُ ', '')}` : `Continue: Surah ${lastRead.englishName || lastRead.name}`}
+        </span>
+        {isAr ? <ArrowLeft size={16} /> : <ArrowLeft size={16} className="rotate-180" />}
+      </Link>
+    )}
+  </div>
+</div>
 
       {!isAppInstalled && deferredPrompt && (
         <div className={`max-w-2xl mx-auto mb-6 p-4 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm border ${

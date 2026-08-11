@@ -31,3 +31,19 @@ body {
 .font-quran {
   font-family: 'Amiri Quran', serif;
 }
+
+
+@keyframes goldGlow {
+  0%, 100% { filter: drop-shadow(0 0 15px rgba(230, 185, 129, 0.4)); }
+  50% { filter: drop-shadow(0 0 35px rgba(230, 185, 129, 0.8)); }
+}
+
+.animate-quran-hero {
+  animation: floatQuran 4s ease-in-out infinite;
+  filter: drop-shadow(0 10px 20px rgba(230, 185, 129, 0.4));
+}
+
+@keyframes floatQuran {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
