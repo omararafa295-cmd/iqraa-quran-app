@@ -212,6 +212,14 @@ const startKhatma = async () => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
+   useEffect(() => {
+    const heroImg = new Image();
+    heroImg.src = "/images/golden-quran.webp";
+    
+    const mosqueImg = new Image();
+    mosqueImg.src = "/images/mosque-bg.jpg";
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 pt-20" dir={isAr ? "rtl" : "ltr"}>
       
@@ -574,29 +582,31 @@ const startKhatma = async () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {juzData.map((juz) => (
-            <Link 
-              to={`/juz/${juz.id}`} 
-              key={juz.id} 
-              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border shadow-sm transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
-                isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
-              }`}
-            >
-              <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg border-[2px] transition-all mb-3 ${
-                isDarkMode ? 'border-gray-700 text-[#E6B981] group-hover:bg-[#E6B981] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4A373] group-hover:bg-[#D4A373] group-hover:border-[#D4A373] group-hover:text-white'
-              }`}>
-                {juz.id}
-              </div>
-              
-              <h3 className={`font-bold text-lg md:text-xl ${isAr ? 'font-quran' : 'font-sans'} mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                {t.juzTitle} {isAr ? juz.nameAr : juz.nameEn}
-              </h3>
-              <p className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                {t.hizb} {juz.hizbStart} - {juz.hizbEnd}
-              </p>
-            </Link>
-          ))}
-        </div>
+  {juzData.map((juz) => (
+    <Link 
+      to={`/juz/${juz.id}`} 
+      key={juz.id} 
+      className={`relative flex flex-col items-center justify-center text-center p-5 rounded-2xl border shadow-sm transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
+        isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+      }`}
+    >
+      <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg border-[2px] transition-all mb-4 ${
+        isDarkMode ? 'border-gray-700 text-[#E6B981] group-hover:bg-[#E6B981] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4A373] group-hover:bg-[#D4A373] group-hover:border-[#D4A373] group-hover:text-white'
+      }`}>
+        {juz.id}
+      </div>
+
+      <h3 className={`font-bold text-lg md:text-xl ${isAr ? 'font-quran' : 'font-sans'} mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        {isAr ? 'الجزء' : 'Juz'} {isAr ? juz.nameAr : (juz.nameEn || juz.id)}
+      </h3>
+      <p className={`text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
+        isDarkMode ? 'bg-gray-900/60 text-gray-400 group-hover:text-[#E6B981]' : 'bg-gray-50 text-gray-500 border border-gray-100 group-hover:text-[#D4A373]'
+      }`}>
+        {isAr ? 'الحزب' : 'Hizb'} {juz.hizbStart} - {juz.hizbEnd}
+      </p>
+    </Link>
+  ))}
+</div>
       )}
     </div>
   );

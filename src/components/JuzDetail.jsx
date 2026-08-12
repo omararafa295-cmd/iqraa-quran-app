@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"; 
 import { AppContext } from "../App";
 
 export default function JuzDetail() {
@@ -14,17 +14,20 @@ export default function JuzDetail() {
 
   useEffect(() => {
     setLoading(true);
-    // هنجيب بيانات الجزء عشان نعرف السور اللي جواه
+    const cachedSurahs = JSON.parse(localStorage.getItem('offline_surahs_list') || "[]");
+
     axios.get(`https://api.alquran.cloud/v1/juz/${id}`)
       .then(res => {
-        const ayahs = res.data.data.ayahs;
+        const ayahs = res.data?.data?.ayahs || [];
         const surahsMap = {};
 
-       
         ayahs.forEach(ayah => {
           if (!surahsMap[ayah.surah.number]) {
+            const cachedSurah = cachedSurahs.find(s => s.number === ayah.surah.number);
+            
             surahsMap[ayah.surah.number] = {
               ...ayah.surah,
+              englishName: cachedSurah ? cachedSurah.englishName : `Surah ${ayah.surah.number}`,
               startAyah: ayah.numberInSurah,
               endAyah: ayah.numberInSurah
             };
@@ -37,12 +40,12 @@ export default function JuzDetail() {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Error fetching Juz details:", err);
         setLoading(false);
       });
   }, [id]);
 
-  const BackIcon = isAr ?ArrowLeft  : ArrowRight;
+  const BackIcon = isAr ? ArrowLeft : ArrowRight;
 
   if (loading) {
     return (
@@ -64,8 +67,6 @@ export default function JuzDetail() {
           <BackIcon size={20} />
         </Link>
       </div>
-
-    
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {surahsInJuz.map((surah) => (
           <Link
@@ -96,11 +97,10 @@ export default function JuzDetail() {
                 </span>
               </div>
             </div>
-
             <div className={`text-xl md:text-2xl font-bold font-quran transition-colors ${
               isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'
             }`}>
-              {surah.name.replace('سُورَةُ ', '')}
+              {(surah.name || "").replace('سُورَةُ ', '')}
             </div>
           </Link>
         ))}
