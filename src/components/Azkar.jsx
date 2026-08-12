@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Sun, Moon, RotateCcw, Heart, X, AlertTriangle } from "lucide-react";
+import { Sun, Moon, RotateCcw, Heart, X, AlertTriangle, ChevronDown } from "lucide-react";
 import { AppContext } from "../App";
 
 const initialMorningAzkar = [
@@ -13,6 +13,8 @@ const initialEveningAzkar = [
   { id: 2, text: "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ.", count: 1, originalCount: 1 },
   { id: 3, text: "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ.", count: 100, originalCount: 100 },
 ];
+
+const BEADS_PER_LAP = 33;
 
 export default function Azkar() {
   const { isDarkMode, lang } = useContext(AppContext);
@@ -79,7 +81,17 @@ export default function Azkar() {
     confirmMsg: isAr ? "هل أنت متأكد أنك تريد تصفير العداد والبدء من جديد؟" : "Are you sure you want to reset the counter?",
     cancelBtn: isAr ? "إلغاء" : "Cancel",
     confirmBtn: isAr ? "نعم، صفر العداد" : "Yes, Reset",
+    lap: isAr ? "الخرزة" : "Bead",
+    of: isAr ? "من" : "of",
+    laps: isAr ? "دورات مكتملة" : "Completed rounds",
   };
+
+  // موقع الخرزة الحالية جوه الدورة (0-32)، وعدد الدورات الكاملة اللي خلصت
+  const posInLap = tasbihCount % BEADS_PER_LAP;
+  const filledBeads = tasbihCount > 0 && posInLap === 0 ? BEADS_PER_LAP : posInLap;
+  const completedLaps = Math.floor(tasbihCount / BEADS_PER_LAP);
+  // بندوّر حلقة الخرزات كلها عشان الخرزة الجاية تيجي دايماً تحت علامة "الإبهام" فوق - زي ما بتسحب سبحة حقيقية
+  const ringRotation = -(filledBeads * (360 / BEADS_PER_LAP));
 
   const renderAzkarList = (azkarList, type) => {
     const remainingAzkar = azkarList.filter(z => z.count > 0);
@@ -152,17 +164,73 @@ export default function Azkar() {
       </div>
 
       {activeTab === "tasbih" && (
-        <div className="flex flex-col items-center justify-center py-10">
-          <div className="relative mb-12">
+        <div className="flex flex-col items-center justify-center py-6">
+
+          {/* علامة الإبهام الثابتة - بتأشر على مكان الخرزة الجاية دايماً */}
+          <div className={`mb-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+            <ChevronDown size={22} strokeWidth={3} />
+          </div>
+
+          <div className="relative w-80 h-80 mb-4 select-none">
+            
+            {/* حلقة الخرزات - بتلف كل ما تضغط، زي ما بتسحب سبحة حقيقية بين صوابعك */}
+            <div
+              className="absolute inset-0 transition-transform duration-300 ease-out"
+              style={{ transform: `rotate(${ringRotation}deg)` }}
+            >
+              {Array.from({ length: BEADS_PER_LAP }).map((_, i) => {
+                const angle = (i / BEADS_PER_LAP) * 2 * Math.PI - Math.PI / 2;
+                const radius = 148;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const isFilled = i < filledBeads;
+                const isNext = i === filledBeads;
+                const size = isNext ? 20 : 15;
+
+                return (
+                  <div
+                    key={i}
+                    className={`absolute rounded-full transition-colors duration-200 ${
+                      isFilled
+                        ? (isDarkMode ? 'bg-[#E6B981] shadow-[0_0_10px_rgba(230,185,129,0.55)]' : 'bg-[#D4A373] shadow-[0_0_10px_rgba(212,163,115,0.45)]')
+                        : isNext
+                          ? (isDarkMode ? 'bg-gray-800 border-2 border-[#E6B981] animate-pulse' : 'bg-white border-2 border-[#D4A373] animate-pulse')
+                          : (isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-[#F0EBE1] border border-[#E2D8C3]')
+                    }`}
+                    style={{
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      left: `calc(50% + ${x}px - ${size / 2}px)`,
+                      top: `calc(50% + ${y}px - ${size / 2}px)`,
+                    }}
+                  />
+                );
+              })}
+
+              {/* خرزة الإمام - الخرزة الكبيرة اللي بتفصل كل دورة 33 عن اللي بعدها */}
+              <div
+                className={`absolute rounded-full shadow-md ${isDarkMode ? 'bg-[#b58555]' : 'bg-[#9c6b3f]'}`}
+                style={{ width: '24px', height: '24px', left: 'calc(50% - 12px)', top: 'calc(50% - 148px - 4px)' }}
+              />
+            </div>
+
+            {/* الزرار المركزي - نفس التفاعل زي الأول بالظبط */}
             <button 
               onClick={handleTasbihClick}
-              className={`w-64 h-64 rounded-full flex flex-col items-center justify-center shadow-[0_10px_40px_rgba(212,163,115,0.3)] border-8 active:scale-95 transition-transform duration-100 ${
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-52 rounded-full flex flex-col items-center justify-center shadow-[0_10px_40px_rgba(212,163,115,0.3)] border-8 active:scale-95 transition-transform duration-100 ${
                 isDarkMode ? 'bg-gray-800 border-[#E6B981] text-[#E6B981]' : 'bg-white border-[#D4A373] text-[#D4A373]'
               }`}
             >
               <span className="text-6xl font-bold font-sans">{tasbihCount}</span>
               <span className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t.clickToCount}</span>
             </button>
+          </div>
+
+          <div className={`text-sm font-bold mb-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {t.lap} {filledBeads} {t.of} {BEADS_PER_LAP}
+            {completedLaps > 0 && (
+              <span className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}> · {completedLaps} {t.laps}</span>
+            )}
           </div>
           
           <button 
