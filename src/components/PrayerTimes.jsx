@@ -46,10 +46,17 @@ export default function PrayerTimes() {
 
     if (!navigator.onLine) {
       handleOfflineFallback();
+      setLoading(false); 
       return;
     }
 
     if ("geolocation" in navigator) {
+      const geoOptions = {
+        enableHighAccuracy: true,
+        timeout: 10000, 
+        maximumAge: 0   
+      };
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
@@ -66,15 +73,19 @@ export default function PrayerTimes() {
             setCity(detectedCity);
           } catch (error) {
             handleOfflineFallback();
+          } finally {
+            setLoading(false); 
           }
         },
         (error) => {
           handleOfflineFallback();
+          setLoading(false); 
         },
-        { timeout: 5000 }
+        geoOptions 
       );
     } else {
       handleOfflineFallback();
+      setLoading(false);
     }
   };
 

@@ -160,6 +160,20 @@ export default function App() {
     }
   }, [lang]);
 
+  useEffect(() => {
+    const handleAppInstalled = () => {
+      alert(lang === 'ar' 
+        ? 'تم تثبيت التطبيق بنجاح! 🎉\nتقدر تقفل المتصفح وتفتحه دلوقتي من الشاشة الرئيسية.' 
+        : 'App installed successfully! 🎉\nYou can now open it from your home screen.');
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [lang]);
+  
   return (
     <AppContext.Provider value={{ isDarkMode, setIsDarkMode, lang, setLang }}>
       <div className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FFFdf9] text-gray-900"}`}>
