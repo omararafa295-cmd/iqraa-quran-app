@@ -4,7 +4,7 @@ import { Radio as RadioIcon, PlayCircle, PauseCircle, Search, Activity, Star } f
 import { AppContext } from "../App";
 
 export default function Radio() {
-  const { isDarkMode, lang } = useContext(AppContext);
+  const { isDarkMode, lang, isPlaying: isQuranPlaying, setIsPlaying: setIsQuranPlaying, isRadioPlaying, setIsRadioPlaying } = useContext(AppContext);
   const isAr = lang === 'ar';
 
   const [radios, setRadios] = useState([]);
@@ -12,7 +12,7 @@ export default function Radio() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeRadio, setActiveRadio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeLetter, setActiveLetter] = useState(null); // فلتر الحرف المختار
+  const [activeLetter, setActiveLetter] = useState(null); 
 
   const audioRef = useRef(null);
 
@@ -28,6 +28,16 @@ export default function Radio() {
   };
 
   const featuredKeywords = ["رمضان", "الأطفال", "تجويد", "كامل", "القرآن الكريم", "تلاوات متنوعة", "قصار السور"];
+
+  useEffect(() => {
+    if (isQuranPlaying && isPlaying) {
+      setIsPlaying(false);
+      setIsRadioPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  }, [isQuranPlaying]); 
 
   useEffect(() => {
     setLoading(true);
@@ -74,23 +84,34 @@ export default function Radio() {
   }, [radios, isAr]);
 
   const togglePlay = (radio) => {
+    if (isQuranPlaying) setIsQuranPlaying(false);
+
     if (activeRadio?.id === radio.id) {
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
+        setIsRadioPlaying(false);
       } else {
-        audioRef.current.play();
+        setIsRadioPlaying(true);
         setIsPlaying(true);
+        audioRef.current.play().catch(e => {
+          console.error(e);
+          setIsPlaying(false);
+          setIsRadioPlaying(false);
+        });
       }
     } else {
       setActiveRadio(radio);
+      setIsRadioPlaying(true);
       setIsPlaying(true);
-      setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.src = radio.url;
-          audioRef.current.play();
-        }
-      }, 0);
+      if (audioRef.current) {
+        audioRef.current.src = radio.url;
+        audioRef.current.play().catch(e => {
+          console.error(e);
+          setIsPlaying(false);
+          setIsRadioPlaying(false);
+        });
+      }
     }
   };
 
@@ -140,7 +161,7 @@ export default function Radio() {
 
   return (
     <div className={`max-w-4xl mx-auto p-4 md:p-6 pt-20 ${activeRadio ? 'pb-36' : 'pb-24'}`} dir={isAr ? "rtl" : "ltr"}>
-      <audio ref={audioRef} onEnded={() => setIsPlaying(false)} onError={() => setIsPlaying(false)} />
+      <audio ref={audioRef} onEnded={() => {setIsPlaying(false); setIsRadioPlaying(false);}} onError={() => {setIsPlaying(false); setIsRadioPlaying(false);}} />
 
       <div className="flex items-center justify-center gap-3 mb-8 mt-4">
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
@@ -159,7 +180,6 @@ export default function Radio() {
         <Search className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
       </div>
 
-      {/* لو في بحث فعّال، نعرض نتيجة مسطّحة عادية */}
       {searchQuery ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredRadios.length > 0 ? (
@@ -172,7 +192,6 @@ export default function Radio() {
         </div>
       ) : (
         <>
-          {/* شريط الحروف للتنقل السريع */}
           <div className={`flex flex-wrap gap-2 mb-6 justify-center ${!isAr && 'font-sans'}`}>
             <button
               onClick={() => setActiveLetter(null)}
@@ -199,7 +218,6 @@ export default function Radio() {
             ))}
           </div>
 
-          {/* الإذاعات المميزة - تظهر فقط لو مفيش فلتر حرف مختار */}
           {featured.length > 0 && !activeLetter && (
             <div className="mb-8">
               <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
@@ -212,7 +230,6 @@ export default function Radio() {
             </div>
           )}
 
-          {/* إذاعات القراء مقسمة بالحروف */}
           <div>
             {!activeLetter && (
               <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
@@ -233,7 +250,6 @@ export default function Radio() {
         </>
       )}
 
-      {/* مشغل الراديو العائم */}
       {activeRadio && (
         <div className={`fixed bottom-[65px] left-0 w-full border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40 transition-colors ${
           isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-[#F0EBE1]"

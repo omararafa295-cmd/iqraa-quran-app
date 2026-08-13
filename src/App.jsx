@@ -12,6 +12,7 @@ import Memorize from "./components/Memorize";
 import DeveloperModal from './components/DeveloperModal';
 import UpdateBanner from './components/UpdateBanner';
 import { sendKhatmaReminderNotification } from './utils/notificationHelper';
+import FloatingPlayer from "./components/FloatingPlayer";
 
 export function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,6 +39,7 @@ const TopBar = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isAr = lang === 'ar';
+  const [isRadioPlaying, setIsRadioPlaying] = useState(false);
 
   useEffect(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -148,6 +150,9 @@ const BottomNav = () => {
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("darkMode") === "true");
   const [lang, setLang] = useState("ar"); 
+const [currentAudio, setCurrentAudio] = useState(null); 
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRadioPlaying, setIsRadioPlaying] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("darkMode", isDarkMode);
@@ -175,11 +180,12 @@ export default function App() {
   }, [lang]);
   
   return (
-    <AppContext.Provider value={{ isDarkMode, setIsDarkMode, lang, setLang }}>
+    <AppContext.Provider value={{ isDarkMode, setIsDarkMode, lang, setLang,currentAudio, setCurrentAudio, isPlaying, setIsPlaying,isRadioPlaying, setIsRadioPlaying }}>
       <div className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FFFdf9] text-gray-900"}`}>
         <Router>
           <UpdateBanner />
           <TopBar />
+          <FloatingPlayer />
           <Routes>
             <Route path="/" element={<SurahList />} />
             <Route path="/surah/:id" element={<SurahDetail />} />

@@ -30,7 +30,6 @@ export default function SurahList() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [khatmaDays, setKhatmaDays] = useState(30);
 
-  // حالات تحميل القرآن كاملاً
   const [isDownloadingQuran, setIsDownloadingQuran] = useState(false);
   const [quranProgress, setQuranProgress] = useState(0);
   const [isQuranDownloaded, setIsQuranDownloaded] = useState(false);
@@ -64,7 +63,7 @@ export default function SurahList() {
 
   const normalizeSearch = (text) => {
     if (!text) return "";
-    return text
+    return String(text)
       .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u06DF-\u06E8\u0640]/g, "") 
       .replace(/[أإآاٱ]/g, "ا") 
       .replace(/ة/g, "ه") 
@@ -77,13 +76,16 @@ export default function SurahList() {
       .toLowerCase();
   };
 
-  const filteredSurahs = surahs.filter(surah => {
+  const filteredSurahs = (surahs || []).filter(surah => {
+    if (!surah) return false;
     const normalizedQuery = normalizeSearch(searchQuery);
-    const normalizedName = normalizeSearch(surah.name);
+    const normalizedName = normalizeSearch(surah.name || "");
+    const engName = surah.englishName || "";
     return normalizedName.includes(normalizedQuery) || 
-           surah.englishName.toLowerCase().includes(searchQuery.toLowerCase());
+           engName.toLowerCase().includes((searchQuery || "").toLowerCase());
   });
-const startKhatma = async () => {
+
+  const startKhatma = async () => {
     const plan = {
       days: khatmaDays,
       pagesPerDay: Math.ceil(604 / khatmaDays),
@@ -93,13 +95,12 @@ const startKhatma = async () => {
     setKhatma(plan);
     localStorage.setItem('khatmaPlan', JSON.stringify(plan));
     setShowKhatmaModal(false);
-
-    
     await requestNotificationPermission();
   };
 
   const addPages = (num) => {
     setKhatma(prev => {
+      if(!prev) return prev;
       const updated = { ...prev, pagesRead: Math.min(604, prev.pagesRead + num) };
       localStorage.setItem('khatmaPlan', JSON.stringify(updated));
       return updated;
@@ -194,8 +195,6 @@ const startKhatma = async () => {
     ajzaa: isAr ? "الأجزاء" : "Juzs",
     noResult: isAr ? "لا توجد سورة بهذا الاسم..." : "No Surah found...",
     continue: isAr ? "متابعة القراءة" : "Continue Reading",
-    juzTitle: isAr ? "الجزء" : "Juz",
-    hizb: isAr ? "الحزب" : "Hizb",
     khatmaTitle: isAr ? "خطة الختمة" : "Khatma Plan",
     createPlan: isAr ? "ابدأ خطة جديدة" : "Start New Plan",
     dailyGoal: isAr ? "الورد" : "Goal",
@@ -207,12 +206,13 @@ const startKhatma = async () => {
     downloaded: isAr ? "تم التنزيل" : "Saved"
   };
 
-  const percentage = khatma ? Math.round((khatma.pagesRead / 604) * 100) : 0;
+  const safePagesRead = khatma?.pagesRead || 0;
+  const percentage = khatma ? Math.round((safePagesRead / 604) * 100) : 0;
   const radius = 30;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-   useEffect(() => {
+  useEffect(() => {
     const heroImg = new Image();
     heroImg.src = "/images/golden-quran.webp";
     
@@ -221,7 +221,7 @@ const startKhatma = async () => {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 pt-20" dir={isAr ? "rtl" : "ltr"}>
+    <div className="max-w-6xl mx-auto p-4 md:p-6 pt-20 pb-24" dir={isAr ? "rtl" : "ltr"}>
       
       <style>{`
         @keyframes float {
@@ -234,62 +234,64 @@ const startKhatma = async () => {
       `}</style>
 
       <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl transition-all duration-500 ${
-  isDarkMode 
-    ? 'bg-gradient-to-b from-gray-950 via-[#18120c] to-gray-950 border border-gray-800' 
-    : 'bg-gradient-to-b from-[#dfaa77] via-[#d6a575] to-[#ba824e]'
-}`}>
+        isDarkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-[#18120c] to-gray-950 border border-gray-800' 
+          : 'bg-gradient-to-b from-[#dfaa77] via-[#d6a575] to-[#ba824e]'
+      }`}>
 
-<div 
-  className={`absolute inset-0 bg-center bg-cover bg-no-repeat pointer-events-none transition-all duration-500 ${
-    isDarkMode 
-      ? 'opacity-35 mix-blend-screen brightness-125 contrast-110' 
-      : 'opacity-20 mix-blend-overlay'
-  }`}
-  style={{ backgroundImage: `url('/images/mosque-bg.jpg')` }}
-></div>
-  <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[90px] pointer-events-none ${
-    isDarkMode ? 'bg-[#E6B981]/25' : 'bg-white/40'
-  }`}></div>
+        <div 
+          className={`absolute inset-0 bg-center bg-cover bg-no-repeat pointer-events-none transition-all duration-500 ${
+            isDarkMode 
+              ? 'opacity-35 mix-blend-screen brightness-125 contrast-110' 
+              : 'opacity-20 mix-blend-overlay'
+          }`}
+          style={{ backgroundImage: `url('/images/mosque-bg.jpg')` }}
+        ></div>
+        <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[90px] pointer-events-none ${
+          isDarkMode ? 'bg-[#E6B981]/25' : 'bg-white/40'
+        }`}></div>
 
-  <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
-    
-<img 
-  src="/images/golden-quran.webp" 
-  alt="القرآن الكريم" 
-  fetchPriority="high" 
-  loading="eager"
-  className="w-48 sm:w-56 md:w-72 lg:w-80 h-auto max-h-[220px] md:max-h-[300px] object-contain animate-quran-hero cursor-pointer transition-transform duration-300 hover:scale-105 drop-shadow-[0_10px_25px_rgba(230,185,129,0.5)]"
-/>
+        <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
+          
+          <img 
+            src="/images/golden-quran.webp" 
+            alt="القرآن الكريم" 
+            fetchPriority="high" 
+            loading="eager"
+            className="w-48 sm:w-56 md:w-72 lg:w-80 h-auto max-h-[220px] md:max-h-[300px] object-contain animate-quran-hero cursor-pointer transition-transform duration-300 hover:scale-105 drop-shadow-[0_10px_25px_rgba(230,185,129,0.5)]"
+          />
 
-    <h1 className={`text-4xl md:text-5xl font-quran mb-6 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
-      {isAr ? 'القرآن الكريم' : 'The Noble Quran'}
-    </h1>
+          <h1 className={`text-4xl md:text-5xl font-quran mb-6 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
+            {isAr ? 'القرآن الكريم' : 'The Noble Quran'}
+          </h1>
 
-    <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
-      isDarkMode ? 'bg-black/40 border-[#E6B981]/20' : 'bg-white/15 border-white/30'
-    }`}>
-      <p className={`text-sm md:text-lg font-medium leading-loose ${isDarkMode ? 'text-[#f4e6d3]' : 'text-white'}`}>
-        « كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ وَلِيَتَذَكَّرَ أُولُو الْأَلْبَابِ »
-      </p>
-    </div>
+          <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
+            isDarkMode ? 'bg-black/40 border-[#E6B981]/20' : 'bg-white/15 border-white/30'
+          }`}>
+            <p className={`text-sm md:text-lg font-medium leading-loose ${isDarkMode ? 'text-[#f4e6d3]' : 'text-white'}`}>
+              « كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ وَلِيَتَذَكَّرَ أُولُو الْأَلْبَابِ »
+            </p>
+          </div>
 
-    {lastRead && (
-      <Link 
-        to={`/surah/${lastRead.id}`} 
-        state={{ targetPage: lastRead.page }}
-        className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 shadow-xl ${
-          isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
-        }`}
-      >
-        <Sparkles size={16} className="animate-pulse" />
-        <span>
-          {isAr ? `متابعة القراءة: سورة ${lastRead.name.replace('سُورَةُ ', '')}` : `Continue: Surah ${lastRead.englishName || lastRead.name}`}
-        </span>
-        {isAr ? <ArrowLeft size={16} /> : <ArrowLeft size={16} className="rotate-180" />}
-      </Link>
-    )}
-  </div>
-</div>
+          {lastRead && (
+            <Link 
+              to={`/surah/${lastRead.id || 1}`} 
+              state={{ targetPage: lastRead.page || 1 }}
+              className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 shadow-xl ${
+                isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
+              }`}
+            >
+              <Sparkles size={16} className="animate-pulse" />
+              <span>
+                {isAr 
+                  ? `متابعة القراءة: سورة ${(lastRead.name || "").replace('سُورَةُ ', '')}` 
+                  : `Continue: Surah ${lastRead.englishName || lastRead.name || "..."}`}
+              </span>
+              {isAr ? <ArrowLeft size={16} /> : <ArrowLeft size={16} className="rotate-180" />}
+            </Link>
+          )}
+        </div>
+      </div>
 
       {!isAppInstalled && deferredPrompt && (
         <div className={`max-w-2xl mx-auto mb-6 p-4 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm border ${
@@ -359,11 +361,11 @@ const startKhatma = async () => {
               </div>
 
               <div className={`flex justify-between text-[9px] md:text-[11px] font-bold mb-3 pb-2 border-b ${isDarkMode ? 'text-gray-300 border-gray-700' : 'text-gray-600 border-gray-100'}`}>
-                <span>{isAr ? 'قرأت:' : 'Read:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{khatma.pagesRead}</span></span>
-                <span>{isAr ? 'متبقي:' : 'Left:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{604 - khatma.pagesRead}</span></span>
+                <span>{isAr ? 'قرأت:' : 'Read:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{safePagesRead}</span></span>
+                <span>{isAr ? 'متبقي:' : 'Left:'} <span className={isDarkMode ? 'text-white' : 'text-black'}>{604 - safePagesRead}</span></span>
               </div>
 
-              {khatma.pagesRead < 604 ? (
+              {safePagesRead < 604 ? (
                 <div className="flex gap-1.5 w-full mt-auto">
                   <button onClick={() => addPages(khatma.pagesPerDay)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-all shadow-sm ${isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#c7915b]'}`}>
                     <CheckCircle size={14} /> {isAr ? 'ورد اليوم' : 'Done'}
@@ -566,7 +568,7 @@ const startKhatma = async () => {
                 <h3 className={`text-xl md:text-2xl font-bold font-quran mb-4 pb-1 leading-relaxed transition-colors ${
                   isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'
                 }`}>
-                  {surah.name.replace('سُورَةُ ', '')}
+                  {(surah.name || "").replace('سُورَةُ ', '')}
                 </h3>
                 
                 <span className={`text-[10px] md:text-xs font-bold font-sans truncate w-full transition-colors ${
@@ -582,31 +584,30 @@ const startKhatma = async () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-  {juzData.map((juz) => (
-    <Link 
-      to={`/juz/${juz.id}`} 
-      key={juz.id} 
-      className={`relative flex flex-col items-center justify-center text-center p-5 rounded-2xl border shadow-sm transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
-        isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
-      }`}
-    >
-      <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg border-[2px] transition-all mb-4 ${
-        isDarkMode ? 'border-gray-700 text-[#E6B981] group-hover:bg-[#E6B981] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4A373] group-hover:bg-[#D4A373] group-hover:border-[#D4A373] group-hover:text-white'
-      }`}>
-        {juz.id}
-      </div>
-
-      <h3 className={`font-bold text-lg md:text-xl ${isAr ? 'font-quran' : 'font-sans'} mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-        {isAr ? 'الجزء' : 'Juz'} {isAr ? juz.nameAr : (juz.nameEn || juz.id)}
-      </h3>
-      <p className={`text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
-        isDarkMode ? 'bg-gray-900/60 text-gray-400 group-hover:text-[#E6B981]' : 'bg-gray-50 text-gray-500 border border-gray-100 group-hover:text-[#D4A373]'
-      }`}>
-        {isAr ? 'الحزب' : 'Hizb'} {juz.hizbStart} - {juz.hizbEnd}
-      </p>
-    </Link>
-  ))}
-</div>
+          {juzData.map((juz) => (
+            <Link 
+              to={`/juz/${juz.id}`} 
+              key={juz.id} 
+              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border shadow-sm transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
+                isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+              }`}
+            >
+              <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg border-[2px] transition-all mb-3 ${
+                isDarkMode ? 'border-gray-700 text-[#E6B981] group-hover:bg-[#E6B981] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4A373] group-hover:bg-[#D4A373] group-hover:border-[#D4A373] group-hover:text-white'
+              }`}>
+                {juz.id}
+              </div>
+              
+              <h3 className={`font-bold text-lg md:text-xl ${isAr ? 'font-quran' : 'font-sans'} mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                {isAr ? 'الجزء' : 'Juz'} {isAr ? juz.nameAr : (juz.nameEn || juz.id)}
+              </h3>
+              
+              <p className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                {isAr ? 'الحزب' : 'Hizb'} {juz.hizbStart} - {juz.hizbEnd}
+              </p>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

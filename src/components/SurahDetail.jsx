@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Settings, X, PlayCircle, PauseCircle, BookOpen, ChevronDown, Brain, Download, CheckCircle, RefreshCw, WifiOff, AlertTriangle } from "lucide-react";
@@ -8,7 +8,7 @@ export default function SurahDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation(); 
-  const { isDarkMode, lang } = useContext(AppContext);
+  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying } = useContext(AppContext);
   const isAr = lang === 'ar'; 
   
   const [surah, setSurah] = useState(null);
@@ -23,10 +23,8 @@ export default function SurahDetail() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const [playingAyah, setPlayingAyah] = useState(null);
   const [reciter, setReciter] = useState("ar.alafasy"); 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const audioRef = useRef(null);
 
   const [isMemorizationMode, setIsMemorizationMode] = useState(false);
   const [revealedAyahs, setRevealedAyahs] = useState([]); 
@@ -91,7 +89,6 @@ export default function SurahDetail() {
     }, 3500); 
   };
 
-  // 🔴 الدالة السحرية لتخطي الـ CORS وجلب الصوتيات من سيرفرات مفتوحة
   const getAudioUrl = (reciterId, surahNumber, ayahNumberInSurah, globalAyahNumber) => {
     const everyAyahMap = {
       "ar.alafasy": "Alafasy_128kbps",
@@ -113,7 +110,6 @@ export default function SurahDetail() {
       return `https://everyayah.com/data/${everyAyahMap[reciterId]}/${sNum}${aNum}.mp3`;
     }
     
-    // لو مفيش في الخريطة، يرجع للرابط القديم كإحتياطي
     return `https://cdn.islamic.network/quran/audio/64/${reciterId}/${globalAyahNumber}.mp3`;
   };
 
@@ -236,7 +232,6 @@ export default function SurahDetail() {
       let failedCount = 0; 
 
       for (let i = 0; i < totalAyahs; i++) {
-        // نستخدم الدالة الجديدة لجلب الرابط النظيف
         const url = getAudioUrl(reciter, surah.number, surah.ayahs[i].numberInSurah, surah.ayahs[i].number);
         
         let success = false;
@@ -255,20 +250,15 @@ export default function SurahDetail() {
               await cache.put(url, response.clone());
               success = true;
             }
-          } catch(netErr) {
-            // محاولة صامتة في حالة رمشة الإنترنت
-          }
+          } catch(netErr) { }
           attempts++;
         }
 
-        if (!success) {
-          failedCount++;
-        }
+        if (!success) failedCount++;
         
         downloadedCount++;
         setDownloadProgress(Math.round((downloadedCount / totalAyahs) * 100));
         
-        // راحة 10 ملي ثانية عشان السيرفر والمتصفح ميقفلوش التحميل
         if (i % 5 === 0) {
           await new Promise(r => setTimeout(r, 10));
         }
@@ -298,74 +288,6 @@ export default function SurahDetail() {
   useEffect(() => {
     localStorage.setItem("fontSize", fontSize);
   }, [fontSize]);
-
-  // تشغيل الصوت أوفلاين أو أونلاين بالرابط النظيف
-  useEffect(() => {
-    const playAudio = async () => {
-      if (!playingAyah || !audioRef.current || !surah) return;
-
-      const currentAyahObj = surah.ayahs.find(a => a.number === playingAyah);
-      const url = currentAyahObj 
-        ? getAudioUrl(reciter, surah.number, currentAyahObj.numberInSurah, playingAyah)
-        : `https://cdn.islamic.network/quran/audio/64/${reciter}/${playingAyah}.mp3`;
-
-      try {
-        if ('caches' in window) {
-          const cache = await caches.open('quran-audio-cache');
-          const cachedRes = await cache.match(url);
-          
-          if (cachedRes) {
-            const blob = await cachedRes.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            audioRef.current.src = blobUrl;
-            await audioRef.current.play();
-            return;
-          }
-        }
-
-        if (!navigator.onLine) {
-          showNotification(isAr ? "هذه الآية غير محملة للأوفلاين." : "Ayah not downloaded.", "warning");
-          setPlayingAyah(null);
-          return;
-        }
-
-        audioRef.current.src = url;
-        await audioRef.current.play();
-
-      } catch (e) {
-        console.error("Audio play error:", e);
-        showNotification(isAr ? "تعذر تشغيل الآية. تأكد من الإنترنت." : "Cannot play Ayah. Check internet.", "error");
-        setPlayingAyah(null);
-      }
-    };
-
-    playAudio();
-  }, [playingAyah, reciter, surah]);
-
-  const handlePlaySurah = () => {
-    if (playingAyah) {
-      audioRef.current.pause();
-      setPlayingAyah(null);
-    } else {
-      setPlayingAyah(surah.ayahs[0].number);
-      setCurrentPage(0);
-      setIsMemorizationMode(false); 
-    }
-  };
-
-  const handleAudioEnded = () => {
-    const currentIndex = surah.ayahs.findIndex(a => a.number === playingAyah);
-    if (currentIndex !== -1 && currentIndex < surah.ayahs.length - 1) {
-      const nextAyah = surah.ayahs[currentIndex + 1];
-      const nextPageIndex = surahPages.findIndex(page => page.some(a => a.number === nextAyah.number));
-      if (nextPageIndex !== -1 && nextPageIndex !== currentPage) {
-        changePage(nextPageIndex);
-      }
-      setPlayingAyah(nextAyah.number);
-    } else {
-      setPlayingAyah(null);
-    }
-  };
 
   const changePage = (newPage) => {
     setIsAnimating(true);
@@ -398,13 +320,36 @@ export default function SurahDetail() {
     }
     return text;
   };
+  const handlePlaySurahGlobal = () => {
+    if (!surah || !surah.ayahs) return;
+
+    const currentReciterObj = recitersList?.find(r => r.id === reciter);
+    const reciterName = currentReciterObj?.name || reciter;
+
+    if (currentAudio?.surahId === surah.number && currentAudio?.reciterId === reciter) {
+      setIsPlaying(!isPlaying);
+    } else {
+      setCurrentAudio({
+        surahId: surah.number,
+        nameAr: surah.name.replace('سُورَةُ ', ''),
+        nameEn: surah.englishName,
+        reciterName: reciterName, 
+        reciterId: reciter, 
+        ayahs: surah.ayahs.map(a => ({
+          ...a,
+          audio: getAudioUrl(reciter, surah.number, a.numberInSurah, a.number)
+        })), 
+        currentAyahIndex: 0
+      });
+      setIsPlaying(true);
+    }
+  };
 
   const toggleMemorizationMode = () => {
     setIsMemorizationMode(!isMemorizationMode);
     setRevealedAyahs([]);
-    if (playingAyah) {
-      audioRef.current.pause();
-      setPlayingAyah(null);
+    if (isPlaying) {
+      setIsPlaying(false);
     }
   };
 
@@ -454,6 +399,8 @@ export default function SurahDetail() {
   const NextPageIcon = isAr ? ChevronLeft : ChevronRight;
   const PrevPageIcon = isAr ? ChevronRight : ChevronLeft;
 
+  const isCurrentAudioSurah = currentAudio?.surahId === surah?.number && currentAudio?.reciterId === reciter;
+
   if (offlineError) {
     return (
       <div className={`flex flex-col justify-center items-center min-h-screen p-6 text-center ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FDFBF7] text-gray-800"}`} dir={isAr ? "rtl" : "ltr"}>
@@ -501,7 +448,6 @@ export default function SurahDetail() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20" dir={isAr ? "rtl" : "ltr"}>
-      <audio ref={audioRef} onEnded={handleAudioEnded} />
 
       {toast.show && (
         <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-3.5 rounded-full shadow-2xl transition-all duration-300 ${
@@ -523,15 +469,15 @@ export default function SurahDetail() {
 
         <div className={`flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto ${isAr ? 'justify-end' : 'justify-start'}`}>
           <button 
-            onClick={handlePlaySurah}
+            onClick={handlePlaySurahGlobal}
             className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-bold transition-all shadow-sm ${!isAr && 'font-sans'} ${
-              playingAyah 
+              isCurrentAudioSurah && isPlaying 
                 ? "bg-red-50 text-red-500 border border-red-200 hover:bg-red-100" 
                 : "bg-[#D4A373] text-white hover:bg-[#b58555]"
             }`}
           >
-            {playingAyah ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
-            <span className="text-xs md:text-sm">{playingAyah ? t.pause : t.play}</span>
+            {isCurrentAudioSurah && isPlaying ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
+            <span className="text-xs md:text-sm">{isCurrentAudioSurah && isPlaying ? t.pause : t.play}</span>
           </button>
 
           <div className="relative">
@@ -557,10 +503,7 @@ export default function SurahDetail() {
                     onClick={() => {
                       setReciter(r.id);
                       setIsDropdownOpen(false);
-                      if (playingAyah) {
-                        audioRef.current.pause();
-                        setPlayingAyah(null);
-                      }
+                      if (isPlaying) setIsPlaying(false); 
                     }}
                     className={`w-full ${isAr ? 'text-right' : 'text-left'} px-4 py-3 text-sm transition-colors ${
                       reciter === r.id 
@@ -684,7 +627,9 @@ export default function SurahDetail() {
             }}
           >
             {currentAyahs.map((ayah) => {
-              const isPlaying = playingAyah === ayah.number;
+              const globalAyahIndex = surah.ayahs.findIndex(a => a.number === ayah.number);
+              const isAyahPlaying = isCurrentAudioSurah && isPlaying && currentAudio?.currentAyahIndex === globalAyahIndex;
+              
               const isRevealed = revealedAyahs.includes(ayah.number);
               const isHidden = isMemorizationMode && !isRevealed; 
               const cleanAyahText = formatAyahText(ayah.text, ayah.numberInSurah, surah.number);
@@ -693,9 +638,9 @@ export default function SurahDetail() {
               return (
                 <span 
                   key={ayah.numberInSurah}
-                  onClick={() => handleAyahClick(ayah)} 
+                  onClick={() => isMemorizationMode ? handleAyahClick(ayah) : handleAyahClick(ayah)} 
                   className={`transition-colors duration-300 cursor-pointer inline ${
-                    isPlaying 
+                    isAyahPlaying 
                       ? (isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]") 
                       : (isDarkMode ? "text-gray-200 hover:text-gray-400" : "text-gray-800 hover:text-[#D4A373]")
                   } ${isHidden ? "blur-[6px] opacity-40 select-none" : ""} ${isTargetAyah && !isMemorizationMode ? (isDarkMode ? "bg-[#E6B981]/20 rounded-lg px-1" : "bg-[#D4A373]/20 rounded-lg px-1") : ""}`}
@@ -705,7 +650,7 @@ export default function SurahDetail() {
                   
                   <span 
                     className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[3px] border-double transition-all ${
-                      isPlaying 
+                      isAyahPlaying 
                         ? "bg-[#D4A373] text-white border-[#D4A373]" 
                         : (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]")
                     } ${isHidden ? "opacity-0" : "opacity-100"}`}
