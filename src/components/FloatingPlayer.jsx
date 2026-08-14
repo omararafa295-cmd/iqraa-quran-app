@@ -24,27 +24,68 @@ export default function FloatingPlayer() {
   }, [isRadioPlaying, setIsPlaying, setCurrentAudio]);
 
   useEffect(() => {
-    if (currentAudio && currentAyah?.audio) {
-      setIsLoading(true);
-      audioRef.current.src = currentAyah.audio;
-      
-      if (isPlaying) {
-        audioRef.current.play()
-          .then(() => setIsLoading(false))
-          .catch(err => {
-            console.error("Audio play error:", err);
+    let isMounted = true;
+    let currentBlobUrl = null;
+
+    const setupAudio = async () => {
+      if (currentAudio && currentAyah?.audio) {
+        setIsLoading(true);
+        let finalAudioSrc = currentAyah.audio;
+        if ('caches' in window) {
+          try {
+            const cache = await caches.open('quran-audio-cache');
+            const cachedRes = await cache.match(currentAyah.audio);
+            if (cachedRes) {
+              const blob = await cachedRes.blob();
+              currentBlobUrl = URL.createObjectURL(blob);
+              finalAudioSrc = currentBlobUrl;
+            }
+          } catch (err) {
+            console.log("Audio cache match error:", err);
+          }
+        }
+
+        if (!isMounted) return;
+
+        if (!navigator.onLine && finalAudioSrc === currentAyah.audio) {
+          console.warn("User is offline and this audio is not downloaded.");
+          setIsLoading(false);
+          setIsPlaying(false);
+          return;
+        }
+
+        if (audioRef.current) {
+          audioRef.current.src = finalAudioSrc;
+          if (isPlaying) {
+            audioRef.current.play()
+              .then(() => {
+                if (isMounted) setIsLoading(false);
+              })
+              .catch(err => {
+                console.error("Audio play error:", err);
+                if (isMounted) setIsLoading(false);
+              });
+          } else {
             setIsLoading(false);
-          });
-      } else {
-        setIsLoading(false);
+          }
+        }
+      } else if (!currentAudio) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = "";
+        }
+        setIsPlaying(false);
       }
-    } else if (!currentAudio) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
+    };
+
+    setupAudio();
+
+    return () => {
+      isMounted = false;
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
       }
-      setIsPlaying(false);
-    }
+    };
   }, [currentAudio?.surahId, currentAudio?.reciterId, currentAudio?.currentAyahIndex]);
 
   useEffect(() => {

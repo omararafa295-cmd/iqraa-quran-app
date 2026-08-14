@@ -34,6 +34,36 @@ export default function SurahList() {
   const [quranProgress, setQuranProgress] = useState(0);
   const [isQuranDownloaded, setIsQuranDownloaded] = useState(false);
 
+  // ✅ روابط الصور لدعم وضع الأوفلاين 100%
+  const [heroImgSrc, setHeroImgSrc] = useState("/images/golden-quran.webp");
+  const [mosqueBgSrc, setMosqueBgSrc] = useState("/images/mosque-bg.jpg");
+
+  useEffect(() => {
+    const cacheAndLoadImage = async (url, setter) => {
+      if ('caches' in window) {
+        try {
+          const cache = await caches.open('quran-assets-cache');
+          let res = await cache.match(url);
+          
+          if (!res && navigator.onLine) {
+            await cache.add(url);
+            res = await cache.match(url);
+          }
+          
+          if (res) {
+            const blob = await res.blob();
+            setter(URL.createObjectURL(blob));
+          }
+        } catch (e) {
+          console.log("Image caching error:", e);
+        }
+      }
+    };
+
+    cacheAndLoadImage("/images/golden-quran.webp", setHeroImgSrc);
+    cacheAndLoadImage("/images/mosque-bg.jpg", setMosqueBgSrc);
+  }, []);
+
   useEffect(() => {
     const savedLastRead = localStorage.getItem("lastRead");
     if (savedLastRead) setLastRead(JSON.parse(savedLastRead));
@@ -212,46 +242,9 @@ export default function SurahList() {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  useEffect(() => {
-  const cacheImagesForOffline = async () => {
-    const urls = ["/images/golden-quran.webp", "/images/mosque-bg.jpg"];
-
-    urls.forEach(url => {
-      const img = new Image();
-      img.src = url;
-    });
-
-    if ('caches' in window) {
-      try {
-        const cache = await caches.open('quran-assets-cache');
-        urls.forEach(async (url) => {
-          const response = await cache.match(url);
-          if (!response) {
-            await cache.add(url);
-          }
-        });
-      } catch (e) {
-        console.log("Caching images failed", e);
-      }
-    }
-  };
-
-  cacheImagesForOffline();
-}, []);
-
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 pt-20 pb-24" dir={isAr ? "rtl" : "ltr"}>
       
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
-
       <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl transition-all duration-500 ${
         isDarkMode 
           ? 'bg-gradient-to-b from-gray-950 via-[#18120c] to-gray-950 border border-gray-800' 
@@ -264,7 +257,7 @@ export default function SurahList() {
               ? 'opacity-35 mix-blend-screen brightness-125 contrast-110' 
               : 'opacity-20 mix-blend-overlay'
           }`}
-          style={{ backgroundImage: `url('/images/mosque-bg.jpg')` }}
+          style={{ backgroundImage: `url('${mosqueBgSrc}')` }}
         ></div>
         <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[90px] pointer-events-none ${
           isDarkMode ? 'bg-[#E6B981]/25' : 'bg-white/40'
@@ -273,7 +266,7 @@ export default function SurahList() {
         <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
           
           <img 
-            src="/images/golden-quran.webp" 
+            src={heroImgSrc} 
             alt="القرآن الكريم" 
             fetchPriority="high" 
             loading="eager"
