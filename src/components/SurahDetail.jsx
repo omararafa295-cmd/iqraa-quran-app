@@ -1,13 +1,19 @@
 import { useState, useEffect, useContext } from "react";
-import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Settings, X, PlayCircle, PauseCircle, BookOpen, ChevronDown, Brain, Download, CheckCircle, RefreshCw, WifiOff, AlertTriangle } from "lucide-react";
+import { 
+  ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Settings, X, 
+  PlayCircle, PauseCircle, BookOpen, ChevronDown, Brain, Download, 
+  CheckCircle, RefreshCw, WifiOff, AlertTriangle, Bookmark, BookmarkCheck, 
+  Volume2 
+} from "lucide-react";
 import { AppContext } from "../App";
 
 export default function SurahDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation(); 
+  
   const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, setIsRadioPlaying } = useContext(AppContext);
   const isAr = lang === 'ar'; 
   
@@ -33,6 +39,15 @@ export default function SurahDetail() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
+  // 🎯 حالات قائمة الخيارات المنبثقة الذكية وموضعها
+  const [activeAyahMenu, setActiveAyahMenu] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [selectedAyahForTafsir, setSelectedAyahForTafsir] = useState(null);
+  const [selectedTafsirEdition, setSelectedTafsirEdition] = useState("ar.muyassar");
+  const [dynamicTafsirText, setDynamicTafsirText] = useState("");
+  const [isTafsirLoading, setIsTafsirLoading] = useState(false);
+  const [bookmarks, setBookmarks] = useState(() => JSON.parse(localStorage.getItem("quran_bookmarks") || "[]"));
+
   const [touchStartX, setTouchStartX] = useState(null);
   const [touchEndX, setTouchEndX] = useState(null);
   const [touchStartY, setTouchStartY] = useState(null);
@@ -53,6 +68,12 @@ export default function SurahDetail() {
     { id: "ar.shaatree", name: isAr ? "أبو بكر الشاطري" : "Abu Bakr Ash-Shaatree" },
   ];
 
+  const tafsirEditionsList = [
+    { id: "ar.muyassar", name: isAr ? "التفسير الميسر" : "Al-Muyassar" },
+    { id: "ar.jalalayn", name: isAr ? "تفسير الجلالين" : "Tafsir Al-Jalalayn" },
+    { id: "ar.qurtubi", name: isAr ? "تفسير القرطبي" : "Tafsir Al-Qurtubi" },
+  ];
+
   const t = {
     play: isAr ? "تشغيل" : "Play",
     pause: isAr ? "إيقاف" : "Pause",
@@ -64,17 +85,19 @@ export default function SurahDetail() {
     nextSurah: isAr ? "السورة التالية" : "Next Surah",
     page: isAr ? "صفحة" : "Page",
     juz: isAr ? "الجزء" : "Juz",
-    tafsirTitle: isAr ? "تفسير الآية" : "Original Arabic",
-    tafsirLabel: isAr ? "التفسير الميسر:" : "Arabic Text:",
+    tafsirTitle: isAr ? "تفسير الآية" : "Tafsir of Ayah",
     loading: isAr ? "جاري تحميل السورة..." : "Loading Surah...",
     memorize: isAr ? "التحفيظ" : "Memorize",
     offlineTitle: isAr ? "تعذر جلب السورة" : "Connection Error",
     offlineDesc: isAr ? "تأكد من اتصالك بالإنترنت. إذا كنت أوفلاين فهذه السورة لم يتم تحميلها مسبقاً." : "Check your connection. If offline, this Surah wasn't saved.",
     goBack: isAr ? "العودة للرئيسية" : "Go Back",
-    retry: isAr ? "إعادة المحاولة" : "Try Again"
+    retry: isAr ? "إعادة المحاولة" : "Try Again",
+    listenAyah: isAr ? "الاستماع للآية" : "Listen to Ayah",
+    showTafsir: isAr ? "التفسير" : "Tafsir",
+    addBookmark: isAr ? "إضافة علامة مرجعية" : "Add Bookmark",
+    removeBookmark: isAr ? "إزالة العلامة المرجعية" : "Remove Bookmark",
   };
 
-  const [selectedAyah, setSelectedAyah] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     const savedSize = localStorage.getItem("fontSize");
@@ -124,33 +147,34 @@ export default function SurahDetail() {
     const modalUrl = `https://api.alquran.cloud/v1/surah/${id}${modalEdition}`;
 
     const processData = (fetchedSurah, fetchedModal) => {
-  const pagesMap = {};
-  fetchedSurah.ayahs.forEach(ayah => {
-    if (!pagesMap[ayah.page]) pagesMap[ayah.page] = [];
-    pagesMap[ayah.page].push(ayah);
-  });
-  
-  const pagesArray = Object.values(pagesMap);
-  setSurahPages(pagesArray);
-  setSurah(fetchedSurah);
-  setModalText(fetchedModal);
-  
-  let initialPage = 0;
-  if (location.state?.targetPage !== undefined) {
-    initialPage = location.state.targetPage; 
-  } else if (location.state?.startAyah) {
-    const targetPageIndex = pagesArray.findIndex(page => 
-      page.some(a => a.numberInSurah === location.state.startAyah)
-    );
-    if (targetPageIndex !== -1) initialPage = targetPageIndex; 
-  }
-  if (initialPage >= pagesArray.length) {
-    initialPage = Math.max(0, pagesArray.length - 1);
-  }
+      const pagesMap = {};
+      fetchedSurah.ayahs.forEach(ayah => {
+        if (!pagesMap[ayah.page]) pagesMap[ayah.page] = [];
+        pagesMap[ayah.page].push(ayah);
+      });
+      
+      const pagesArray = Object.values(pagesMap);
+      setSurahPages(pagesArray);
+      setSurah(fetchedSurah);
+      setModalText(fetchedModal);
+      
+      let initialPage = 0;
+      if (location.state?.targetPage !== undefined) {
+        initialPage = location.state.targetPage; 
+      } else if (location.state?.startAyah) {
+        const targetPageIndex = pagesArray.findIndex(page => 
+          page.some(a => a.numberInSurah === location.state.startAyah)
+        );
+        if (targetPageIndex !== -1) initialPage = targetPageIndex; 
+      }
+      if (initialPage >= pagesArray.length) {
+        initialPage = Math.max(0, pagesArray.length - 1);
+      }
 
-  setCurrentPage(initialPage);
-  setLoading(false);
-};
+      setCurrentPage(initialPage);
+      setLoading(false);
+    };
+
     const loadData = async () => {
       try {
         const [surahRes, modalRes] = await Promise.all([
@@ -217,7 +241,40 @@ export default function SurahDetail() {
     checkCache();
   }, [surah, reciter]);
 
-  const downloadSurahAudio = async () => {
+  useEffect(() => {
+    if (!selectedAyahForTafsir) return;
+
+    if (selectedTafsirEdition === "ar.muyassar" && modalText) {
+      const found = modalText.ayahs.find(a => a.numberInSurah === selectedAyahForTafsir.numberInSurah)?.text;
+      if (found) {
+        setDynamicTafsirText(found);
+        return;
+      }
+    }
+
+    setIsTafsirLoading(true);
+    const tafsirUrl = `https://api.alquran.cloud/v1/ayah/${selectedAyahForTafsir.number}/${selectedTafsirEdition}`;
+
+    axios.get(tafsirUrl, { timeout: 10000 })
+      .then(res => {
+        let raw = res.data?.data?.text || "";
+        const cleanAyah = selectedAyahForTafsir.text.trim();
+        if (raw.startsWith(cleanAyah)) {
+          raw = raw.replace(cleanAyah, "").trim();
+        }
+        setDynamicTafsirText(raw || "لا يتوفر نص تفسير إضافي لهذه الآية في هذه الطبعة.");
+      })
+      .catch(err => {
+        console.error("Tafsir fetch error:", err);
+        setDynamicTafsirText("تعذر جلب التفسير حالياً. يرجى التأكد من اتصال الإنترنت.");
+      })
+      .finally(() => {
+        setIsTafsirLoading(false);
+      });
+  }, [selectedAyahForTafsir, selectedTafsirEdition, modalText]);
+
+  const downloadSurahAudio = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     if (!surah || !('caches' in window)) return;
     
     if (!navigator.onLine) {
@@ -228,64 +285,65 @@ export default function SurahDetail() {
     setIsDownloading(true);
     setDownloadProgress(0);
     
-    try {
-      const cache = await caches.open('quran-audio-cache');
-      const totalAyahs = surah.ayahs.length;
-      let downloadedCount = 0;
-      let failedCount = 0; 
+    (async () => {
+      try {
+        const cache = await caches.open('quran-audio-cache');
+        const totalAyahs = surah.ayahs.length;
+        let downloadedCount = 0;
+        let failedCount = 0; 
 
-      for (let i = 0; i < totalAyahs; i++) {
-        const url = getAudioUrl(reciter, surah.number, surah.ayahs[i].numberInSurah, surah.ayahs[i].number);
+        for (let i = 0; i < totalAyahs; i++) {
+          const url = getAudioUrl(reciter, surah.number, surah.ayahs[i].numberInSurah, surah.ayahs[i].number);
+          let success = false;
+          let attempts = 0;
+
+          while (!success && attempts < 2) {
+            try {
+              const cachedResponse = await cache.match(url);
+              if (cachedResponse) {
+                success = true;
+                break;
+              }
+
+              const response = await fetch(url);
+              if (response.ok) {
+                await cache.put(url, response.clone());
+                success = true;
+              }
+            } catch(netErr) { }
+            attempts++;
+          }
+
+          if (!success) failedCount++;
+          
+          downloadedCount++;
+          setDownloadProgress(Math.round((downloadedCount / totalAyahs) * 100));
+          
+          if (i % 5 === 0) {
+            await new Promise(r => setTimeout(r, 10));
+          }
+        }
         
-        let success = false;
-        let attempts = 0;
-
-        while (!success && attempts < 2) {
-          try {
-            const cachedResponse = await cache.match(url);
-            if (cachedResponse) {
-              success = true;
-              break;
-            }
-
-            const response = await fetch(url);
-            if (response.ok) {
-              await cache.put(url, response.clone());
-              success = true;
-            }
-          } catch(netErr) { }
-          attempts++;
+        if (failedCount === totalAyahs) {
+          showNotification(isAr ? "فشل التحميل. تأكد من اتصالك بالإنترنت." : "Download failed. Check connection.", "error");
+          setIsDownloaded(false);
+        } else if (failedCount > 0) {
+          showNotification(isAr ? `تم تحميل جزء وفشلت ${failedCount} آية. حاول مجدداً.` : `Partial download. ${failedCount} failed.`, "warning");
+          setIsDownloaded(false); 
+        } else {
+          localStorage.setItem(`offline_audio_saved_${surah.number}_${reciter}`, 'true');
+          setIsDownloaded(true);
+          const currentReciterObj = recitersList.find(r => r.id === reciter);
+          showNotification(isAr ? `تم تحميل السورة بصوت ${currentReciterObj?.name} بنجاح` : `Downloaded successfully`, "success");
         }
 
-        if (!success) failedCount++;
-        
-        downloadedCount++;
-        setDownloadProgress(Math.round((downloadedCount / totalAyahs) * 100));
-        
-        if (i % 5 === 0) {
-          await new Promise(r => setTimeout(r, 10));
-        }
+      } catch (error) {
+        console.error(error);
+        showNotification(isAr ? "حدث خطأ غير متوقع أثناء التحميل." : "Unexpected error occurred.", "error");
+      } finally {
+        setIsDownloading(false);
       }
-      
-      if (failedCount === totalAyahs) {
-        showNotification(isAr ? "فشل التحميل. تأكد من اتصالك بالإنترنت." : "Download failed. Check connection.", "error");
-        setIsDownloaded(false);
-      } else if (failedCount > 0) {
-        showNotification(isAr ? `تم تحميل جزء وفشلت ${failedCount} آية. حاول مجدداً.` : `Partial download. ${failedCount} failed.`, "warning");
-        setIsDownloaded(false); 
-      } else {
-        localStorage.setItem(`offline_audio_saved_${surah.number}_${reciter}`, 'true');
-        setIsDownloaded(true);
-        const currentReciterObj = recitersList.find(r => r.id === reciter);
-        showNotification(isAr ? `تم تحميل السورة بصوت ${currentReciterObj?.name} بنجاح` : `Downloaded successfully`, "success");
-      }
-
-    } catch (error) {
-      console.error(error);
-      showNotification(isAr ? "حدث خطأ غير متوقع أثناء التحميل." : "Unexpected error occurred.", "error");
-    } finally {
-      setIsDownloading(false);
-    }
+    })();
   };
 
   useEffect(() => {
@@ -294,6 +352,7 @@ export default function SurahDetail() {
 
   const changePage = (newPage) => {
     setIsAnimating(true);
+    setActiveAyahMenu(null);
     setTimeout(() => {
       setCurrentPage(newPage);
       setIsAnimating(false);
@@ -303,7 +362,7 @@ export default function SurahDetail() {
   const handleNextPage = () => {
     if (currentPage < surahPages.length - 1) {
       changePage(currentPage + 1);
-    } else if (surah.number < 114) {
+    } else if (surah?.number < 114) {
       navigate(`/surah/${surah.number + 1}`);
     }
   };
@@ -311,7 +370,7 @@ export default function SurahDetail() {
   const handlePrevPage = () => {
     if (currentPage > 0) {
       changePage(currentPage - 1);
-    } else if (surah.number > 1) {
+    } else if (surah?.number > 1) {
       navigate(`/surah/${surah.number - 1}`);
     }
   };
@@ -324,7 +383,8 @@ export default function SurahDetail() {
     return text;
   };
 
-  const handlePlaySurahGlobal = () => {
+  const handlePlaySurahGlobal = (e, startIndex = 0) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     if (!surah || !surah.ayahs) return;
 
     setIsRadioPlaying(false);
@@ -332,7 +392,7 @@ export default function SurahDetail() {
     const currentReciterObj = recitersList?.find(r => r.id === reciter);
     const reciterName = currentReciterObj?.name || reciter;
 
-    if (currentAudio?.surahId === surah.number && currentAudio?.reciterId === reciter) {
+    if (currentAudio?.surahId === surah.number && currentAudio?.reciterId === reciter && startIndex === 0 && !currentAudio?.playSingle) {
       setIsPlaying(!isPlaying);
     } else {
       setCurrentAudio({
@@ -345,13 +405,41 @@ export default function SurahDetail() {
           ...a,
           audio: getAudioUrl(reciter, surah.number, a.numberInSurah, a.number)
         })), 
-        currentAyahIndex: 0
+        currentAyahIndex: startIndex,
+        playSingle: false
       });
       setIsPlaying(true);
     }
   };
 
-  const toggleMemorizationMode = () => {
+  const handlePlaySingleAyah = (ayah) => {
+    if (!surah || !ayah) return;
+
+    setIsRadioPlaying(false);
+
+    const currentReciterObj = recitersList?.find(r => r.id === reciter);
+    const reciterName = currentReciterObj?.name || reciter;
+    const audioUrl = getAudioUrl(reciter, surah.number, ayah.numberInSurah, ayah.number);
+
+    setCurrentAudio({
+      surahId: surah.number,
+      nameAr: surah.name.replace('سُورَةُ ', ''),
+      nameEn: surah.englishName,
+      reciterName: reciterName, 
+      reciterId: reciter, 
+      ayahs: [{
+        ...ayah,
+        audio: audioUrl
+      }], 
+      currentAyahIndex: 0,
+      playSingle: true
+    });
+    setIsPlaying(true);
+    setActiveAyahMenu(null);
+  };
+
+  const toggleMemorizationMode = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     setIsMemorizationMode(!isMemorizationMode);
     setRevealedAyahs([]);
     if (isPlaying) {
@@ -359,16 +447,82 @@ export default function SurahDetail() {
     }
   };
 
-  const handleAyahClick = (ayah) => {
+  const handleAyahClick = (e, ayah) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+
     if (isMemorizationMode) {
       setRevealedAyahs(prev => 
         prev.includes(ayah.number) 
           ? prev.filter(n => n !== ayah.number) 
           : [...prev, ayah.number]
       );
-    } else {
-      setSelectedAyah(ayah);
+      return;
     }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX || (rect.left + rect.width / 2);
+    const clickY = e.clientY || rect.bottom;
+
+    const menuWidth = 180;
+    const menuHeight = 135;
+
+    let left = isAr ? (clickX - menuWidth + 20) : (clickX - 20);
+    
+    if (left < 12) left = 12;
+    if (left + menuWidth > window.innerWidth - 12) {
+      left = window.innerWidth - menuWidth - 12;
+    }
+
+    let top = clickY + 8;
+    if (top + menuHeight > window.innerHeight - 20) {
+      top = (e.clientY ? clickY - menuHeight - 8 : rect.top - menuHeight - 8);
+    }
+    if (top < 12) top = 12;
+
+    setMenuPosition({ top, left });
+    setActiveAyahMenu(ayah);
+  };
+
+  const toggleBookmark = (ayah) => {
+    const isBookmarked = bookmarks.some(b => b.surahNumber === surah.number && b.ayahNumberInSurah === ayah.numberInSurah);
+    let updated;
+    if (isBookmarked) {
+      updated = bookmarks.filter(b => !(b.surahNumber === surah.number && b.ayahNumberInSurah === ayah.numberInSurah));
+      showNotification(isAr ? "تمت إزالة العلامة المرجعية" : "Bookmark removed", "warning");
+    } else {
+      const newBookmark = {
+        surahNumber: surah.number,
+        surahName: surah.name,
+        surahEnglishName: surah.englishName,
+        ayahNumber: ayah.number,
+        ayahNumberInSurah: ayah.numberInSurah,
+        page: currentPage,
+        date: new Date().toISOString()
+      };
+      updated = [...bookmarks, newBookmark];
+      showNotification(isAr ? "تمت إضافة العلامة المرجعية بنجاح" : "Bookmark saved successfully", "success");
+    }
+    setBookmarks(updated);
+    localStorage.setItem("quran_bookmarks", JSON.stringify(updated));
+    setActiveAyahMenu(null);
+  };
+
+  const renderFormattedTafsir = (text) => {
+    if (!text) return null;
+
+    const paragraphs = text
+      .split(/(?:\r?\n)+|(?<=[.؛])\s+(?=[«"(A-Za-z\u0600-\u06FF])/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    return paragraphs.map((para, idx) => (
+      <p 
+        key={idx} 
+        className="mb-3.5 leading-[2.3] text-justify text-base md:text-[17px] text-gray-700 dark:text-gray-200"
+      >
+        {para}
+      </p>
+    ));
   };
 
   const onTouchStart = (e) => {
@@ -446,7 +600,7 @@ export default function SurahDetail() {
   }
 
   const totalPages = surahPages.length;
-  const currentAyahs = surahPages[currentPage];
+  const currentAyahs = surahPages[currentPage] || [];
   const currentReciterName = recitersList.find(r => r.id === reciter)?.name;
   const realMushafPage = currentAyahs[0]?.page;
   const currentJuz = currentAyahs[0]?.juz;
@@ -456,10 +610,10 @@ export default function SurahDetail() {
     <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
 
       {toast.show && (
-        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-3.5 rounded-full shadow-2xl transition-all duration-300 ${
+        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[120] flex items-center gap-3 px-6 py-3.5 rounded-full shadow-2xl transition-all duration-300 ${
           toast.type === 'error' ? 'bg-red-500 text-white' : 
-          toast.type === 'warning' ? 'bg-yellow-500 text-white' : 
-          'bg-green-500 text-white'
+          toast.type === 'warning' ? 'bg-amber-600 text-white' : 
+          'bg-green-600 text-white'
         }`} dir={isAr ? 'rtl' : 'ltr'}>
           {toast.type === 'error' ? <WifiOff size={20} /> : 
            toast.type === 'warning' ? <AlertTriangle size={20} /> : 
@@ -467,28 +621,33 @@ export default function SurahDetail() {
           <span className={`font-bold text-sm md:text-base whitespace-nowrap ${!isAr && 'font-sans'}`}>{toast.message}</span>
         </div>
       )}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 px-2 w-full">
+
+      {/* ✅ الهيدر العلوي مع رفع z-index وتفعيل الضغطات بدقة */}
+      <div className="relative z-30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6 px-2 w-full">
         <h2 className={`text-2xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
-          {isAr ? surah.name : surah.englishName}
+          {isAr ? surah?.name : surah?.englishName}
         </h2>
 
         <div className={`flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto ${isAr ? 'justify-end' : 'justify-start'}`}>
           
           <button 
-            onClick={handlePlaySurahGlobal}
+            onClick={(e) => handlePlaySurahGlobal(e, 0)}
             className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-bold transition-all shadow-sm ${!isAr && 'font-sans'} ${
-              isCurrentAudioSurah && isPlaying 
+              isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle
                 ? "bg-red-50 text-red-500 border border-red-200 hover:bg-red-100" 
                 : "bg-[#D4A373] text-white hover:bg-[#b58555]"
             }`}
           >
-            {isCurrentAudioSurah && isPlaying ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
-            <span className="text-xs md:text-sm">{isCurrentAudioSurah && isPlaying ? t.pause : t.play}</span>
+            {isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
+            <span className="text-xs md:text-sm">{isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? t.pause : t.play}</span>
           </button>
 
           <div className="relative">
             <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDropdownOpen(!isDropdownOpen);
+              }}
               className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-medium text-xs md:text-sm transition-all shadow-sm border ${!isAr && 'font-sans'} ${
                 isDarkMode 
                   ? "bg-gray-800 border-gray-700 text-gray-200 hover:border-[#E6B981]" 
@@ -506,7 +665,8 @@ export default function SurahDetail() {
                 {recitersList.map((r) => (
                   <button
                     key={r.id}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setReciter(r.id);
                       setIsDropdownOpen(false);
                       if (isPlaying) setIsPlaying(false); 
@@ -566,7 +726,10 @@ export default function SurahDetail() {
           </button>
 
           <button 
-            onClick={() => setShowSettings(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowSettings(true);
+            }}
             className={`p-2 rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]"}`}
           >
             <Settings size={20} />
@@ -581,7 +744,7 @@ export default function SurahDetail() {
         </div>
       </div>
 
-      {/* ✅ حاوية صفحة المصحف الأصلي */}
+      {/* صفحة المصحف */}
       <div 
         className={`px-4 md:px-12 py-8 rounded-2xl md:rounded-3xl shadow-lg border transition-colors duration-300 min-h-[75vh] flex flex-col justify-between ${
           isDarkMode ? "bg-gray-800 border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"
@@ -591,11 +754,10 @@ export default function SurahDetail() {
         onTouchEnd={onTouchEnd}
       >
         
-        {/* هيدر صفحة المصحف */}
         <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${
           isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"
         } font-bold text-sm md:text-base`}>
-          <span>{isAr ? surah.name : surah.englishName}</span>
+          <span>{isAr ? surah?.name : surah?.englishName}</span>
           <span>{t.juz} {currentJuz}</span>
         </div>
 
@@ -615,18 +777,19 @@ export default function SurahDetail() {
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center pb-2 md:pb-3">
                   <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} pt-1 ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
-                    {isAr ? surah.name : surah.englishName}
+                    {isAr ? surah?.name : surah?.englishName}
                   </h2>
                 </div>
               </div>
 
-              {surah.number !== 1 && surah.number !== 9 && (
+              {surah?.number !== 1 && surah?.number !== 9 && (
                 <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
                   {isAr ? "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" : "In the name of Allah..."}
                 </div>
               )}
             </>
           )}
+
           <div 
             className={isAr ? "font-quran" : "font-sans"} 
             style={{ 
@@ -637,32 +800,43 @@ export default function SurahDetail() {
             }}
           >
             {currentAyahs.map((ayah) => {
-              const globalAyahIndex = surah.ayahs.findIndex(a => a.number === ayah.number);
-              const isAyahPlaying = isCurrentAudioSurah && isPlaying && currentAudio?.currentAyahIndex === globalAyahIndex;
+              const globalAyahIndex = surah?.ayahs.findIndex(a => a.number === ayah.number);
+              const isAyahPlaying = isCurrentAudioSurah && isPlaying && (
+                currentAudio?.playSingle 
+                  ? currentAudio?.ayahs?.[0]?.number === ayah.number 
+                  : currentAudio?.currentAyahIndex === globalAyahIndex
+              );
               
               const isRevealed = revealedAyahs.includes(ayah.number);
               const isHidden = isMemorizationMode && !isRevealed; 
-              const cleanAyahText = formatAyahText(ayah.text, ayah.numberInSurah, surah.number);
+              const cleanAyahText = formatAyahText(ayah.text, ayah.numberInSurah, surah?.number);
               const isTargetAyah = location.state?.startAyah === ayah.numberInSurah;
-              
+              const isBookmarked = bookmarks.some(b => b.surahNumber === surah?.number && b.ayahNumberInSurah === ayah.numberInSurah);
+              const isMenuActive = activeAyahMenu?.numberInSurah === ayah.numberInSurah;
+
               return (
                 <span 
                   key={ayah.numberInSurah}
-                  onClick={() => handleAyahClick(ayah)} 
-                  className={`transition-colors duration-300 cursor-pointer inline ${
+                  onClick={(e) => handleAyahClick(e, ayah)} 
+                  className={`transition-all duration-300 cursor-pointer inline rounded px-1 py-0.5 ${
                     isAyahPlaying 
-                      ? (isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]") 
-                      : (isDarkMode ? "text-gray-200 hover:text-gray-400" : "text-gray-800 hover:text-[#D4A373]")
-                  } ${isHidden ? "blur-[6px] opacity-40 select-none" : ""} ${isTargetAyah && !isMemorizationMode ? (isDarkMode ? "bg-[#E6B981]/20 rounded-lg px-1" : "bg-[#D4A373]/20 rounded-lg px-1") : ""}`}
+                      ? (isDarkMode ? "text-[#E6B981] bg-[#E6B981]/15 font-bold rounded-lg" : "text-[#D4A373] bg-[#D4A373]/15 font-bold rounded-lg") 
+                      : isMenuActive
+                        ? (isDarkMode ? "text-[#E6B981] bg-[#E6B981]/25 font-bold rounded-lg shadow-sm" : "text-[#D4A373] bg-[#D4A373]/25 font-bold rounded-lg shadow-sm")
+                        : (isDarkMode ? "text-gray-200 hover:text-[#E6B981]" : "text-gray-800 hover:text-[#D4A373]")
+                  } ${isHidden ? "blur-[6px] opacity-40 select-none" : ""} ${isTargetAyah && !isMemorizationMode ? (isDarkMode ? "bg-[#E6B981]/20 rounded-lg" : "bg-[#D4A373]/20 rounded-lg") : ""}`}
                   style={{ fontSize: `${fontSize}px` }}
                 >
                   {cleanAyahText}
-            
+                  
+                  {/* رقم الآية الدائري */}
                   <span 
-                    className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all ${
-                      isAyahPlaying 
-                        ? "bg-[#D4A373] text-white border-[#D4A373]" 
-                        : (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]")
+                    className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all relative ${
+                      isAyahPlaying || isMenuActive
+                        ? "bg-[#D4A373] text-white border-[#D4A373] scale-105 shadow-sm" 
+                        : isBookmarked
+                          ? (isDarkMode ? "bg-amber-950/60 text-[#E6B981] border-[#E6B981]" : "bg-amber-100 text-[#D4A373] border-[#D4A373]")
+                          : (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]")
                     } ${isHidden ? "opacity-0" : "opacity-100"}`}
                     style={{ 
                       width: `${fontSize * (isAr ? 1.3 : 1.1)}px`, 
@@ -672,6 +846,9 @@ export default function SurahDetail() {
                     }}
                   >
                     {ayah.numberInSurah}
+                    {isBookmarked && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border border-white dark:border-gray-900 animate-pulse" />
+                    )}
                   </span>
                 </span>
               );
@@ -679,13 +856,12 @@ export default function SurahDetail() {
           </div>
         </div>
 
-   
         <div className={`flex items-center justify-between mt-8 md:mt-10 pt-4 border-t ${isDarkMode ? "border-gray-700" : "border-[#F0EBE1]/60"}`}>
           <button
             onClick={handlePrevPage}
-            disabled={surah.number === 1 && currentPage === 0}
+            disabled={surah?.number === 1 && currentPage === 0}
             className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
-              surah.number === 1 && currentPage === 0
+              surah?.number === 1 && currentPage === 0
                 ? "opacity-50 cursor-not-allowed text-gray-400" 
                 : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
             }`}
@@ -700,9 +876,9 @@ export default function SurahDetail() {
           
           <button
             onClick={handleNextPage}
-            disabled={surah.number === 114 && currentPage === totalPages - 1}
+            disabled={surah?.number === 114 && currentPage === totalPages - 1}
             className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
-              surah.number === 114 && currentPage === totalPages - 1
+              surah?.number === 114 && currentPage === totalPages - 1
                 ? "opacity-50 cursor-not-allowed text-gray-400" 
                 : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
             }`}
@@ -713,34 +889,134 @@ export default function SurahDetail() {
         </div>
       </div>
 
-      {selectedAyah && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAyah(null)}>
-          <div className={`w-full max-w-lg p-5 md:p-6 rounded-3xl shadow-xl transform transition-all ${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"}`} onClick={e => e.stopPropagation()} dir={isAr ? 'rtl' : 'ltr'}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className={`font-bold text-lg md:text-xl ${!isAr && 'font-sans'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
-                {t.tafsirTitle} ({selectedAyah.numberInSurah})
-              </h3>
-              <button onClick={() => setSelectedAyah(null)} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
+      {/* 🎯 قائمة خيارات الآية العائمة الذكية */}
+      {activeAyahMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-[9998] bg-transparent"
+            onClick={() => setActiveAyahMenu(null)}
+          />
+
+          <div 
+            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+            onClick={(e) => e.stopPropagation()}
+            className={`fixed z-[9999] w-48 rounded-2xl shadow-[0_10px_35px_rgba(212,163,115,0.25)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.7)] border backdrop-blur-xl transform transition-all animate-in fade-in zoom-in-95 duration-150 overflow-hidden ${
+              isDarkMode 
+                ? "bg-gray-900/95 border-[#E6B981]/40 text-gray-100 divide-y divide-gray-800" 
+                : "bg-white/95 border-[#D4A373]/40 text-gray-800 divide-y divide-[#F0EBE1]"
+            }`}
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            {/* 1. التفسير */}
+            <button
+              onClick={() => {
+                setSelectedAyahForTafsir(activeAyahMenu);
+                setActiveAyahMenu(null);
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+              }`}
+            >
+              <span>{t.showTafsir}</span>
+              <BookOpen size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+            </button>
+
+            {/* 2. الاستماع للآية */}
+            <button
+              onClick={() => handlePlaySingleAyah(activeAyahMenu)}
+              className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+              }`}
+            >
+              <span>{t.listenAyah}</span>
+              <Volume2 size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+            </button>
+
+            {/* 3. إضافة / إزالة علامة مرجعية */}
+            <button
+              onClick={() => toggleBookmark(activeAyahMenu)}
+              className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+              }`}
+            >
+              <span>
+                {bookmarks.some(b => b.surahNumber === surah?.number && b.ayahNumberInSurah === activeAyahMenu.numberInSurah)
+                  ? t.removeBookmark
+                  : t.addBookmark}
+              </span>
+              {bookmarks.some(b => b.surahNumber === surah?.number && b.ayahNumberInSurah === activeAyahMenu.numberInSurah) ? (
+                <BookmarkCheck size={16} className="text-amber-500" />
+              ) : (
+                <Bookmark size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+              )}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* 📖 مودال التفاسير المتعددة */}
+      {selectedAyahForTafsir && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAyahForTafsir(null)}>
+          <div className={`w-full max-w-xl p-5 md:p-6 rounded-[2.5rem] shadow-2xl border transform transition-all ${
+            isDarkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-white border-[#F0EBE1] text-gray-800"
+          }`} onClick={e => e.stopPropagation()} dir={isAr ? 'rtl' : 'ltr'}>
+            
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2">
+                <BookOpen size={20} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <h3 className={`font-bold text-base md:text-lg ${!isAr && 'font-sans'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+                  {t.tafsirTitle} ({selectedAyahForTafsir.numberInSurah})
+                </h3>
+              </div>
+              <button onClick={() => setSelectedAyahForTafsir(null)} className="text-gray-400 hover:text-red-500 p-1 rounded-full transition-colors">
+                <X size={20} />
+              </button>
             </div>
             
-            <p className={`${isAr ? 'font-quran text-center' : 'font-sans font-medium text-left'} text-xl md:text-2xl leading-loose mb-5 text-gray-500`}>
-              {formatAyahText(selectedAyah.text, selectedAyah.numberInSurah, surah.number)}
+            <p className={`${isAr ? 'font-quran text-center' : 'font-sans font-medium text-left'} text-lg md:text-xl leading-loose mb-3 p-3 rounded-2xl border ${
+              isDarkMode ? 'bg-gray-800/60 border-gray-700 text-gray-200' : 'bg-[#FDFBF7] border-[#F0EBE1] text-gray-700'
+            }`}>
+              {formatAyahText(selectedAyahForTafsir.text, selectedAyahForTafsir.numberInSurah, surah?.number)}
             </p>
+
+            {/* شريط اختيار المفسر */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none">
+              {tafsirEditionsList.map(ed => (
+                <button
+                  key={ed.id}
+                  onClick={() => setSelectedTafsirEdition(ed.id)}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+                    selectedTafsirEdition === ed.id
+                      ? (isDarkMode ? 'bg-[#E6B981] text-gray-900 shadow-md' : 'bg-[#D4A373] text-white shadow-md')
+                      : (isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-gray-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                  }`}
+                >
+                  {ed.name}
+                </button>
+              ))}
+            </div>
             
-            <div className={`p-5 rounded-2xl shadow-inner border max-h-[40vh] overflow-y-auto ${isDarkMode ? "bg-[#161b22] border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"}`}>
-              <div className={`flex items-center gap-2 mb-3 text-sm font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
-                <BookOpen size={18} /> {t.tafsirLabel}
-              </div>
-              <p className={`text-lg md:text-[22px] font-medium leading-[2.2] ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? 'text-gray-300' : 'text-[#5a4a3e]'}`} dir={isAr ? "rtl" : "ltr"}>
-                {modalText?.ayahs.find(a => a.numberInSurah === selectedAyah.numberInSurah)?.text || "..."}
-              </p>
+            <div className={`p-4 md:p-5 rounded-2xl shadow-inner border max-h-[42vh] overflow-y-auto ${
+              isDarkMode ? "bg-[#161b22] border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"
+            }`}>
+              {isTafsirLoading ? (
+                <div className="flex items-center justify-center py-10 gap-2 text-sm font-bold text-gray-400">
+                  <RefreshCw size={18} className="animate-spin" />
+                  <span>جاري جلب التفسير...</span>
+                </div>
+              ) : (
+                <div className={isAr ? 'font-sans' : 'font-serif'}>
+                  {renderFormattedTafsir(dynamicTafsirText)}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
+      {/* مودال إعدادات حجم الخط */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
           <div className={`w-full max-w-sm p-5 md:p-6 rounded-3xl shadow-xl ${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"}`} onClick={e => e.stopPropagation()} dir={isAr ? "rtl" : "ltr"}>
             <div className="flex justify-between items-center mb-6">
               <h3 className={`font-bold text-lg md:text-xl ${!isAr && 'font-sans'}`}>{t.settings}</h3>
