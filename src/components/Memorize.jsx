@@ -1,32 +1,53 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import axios from "axios";
-import { Mic, MicOff, AlertCircle, HelpCircle, CheckCircle, ChevronDown, ChevronRight, ChevronLeft, BookOpen } from "lucide-react";
+import { Mic, MicOff, AlertCircle, HelpCircle, CheckCircle, ChevronDown, ChevronRight, ChevronLeft, BookOpen, AlertTriangle } from "lucide-react";
 import { AppContext } from "../App";
 
 const normalizeArabic = (text) => {
   if (!text) return "";
   return text
-    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u06DF-\u06E8\u0640]/g, "") 
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u06DF-\u06E8\u0640\uFD3E\uFD3F]/g, "") // إزالة التشكيل وعلامات الوقف
     .replace(/[أإآاٱ]/g, "ا") 
     .replace(/ة/g, "ه") 
-    .replace(/ى/g, "ي") 
+    .replace(/[ىيئ]/g, "ي") 
     .replace(/ؤ/g, "و") 
-    .replace(/ئ/g, "ي") 
     .replace(/ء/g, "") 
-    .replace(/الرحمان/g, "الرحمن") 
-    .replace(/سموت/g, "سماوات") 
     .trim();
 };
 
-const isMatch = (spoken, target) => {
+const isMatchFast = (spoken, target) => {
   if (!spoken || !target) return false;
-  const sNoSpace = spoken.replace(/\s+/g, '');
-  const tNoSpace = target.replace(/\s+/g, '');
-  if (sNoSpace === tNoSpace) return true;
-  if (sNoSpace.length >= 3 && tNoSpace.length >= 3) {
-    if (sNoSpace.includes(tNoSpace) || tNoSpace.includes(sNoSpace)) return true;
+  if (spoken === target) return true;
+
+  const sPhon = spoken.replace(/[ذزظ]/g, 'ز').replace(/[ثست]/g, 'س').replace(/[ضد]/g, 'د').replace(/[طت]/g, 'ت').replace(/[كق]/g, 'ك');
+  const tPhon = target.replace(/[ذزظ]/g, 'ز').replace(/[ثست]/g, 'س').replace(/[ضد]/g, 'د').replace(/[طت]/g, 'ت').replace(/[كق]/g, 'ك');
+  if (sPhon === tPhon) return true;
+
+  const sLen = spoken.length;
+  const tLen = target.length;
+  if (sLen >= 3 && tLen >= 3) {
+    if (spoken.startsWith(target) || target.startsWith(spoken)) return true;
+    if (sPhon.startsWith(tPhon) || tPhon.startsWith(sPhon)) return true;
+    if (spoken.endsWith(target) || target.endsWith(spoken)) return true;
   }
-  if (tNoSpace.length <= 2 && sNoSpace === tNoSpace) return true;
+
+  if (Math.abs(sLen - tLen) <= 1 && sLen >= 4 && tLen >= 4) {
+    let diff = 0;
+    let i = 0, j = 0;
+    while (i < sLen && j < tLen) {
+      if (sPhon[i] !== tPhon[j]) {
+        diff++;
+        if (diff > 1) return false;
+        if (sLen > tLen) i++;
+        else if (tLen > sLen) j++;
+        else { i++; j++; }
+      } else {
+        i++; j++;
+      }
+    }
+    return true;
+  }
+
   return false;
 };
 
@@ -40,27 +61,30 @@ export default function Memorize() {
   const [surahPages, setSurahPages] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0); 
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [wordStatuses, setWordStatuses] = useState({}); 
   
+  const [isAnimating, setIsAnimating] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState(""); 
   const [supportError, setSupportError] = useState(null);
-  const [showHint, setShowHint] = useState(false);
+  const [micError, setMicError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const [fontSize, setFontSize] = useState(() => {
     const savedSize = localStorage.getItem("fontSize");
-    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 26 : 38);
+    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 24 : 34);
   });
 
   const recognitionRef = useRef(null);
   const wordsRef = useRef([]);
+  const wordStatusesRef = useRef({});
   const isManualStopRef = useRef(false);
-  
   const currentIndexRef = useRef(0);
-  const chunkBaseRef = useRef(-1);
-  const chunkConsumedWordsRef = useRef(0);
+  const chunkBaseRef = useRef(-1);       
+  const consumedInChunkRef = useRef(0);  
+  const consecutiveErrorsRef = useRef(0); 
+  const lastErrorTypeRef = useRef(null);
 
   useEffect(() => {
     if (surahPages.length > 0) {
@@ -93,18 +117,50 @@ export default function Memorize() {
     recognition.onstart = () => {
       setIsListening(true);
       setLiveTranscript("");
+      setMicError(null);
+      consecutiveErrorsRef.current = 0;
     };
     
     recognition.onend = () => {
-      if (!isManualStopRef.current && wordsRef.current && currentIndexRef.current < wordsRef.current.length) {
-        try { recognition.start(); } catch(e) {}
-      } else {
+      if (isManualStopRef.current || !wordsRef.current || currentIndexRef.current >= wordsRef.current.length) {
         setIsListening(false);
+        return;
       }
+
+      if (consecutiveErrorsRef.current >= 4) {
+        setIsListening(false);
+        setMicError(isAr ? "الاستماع اتوقف بسبب مشكلة متكررة. اضغط ابدأ التسميع تاني." : "Listening stopped after repeated issues. Tap Start again.");
+        return;
+      }
+
+      const delay = lastErrorTypeRef.current === 'network' ? 1500 : 0;
+      setTimeout(() => {
+        if (!isManualStopRef.current) {
+          try { recognition.start(); } catch (e) {}
+        }
+      }, delay);
     };
     
-    recognition.onerror = () => {
-      if(isManualStopRef.current) setIsListening(false);
+    recognition.onerror = (event) => {
+      lastErrorTypeRef.current = event.error;
+
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
+
+      consecutiveErrorsRef.current += 1;
+
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        isManualStopRef.current = true;
+        setIsListening(false);
+        setMicError(isAr ? "المتصفح مش ادّيك إذن استخدام المايك. فعّل الإذن من إعدادات المتصفح وحاول تاني." : "Microphone access is blocked. Enable it in your browser settings and try again.");
+        return;
+      }
+
+      if (event.error === 'network') {
+        setMicError(isAr ? "في مشكلة في الاتصال بالإنترنت - بنحاول نرجع نوصل..." : "Network issue - trying to reconnect...");
+        return;
+      }
+
+      if (isManualStopRef.current) setIsListening(false);
     };
 
     recognition.onresult = (event) => {
@@ -112,59 +168,79 @@ export default function Memorize() {
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         latestTranscript += event.results[i][0].transcript + " ";
       }
-
       if (chunkBaseRef.current !== event.resultIndex) {
         chunkBaseRef.current = event.resultIndex;
-        chunkConsumedWordsRef.current = 0;
+        consumedInChunkRef.current = 0;
       }
 
       let fixedTranscript = latestTranscript
-        .replace(/(الف|ألف|اف|ايف)\s*(لام|لا|لم)\s*(ميم|مي)/g, "الم")
+        .replace(/(الف|ألف|اف|ايف)\s*(لام|لا|لم|لآم)\s*(ميم|مي|م)/g, "الم")
         .replace(/ألم/g, "الم")
         .replace(/علم/g, "الم") 
         .replace(/(الف|ألف)\s*(لام|لا)\s*(ميم|مي)\s*(صاد|ص)/g, "المص")
         .replace(/(الف|ألف)\s*(لام|لا)\s*(را|ر)/g, "الر")
         .replace(/(كاف|ك)\s*(ها|ه)\s*(يا|ي)\s*(عين|ع)\s*(صاد|ص)/g, "كهيعص")
         .replace(/(طا|ط)\s*(ها|ه)/g, "طه")
+        .replace(/(طا|ط)\s*(سين|س)\s*(ميم|م)/g, "طسم")
+        .replace(/(طا|ط)\s*(سين|س)/g, "طس")
         .replace(/(يا|ي)\s*(سين|س)/g, "يس")
         .replace(/(حا|ح)\s*(ميم|م)/g, "حم")
+        .replace(/عسق/g, "عسق")
         .replace(/قاف/g, "ق")
         .replace(/نون/g, "ن");
 
       setLiveTranscript(fixedTranscript.trim());
 
-      const spokenWords = fixedTranscript.split(' ').map(normalizeArabic).filter(w => w);
-      let unconsumedSpoken = spokenWords.slice(chunkConsumedWordsRef.current);
+      const spokenWords = fixedTranscript.split(/\s+/).map(normalizeArabic).filter(Boolean);
+      if (spokenWords.length === 0) return;
+      const unconsumedSpoken = spokenWords.slice(consumedInChunkRef.current);
 
       let tIndex = currentIndexRef.current;
-      let advanced = false;
+      const targetWords = wordsRef.current;
+      const newStatuses = { ...wordStatusesRef.current };
+      let hasAdvanced = false;
+      let consumedUpTo = 0;
+      for (let s = 0; s < unconsumedSpoken.length && tIndex < targetWords.length; s++) {
+        const spoken = unconsumedSpoken[s];
 
-      while (tIndex < wordsRef.current.length && unconsumedSpoken.length > 0) {
-        let tWord = wordsRef.current[tIndex].normalized;
-        let foundIdx = -1;
-
-        for (let i = 0; i < Math.min(4, unconsumedSpoken.length); i++) {
-          if (isMatch(unconsumedSpoken[i], tWord)) {
-            foundIdx = i;
-            break;
-          }
+        if (isMatchFast(spoken, targetWords[tIndex].normalized)) {
+          newStatuses[tIndex] = 'correct';
+          tIndex++;
+          hasAdvanced = true;
+          consumedUpTo = s + 1;
+          continue;
+        }
+        if (tIndex + 1 < targetWords.length && isMatchFast(spoken, targetWords[tIndex + 1].normalized)) {
+          newStatuses[tIndex] = 'missed'; // الكلمة المنسية تصبح حمراء
+          newStatuses[tIndex + 1] = 'correct';
+          tIndex += 2;
+          hasAdvanced = true;
+          consumedUpTo = s + 1;
+          continue;
         }
 
-        if (foundIdx !== -1) {
-          tIndex++;
-          advanced = true;
-          chunkConsumedWordsRef.current += (foundIdx + 1);
-          unconsumedSpoken = unconsumedSpoken.slice(foundIdx + 1);
-        } else {
-          break;
+        if (tIndex + 2 < targetWords.length && isMatchFast(spoken, targetWords[tIndex + 2].normalized)) {
+          newStatuses[tIndex] = 'missed';
+          newStatuses[tIndex + 1] = 'missed';
+          newStatuses[tIndex + 2] = 'correct';
+          tIndex += 3;
+          hasAdvanced = true;
+          consumedUpTo = s + 1;
+          continue;
         }
       }
 
-      if (advanced) {
+      if (consumedUpTo > 0) {
+        consumedInChunkRef.current += consumedUpTo;
+      }
+
+      if (hasAdvanced) {
         currentIndexRef.current = tIndex;
+        wordStatusesRef.current = newStatuses;
+        setWordStatuses(newStatuses);
         setCurrentIndex(tIndex);
-        setShowHint(false);
-        setLiveTranscript(""); 
+        consecutiveErrorsRef.current = 0;
+        setMicError(null);
       }
     };
 
@@ -181,7 +257,7 @@ export default function Memorize() {
     if (isListening && recognitionRef.current) recognitionRef.current.stop();
     setLiveTranscript("");
     chunkBaseRef.current = -1;
-    chunkConsumedWordsRef.current = 0;
+    consumedInChunkRef.current = 0;
     
     axios.get(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-simple`)
       .then((res) => {
@@ -199,12 +275,14 @@ export default function Memorize() {
             cleanText = cleanText.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "").trim();
           }
           
-          const ayahWords = cleanText.split(' ');
+          const ayahWords = cleanText.split(/\s+/);
           ayahWords.forEach((w) => {
-            if(w.trim()) {
+            const norm = normalizeArabic(w);
+            if (norm && norm.length > 0 && /[ا-ي]/.test(norm)) {
+              const cleanOriginal = w.replace(/[\u06D6-\u06ED\uFD3E\uFD3F]/g, '').trim() || w;
               pagesMap[ayah.page].push({
-                original: w,
-                normalized: normalizeArabic(w),
+                original: cleanOriginal,
+                normalized: norm,
                 ayahNumber: ayah.numberInSurah,
                 juz: ayah.juz
               });
@@ -221,7 +299,8 @@ export default function Memorize() {
         setCurrentPage(0);
         setCurrentIndex(0);
         currentIndexRef.current = 0;
-        setShowHint(false);
+        setWordStatuses({});
+        wordStatusesRef.current = {};
         setLoading(false);
       })
       .catch((err) => {
@@ -240,7 +319,9 @@ export default function Memorize() {
     } else {
       isManualStopRef.current = false;
       chunkBaseRef.current = -1;
-      chunkConsumedWordsRef.current = 0;
+      consumedInChunkRef.current = 0;
+      consecutiveErrorsRef.current = 0;
+      setMicError(null);
       setLiveTranscript("");
       try {
         recognitionRef.current.start();
@@ -258,8 +339,9 @@ export default function Memorize() {
       setCurrentIndex(0);
       currentIndexRef.current = 0;
       chunkBaseRef.current = -1;
-      chunkConsumedWordsRef.current = 0;
-      setShowHint(false);
+      consumedInChunkRef.current = 0;
+      setWordStatuses({});
+      wordStatusesRef.current = {};
       setLiveTranscript("");
       setIsAnimating(false);
     }, 300);
@@ -281,21 +363,44 @@ export default function Memorize() {
     }
   };
 
-  const handleWordClick = (index) => {
-    if (index === currentIndexRef.current) {
-      const nextIdx = currentIndexRef.current + 1;
-      setCurrentIndex(nextIdx);
+  const handleHintClick = () => {
+    if (currentIndexRef.current < wordsRef.current.length) {
+      const idx = currentIndexRef.current;
+      const newStatuses = { ...wordStatusesRef.current, [idx]: 'missed' };
+      const nextIdx = idx + 1;
+
+      wordStatusesRef.current = newStatuses;
+      setWordStatuses(newStatuses);
       currentIndexRef.current = nextIdx;
-      chunkBaseRef.current = -1;
-      chunkConsumedWordsRef.current = 0;
-      setShowHint(false);
+      setCurrentIndex(nextIdx);
       setLiveTranscript("");
+      chunkBaseRef.current = -1;
+      consumedInChunkRef.current = 0;
+    }
+  };
+
+  const handleWordClick = (index) => {
+    if (index >= currentIndexRef.current) {
+      const newStatuses = { ...wordStatusesRef.current };
+      for (let i = currentIndexRef.current; i < index; i++) {
+        newStatuses[i] = 'missed';
+      }
+      newStatuses[index] = 'missed';
+      const nextIdx = index + 1;
+      
+      currentIndexRef.current = nextIdx;
+      wordStatusesRef.current = newStatuses;
+      setWordStatuses(newStatuses);
+      setCurrentIndex(nextIdx);
+      setLiveTranscript("");
+      chunkBaseRef.current = -1;
+      consumedInChunkRef.current = 0;
     }
   };
 
   const t = {
     title: isAr ? "التسميع بالصوت" : "Voice Memorization",
-    subtitle: isAr ? "اقرأ بصوتك أو اضغط على الكلمة المتعثرة لفتحها" : "Recite or tap the word to reveal",
+    subtitle: isAr ? "اقرأ بصوتك ، والكلمات المنسية أو التلميحات ستظهر باللون الأحمر" : "Recite freely, missed words or hints will appear in red",
     select: isAr ? "اختر سورة للتسميع" : "Select a Surah",
     start: isAr ? "ابدأ التسميع" : "Start Reciting",
     stop: isAr ? "إيقاف المايك" : "Stop Mic",
@@ -305,19 +410,23 @@ export default function Memorize() {
     nextSurah: isAr ? "السورة التالية" : "Next Surah",
     prevPage: isAr ? "السابق" : "Prev",
     nextPage: isAr ? "التالي" : "Next",
+    missedWords: isAr ? "كلمات لم تُنطق / مساعدة:" : "Missed / Hinted Words:",
+    perfect: isAr ? "ممتاز! تسميع متقن بدون أي مساعدة " : "Perfect recitation without help! ",
   };
 
   const currentWords = surahPages[currentPage] || [];
   const totalPages = surahPages.length;
   const currentJuz = currentWords[0]?.juz || "";
   
+  const missedCount = Object.values(wordStatuses).filter(s => s === 'missed').length;
+
   const PrevPageIcon = isAr ? ChevronRight : ChevronLeft;
   const NextPageIcon = isAr ? ChevronLeft : ChevronRight;
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
       
-      <div className="text-center mb-8 mt-4 px-2">
+      <div className="text-center mb-6 mt-4 px-2">
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-7 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
           {t.title}
         </h2>
@@ -330,8 +439,14 @@ export default function Memorize() {
         </div>
       )}
 
-      
-      <div className="relative mb-8 max-w-sm mx-auto z-40 px-2 flex justify-center">
+      {micError && (
+        <div className={`p-4 rounded-2xl mb-6 flex items-center gap-2 font-medium mx-2 text-sm ${
+          isDarkMode ? 'bg-amber-950/40 text-amber-300 border border-amber-900/50' : 'bg-amber-50 text-amber-700 border border-amber-200'
+        }`}>
+          <AlertTriangle size={18} className="shrink-0" /> {micError}
+        </div>
+      )}
+      <div className="relative mb-6 max-w-sm mx-auto z-40 px-2 flex justify-center">
         <div className="relative w-full">
           <button 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -351,7 +466,7 @@ export default function Memorize() {
           {isDropdownOpen && (
             <div className={`absolute top-full mt-2 w-full max-h-64 overflow-y-auto rounded-2xl shadow-2xl z-50 border ${
               isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#F0EBE1]"
-            }`} >
+            }`}>
               {surahs.map((s) => (
                 <button
                   key={s.number}
@@ -372,9 +487,13 @@ export default function Memorize() {
       {loading ? (
         <div className={`text-center py-10 font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>جاري التحميل...</div>
       ) : selectedSurah && currentWords.length > 0 ? (
-        <div className={`px-4 md:px-12 py-8 rounded-xl shadow-md border-x border-b transition-colors duration-300 min-h-[60vh] flex flex-col justify-between ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFdf9] border-[#E8E1D3]'}`}>
+        <div className={`px-4 md:px-12 py-8 rounded-2xl shadow-lg border transition-colors duration-300 min-h-[60vh] flex flex-col justify-between ${
+          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFdf9] border-[#E8E1D3]'
+        }`}>
           
-          <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"} font-bold text-sm md:text-base`}>
+          <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${
+            isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"
+          } font-bold text-sm md:text-base`}>
             <span>{isAr ? selectedSurah.name : selectedSurah.englishName}</span>
             <span>{t.juz} {currentJuz}</span>
           </div>
@@ -382,36 +501,36 @@ export default function Memorize() {
           <div className={`transition-opacity duration-300 ease-in-out text-center flex-1 ${isAnimating ? "opacity-0" : "opacity-100"}`}>
             
             {currentPage === 0 && selectedSurah.number !== 1 && selectedSurah.number !== 9 && (
-              <div className={`text-center ${isAr ? 'text-2xl md:text-4xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+              <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
                 {isAr ? "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" : "In the name of Allah..."}
               </div>
             )}
-            
+ 
             <div 
               className={isAr ? "font-quran" : "font-sans"} 
               style={{ 
                 textAlign: isAr ? 'justify' : 'left',
                 textAlignLast: isAr ? 'center' : 'left', 
                 direction: isAr ? 'rtl' : 'ltr',
-                lineHeight: `${fontSize * (isAr ? 2 : 1.6)}px` 
+                lineHeight: isAr ? '2.4' : '1.8'
               }}
             >
               {currentWords.map((word, index) => {
                 const isRevealed = index < currentIndex;
-                const isCurrent = index === currentIndex;
-                const showAsHint = isCurrent && showHint;
                 const isLastWordInAyah = index === currentWords.length - 1 || word.ayahNumber !== currentWords[index + 1].ayahNumber;
+                const status = wordStatuses[index];
 
                 return (
                   <span key={word.id} className="inline">
                     <span 
                       onClick={() => handleWordClick(index)}
-                      className={`inline-block mx-0.5 cursor-pointer transition-all duration-300 ${
+                      title={status === 'missed' ? (isAr ? "كلمة تم تخطيها أو المساعدة فيها" : "Missed word / Hinted") : ""}
+                      className={`inline-block mx-0.5 px-1 py-0.5 cursor-pointer rounded-lg transition-all duration-200 ${
                         isRevealed 
-                          ? (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') 
-                          : showAsHint 
-                            ? (isDarkMode ? 'text-red-400 border-b-2 border-red-400' : 'text-red-500 border-b-2 border-red-500') 
-                            : 'opacity-15 blur-[4px] select-none text-gray-500'
+                          ? status === 'missed'
+                            ? (isDarkMode ? 'text-red-400 bg-red-950/50 border border-red-500/60 font-bold shadow-sm' : 'text-red-600 bg-red-50 border border-red-300 font-bold shadow-sm')
+                            : (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') 
+                          : 'opacity-15 blur-[4px] select-none text-gray-500'
                       }`}
                       style={{ fontSize: `${fontSize}px` }}
                     >
@@ -420,8 +539,8 @@ export default function Memorize() {
                     
                     {isLastWordInAyah && (
                       <span 
-                        className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[3px] border-double transition-all ${
-                          isRevealed || (isCurrent && showHint)
+                        className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all ${
+                          isRevealed
                             ? (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]") 
                             : "opacity-15 blur-[2px] text-gray-500 border-gray-500"
                         }`}
@@ -441,11 +560,11 @@ export default function Memorize() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-4 mt-10">
+          <div className="flex flex-col items-center gap-3 mt-8">
             {currentIndex < currentWords.length ? (
               <>
-                <div className={`h-8 w-full max-w-sm text-center text-sm truncate px-4 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {isListening && liveTranscript ? `سمعتك تقول: "${liveTranscript}"` : ''}
+                <div className={`h-6 w-full max-w-md text-center text-xs md:text-sm truncate px-4 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {isListening && liveTranscript ? `جاري السماع: "${liveTranscript}"` : ''}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -460,9 +579,10 @@ export default function Memorize() {
                     {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                     {isListening ? t.stop : t.start}
                   </button>
+
                   <button 
-                    onClick={() => setShowHint(true)}
-                    className={`p-3 rounded-full font-bold transition-colors border ${
+                    onClick={handleHintClick}
+                    className={`p-3 rounded-full font-bold transition-all border shadow-sm ${
                       isDarkMode ? 'border-gray-700 text-[#E6B981] hover:bg-gray-700' : 'border-[#F0EBE1] text-[#D4A373] hover:bg-[#FDFBF7]'
                     }`}
                     title={t.hint}
@@ -472,12 +592,20 @@ export default function Memorize() {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-2 text-green-500 font-bold bg-green-50 px-6 py-3 rounded-full">
-                <CheckCircle size={24} /> اكتملت الصفحة
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 text-green-500 font-bold bg-green-50 dark:bg-green-950/40 px-6 py-3 rounded-full border border-green-200 dark:border-green-800">
+                  <CheckCircle size={20} />
+                  <span>{missedCount === 0 ? t.perfect : "اكتملت الصفحة بنجاح!"}</span>
+                </div>
+                {missedCount > 0 && (
+                  <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-1.5 rounded-xl border border-red-200 dark:border-red-900/50">
+                    <AlertTriangle size={16} />
+                    <span>{t.missedWords} {missedCount}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
-
           <div className={`flex items-center justify-between mt-8 pt-4 border-t ${isDarkMode ? "border-gray-700" : "border-[#F0EBE1]/60"}`}>
             <button
               onClick={handlePrevPage}
