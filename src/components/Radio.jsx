@@ -28,6 +28,11 @@ export default function Radio() {
   };
 
   const featuredKeywords = ["رمضان", "الأطفال", "تجويد", "كامل", "القرآن الكريم", "تلاوات متنوعة", "قصار السور"];
+  useEffect(() => {
+    return () => {
+      setIsRadioPlaying(false);
+    };
+  }, [setIsRadioPlaying]);
 
   useEffect(() => {
     if (isQuranPlaying && isPlaying) {
@@ -37,7 +42,7 @@ export default function Radio() {
         audioRef.current.pause();
       }
     }
-  }, [isQuranPlaying]); 
+  }, [isQuranPlaying]);
 
   useEffect(() => {
     setLoading(true);
@@ -104,13 +109,20 @@ export default function Radio() {
       setActiveRadio(radio);
       setIsRadioPlaying(true);
       setIsPlaying(true);
+      
       if (audioRef.current) {
+        audioRef.current.pause(); 
         audioRef.current.src = radio.url;
-        audioRef.current.play().catch(e => {
-          console.error(e);
-          setIsPlaying(false);
-          setIsRadioPlaying(false);
-        });
+        audioRef.current.load();
+        
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Radio play error:", error);
+            setIsPlaying(false);
+            setIsRadioPlaying(false);
+          });
+        }
       }
     }
   };
@@ -161,7 +173,11 @@ export default function Radio() {
 
   return (
     <div className={`max-w-4xl mx-auto p-4 md:p-6 pt-20 ${activeRadio ? 'pb-36' : 'pb-24'}`} dir={isAr ? "rtl" : "ltr"}>
-      <audio ref={audioRef} onEnded={() => {setIsPlaying(false); setIsRadioPlaying(false);}} onError={() => {setIsPlaying(false); setIsRadioPlaying(false);}} />
+      <audio 
+        ref={audioRef} 
+        onEnded={() => {setIsPlaying(false); setIsRadioPlaying(false);}} 
+        onError={() => {setIsPlaying(false); setIsRadioPlaying(false);}} 
+      />
 
       <div className="flex items-center justify-center gap-3 mb-8 mt-4">
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
@@ -251,12 +267,12 @@ export default function Radio() {
       )}
 
       {activeRadio && (
-        <div className={`fixed bottom-[65px] left-0 w-full border-t shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40 transition-colors ${
-          isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-[#F0EBE1]"
+        <div className={`fixed bottom-20 left-3 right-3 md:bottom-20 md:left-1/2 md:-translate-x-1/2 md:w-[450px] rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] transition-colors border backdrop-blur-md ${
+          isDarkMode ? "bg-gray-900/95 border-gray-700" : "bg-white/95 border-[#F0EBE1]"
         }`}>
-          <div className={`max-w-md mx-auto px-4 py-3 flex items-center justify-between ${!isAr && 'flex-row-reverse'}`}>
+          <div className={`px-4 py-3 flex items-center justify-between ${!isAr && 'flex-row-reverse'}`}>
             <div className={`flex items-center gap-3 w-3/4 ${!isAr && 'flex-row-reverse'}`}>
-              <div className="w-10 h-10 rounded-full bg-[#D4A373] flex items-center justify-center text-white shrink-0 shadow-md">
+              <div className="w-10 h-10 rounded-full bg-[#D4A373] dark:bg-[#E6B981] flex items-center justify-center text-white dark:text-gray-900 shrink-0 shadow-md">
                 <RadioIcon size={20} />
               </div>
               <div className={`overflow-hidden ${isAr ? 'text-right' : 'text-left'}`}>

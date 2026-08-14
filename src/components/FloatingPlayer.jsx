@@ -3,7 +3,7 @@ import { Play, Pause, X, Volume2, Loader2, SkipForward, SkipBack } from 'lucide-
 import { AppContext } from '../App';
 
 export default function FloatingPlayer() {
-  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, isRadioPlaying } = useContext(AppContext);
+  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, isRadioPlaying, setIsRadioPlaying } = useContext(AppContext);
   const isAr = lang === 'ar';
   
   const audioRef = useRef(null);
@@ -11,14 +11,17 @@ export default function FloatingPlayer() {
   const [isLoading, setIsLoading] = useState(false);
 
   const currentAyah = currentAudio?.ayahs?.[currentAudio?.currentAyahIndex || 0];
+
   useEffect(() => {
-    if (isRadioPlaying && isPlaying) {
+    if (isRadioPlaying) {
       setIsPlaying(false);
+      setCurrentAudio(null);
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = "";
       }
     }
-  }, [isRadioPlaying, isPlaying, setIsPlaying]);
+  }, [isRadioPlaying, setIsPlaying, setCurrentAudio]);
 
   useEffect(() => {
     if (currentAudio && currentAyah?.audio) {
@@ -145,9 +148,8 @@ export default function FloatingPlayer() {
 
           <button 
             onClick={() => {
-              // لو هنشغل القرآن نقفل الراديو الأول
-              if (!isPlaying) setIsPlaying(true);
-              else setIsPlaying(false);
+              if (isRadioPlaying) setIsRadioPlaying(false);
+              setIsPlaying(!isPlaying);
             }}
             className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
               isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'

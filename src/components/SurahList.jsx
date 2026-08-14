@@ -213,12 +213,31 @@ export default function SurahList() {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   useEffect(() => {
-    const heroImg = new Image();
-    heroImg.src = "/images/golden-quran.webp";
-    
-    const mosqueImg = new Image();
-    mosqueImg.src = "/images/mosque-bg.jpg";
-  }, []);
+  const cacheImagesForOffline = async () => {
+    const urls = ["/images/golden-quran.webp", "/images/mosque-bg.jpg"];
+
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+
+    if ('caches' in window) {
+      try {
+        const cache = await caches.open('quran-assets-cache');
+        urls.forEach(async (url) => {
+          const response = await cache.match(url);
+          if (!response) {
+            await cache.add(url);
+          }
+        });
+      } catch (e) {
+        console.log("Caching images failed", e);
+      }
+    }
+  };
+
+  cacheImagesForOffline();
+}, []);
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 pt-20 pb-24" dir={isAr ? "rtl" : "ltr"}>
@@ -276,7 +295,7 @@ export default function SurahList() {
           {lastRead && (
             <Link 
               to={`/surah/${lastRead.id || 1}`} 
-              state={{ targetPage: lastRead.page || 1 }}
+              state={{ targetPage: lastRead.page !== undefined ? lastRead.page : 0 }}
               className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 shadow-xl ${
                 isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
               }`}

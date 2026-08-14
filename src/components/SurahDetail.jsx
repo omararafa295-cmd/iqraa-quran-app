@@ -8,7 +8,7 @@ export default function SurahDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation(); 
-  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying } = useContext(AppContext);
+  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, setIsRadioPlaying } = useContext(AppContext);
   const isAr = lang === 'ar'; 
   
   const [surah, setSurah] = useState(null);
@@ -76,10 +76,9 @@ export default function SurahDetail() {
 
   const [selectedAyah, setSelectedAyah] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  
   const [fontSize, setFontSize] = useState(() => {
     const savedSize = localStorage.getItem("fontSize");
-    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 20 : (isAr ? 38 : 22));
+    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 20 : 28);
   });
 
   const showNotification = (message, type = "error") => {
@@ -125,29 +124,33 @@ export default function SurahDetail() {
     const modalUrl = `https://api.alquran.cloud/v1/surah/${id}${modalEdition}`;
 
     const processData = (fetchedSurah, fetchedModal) => {
-      const pagesMap = {};
-      fetchedSurah.ayahs.forEach(ayah => {
-        if (!pagesMap[ayah.page]) pagesMap[ayah.page] = [];
-        pagesMap[ayah.page].push(ayah);
-      });
-      
-      const pagesArray = Object.values(pagesMap);
-      setSurahPages(pagesArray);
-      setSurah(fetchedSurah);
-      setModalText(fetchedModal);
-      
-      let initialPage = 0;
-      if (location.state?.targetPage !== undefined) {
-        initialPage = location.state.targetPage; 
-      } else if (location.state?.startAyah) {
-        const targetPageIndex = pagesArray.findIndex(page => page.some(a => a.numberInSurah === location.state.startAyah));
-        if (targetPageIndex !== -1) initialPage = targetPageIndex; 
-      }
-      
-      setCurrentPage(initialPage);
-      setLoading(false);
-    };
+  const pagesMap = {};
+  fetchedSurah.ayahs.forEach(ayah => {
+    if (!pagesMap[ayah.page]) pagesMap[ayah.page] = [];
+    pagesMap[ayah.page].push(ayah);
+  });
+  
+  const pagesArray = Object.values(pagesMap);
+  setSurahPages(pagesArray);
+  setSurah(fetchedSurah);
+  setModalText(fetchedModal);
+  
+  let initialPage = 0;
+  if (location.state?.targetPage !== undefined) {
+    initialPage = location.state.targetPage; 
+  } else if (location.state?.startAyah) {
+    const targetPageIndex = pagesArray.findIndex(page => 
+      page.some(a => a.numberInSurah === location.state.startAyah)
+    );
+    if (targetPageIndex !== -1) initialPage = targetPageIndex; 
+  }
+  if (initialPage >= pagesArray.length) {
+    initialPage = Math.max(0, pagesArray.length - 1);
+  }
 
+  setCurrentPage(initialPage);
+  setLoading(false);
+};
     const loadData = async () => {
       try {
         const [surahRes, modalRes] = await Promise.all([
@@ -320,8 +323,11 @@ export default function SurahDetail() {
     }
     return text;
   };
+
   const handlePlaySurahGlobal = () => {
     if (!surah || !surah.ayahs) return;
+
+    setIsRadioPlaying(false);
 
     const currentReciterObj = recitersList?.find(r => r.id === reciter);
     const reciterName = currentReciterObj?.name || reciter;
@@ -447,7 +453,7 @@ export default function SurahDetail() {
   const themeColor = isDarkMode ? "#E6B981" : "#D4A373";
 
   return (
-    <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20" dir={isAr ? "rtl" : "ltr"}>
+    <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
 
       {toast.show && (
         <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-3.5 rounded-full shadow-2xl transition-all duration-300 ${
@@ -461,13 +467,13 @@ export default function SurahDetail() {
           <span className={`font-bold text-sm md:text-base whitespace-nowrap ${!isAr && 'font-sans'}`}>{toast.message}</span>
         </div>
       )}
-
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 px-2 w-full">
         <h2 className={`text-2xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
           {isAr ? surah.name : surah.englishName}
         </h2>
 
         <div className={`flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto ${isAr ? 'justify-end' : 'justify-start'}`}>
+          
           <button 
             onClick={handlePlaySurahGlobal}
             className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-bold transition-all shadow-sm ${!isAr && 'font-sans'} ${
@@ -575,23 +581,28 @@ export default function SurahDetail() {
         </div>
       </div>
 
+      {/* ✅ حاوية صفحة المصحف الأصلي */}
       <div 
-        className={`px-4 md:px-12 py-8 rounded-xl shadow-md border-x border-b transition-colors duration-300 min-h-[75vh] flex flex-col justify-between ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"}`}
+        className={`px-4 md:px-12 py-8 rounded-2xl md:rounded-3xl shadow-lg border transition-colors duration-300 min-h-[75vh] flex flex-col justify-between ${
+          isDarkMode ? "bg-gray-800 border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"
+        }`}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         
-        <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"} font-bold text-sm md:text-base`}>
+        {/* هيدر صفحة المصحف */}
+        <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${
+          isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"
+        } font-bold text-sm md:text-base`}>
           <span>{isAr ? surah.name : surah.englishName}</span>
           <span>{t.juz} {currentJuz}</span>
         </div>
 
         <div className={`transition-opacity duration-300 ease-in-out text-center flex-1 ${isAnimating ? "opacity-0" : "opacity-100"}`}>
-          
           {currentAyahs.some(a => a.numberInSurah === 1) && (
             <>
-              <div className="relative flex items-center justify-center mb-8 mt-4 mx-auto w-[260px] h-[60px] md:w-[380px] md:h-[80px]">
+              <div className="relative flex items-center justify-center mb-8 mt-2 mx-auto w-[260px] h-[60px] md:w-[380px] md:h-[80px]">
                 <svg viewBox="0 0 400 80" className="absolute inset-0 w-full h-full drop-shadow-sm" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="2" y="2" width="396" height="76" stroke={themeColor} strokeWidth="2" />
                   <rect x="8" y="8" width="384" height="64" stroke={themeColor} strokeWidth="1" />
@@ -610,20 +621,19 @@ export default function SurahDetail() {
               </div>
 
               {surah.number !== 1 && surah.number !== 9 && (
-                <div className={`text-center ${isAr ? 'text-2xl md:text-4xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+                <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
                   {isAr ? "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" : "In the name of Allah..."}
                 </div>
               )}
             </>
           )}
-          
           <div 
             className={isAr ? "font-quran" : "font-sans"} 
             style={{ 
               textAlign: isAr ? 'justify' : 'left',
               textAlignLast: isAr ? 'center' : 'left', 
               direction: isAr ? 'rtl' : 'ltr',
-              lineHeight: `${fontSize * (isAr ? 2 : 1.6)}px` 
+              lineHeight: isAr ? '2.4' : '1.8'
             }}
           >
             {currentAyahs.map((ayah) => {
@@ -638,7 +648,7 @@ export default function SurahDetail() {
               return (
                 <span 
                   key={ayah.numberInSurah}
-                  onClick={() => isMemorizationMode ? handleAyahClick(ayah) : handleAyahClick(ayah)} 
+                  onClick={() => handleAyahClick(ayah)} 
                   className={`transition-colors duration-300 cursor-pointer inline ${
                     isAyahPlaying 
                       ? (isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]") 
@@ -647,9 +657,9 @@ export default function SurahDetail() {
                   style={{ fontSize: `${fontSize}px` }}
                 >
                   {cleanAyahText}
-                  
+            
                   <span 
-                    className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[3px] border-double transition-all ${
+                    className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all ${
                       isAyahPlaying 
                         ? "bg-[#D4A373] text-white border-[#D4A373]" 
                         : (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]")
@@ -669,6 +679,7 @@ export default function SurahDetail() {
           </div>
         </div>
 
+   
         <div className={`flex items-center justify-between mt-8 md:mt-10 pt-4 border-t ${isDarkMode ? "border-gray-700" : "border-[#F0EBE1]/60"}`}>
           <button
             onClick={handlePrevPage}
