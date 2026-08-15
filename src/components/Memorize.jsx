@@ -424,7 +424,7 @@ export default function Memorize() {
   const NextPageIcon = isAr ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
+    <div className="max-w-4xl mx-auto px-4 md:px-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
       
       <div className="text-center mb-6 mt-4 px-2">
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-7 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>

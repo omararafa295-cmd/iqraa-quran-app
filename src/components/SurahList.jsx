@@ -243,7 +243,7 @@ export default function SurahList() {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-<div className="max-w-6xl mx-auto p-4 md:p-6 pt-2 md:pt-3 pb-24" dir={isAr ? "rtl" : "ltr"}>
+<div className="max-w-6xl mx-auto p-4 md:p-6 pt-2 md:pt-4 pb-32" dir={isAr ? "rtl" : "ltr"}>
       
       <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl transition-all duration-500 ${
         isDarkMode 

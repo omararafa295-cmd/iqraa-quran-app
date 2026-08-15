@@ -31,7 +31,7 @@ export default function Hadith() {
   const [bookmarks, setBookmarks] = useState(() => {
     try { return JSON.parse(localStorage.getItem("hadith_bookmarks_v2") || "[]"); } catch { return []; }
   });
-  const [activeBook, setActiveBook] = useState(FAVORITES_ID); 
+  const [activeBook, setActiveBook] = useState(FAVORITES_ID);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [hadithsByBook, setHadithsByBook] = useState({}); 
@@ -44,7 +44,6 @@ export default function Hadith() {
   const [selectedHadith, setSelectedHadith] = useState(null);
   const dailyPickedRef = useRef({});
 
-  // لضبط الكتاب الافتراضي عند فتح الصفحة لأول مرة ليكون البخاري إذا أردت
   useEffect(() => {
     setActiveBook("bukhari");
   }, []);
@@ -52,7 +51,6 @@ export default function Hadith() {
   useEffect(() => {
     localStorage.setItem("hadith_bookmarks_v2", JSON.stringify(bookmarks));
   }, [bookmarks]);
-
 
   useEffect(() => {
     setSelectedHadith(null);
@@ -178,7 +176,7 @@ export default function Hadith() {
   const showDaily = !searchQuery && dailyHadith && activeBook !== FAVORITES_ID;
 
   const HadithSkeleton = () => (
-    <div className={`p-6 rounded-3xl border animate-pulse shadow-sm ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#F0EBE1]"}`}>
+    <div className={`p-5 md:p-6 rounded-3xl border animate-pulse shadow-sm ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#F0EBE1]"}`}>
       <div className={`h-4 rounded-full mb-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} style={{ width: '90%' }} />
       <div className={`h-4 rounded-full mb-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} style={{ width: '70%' }} />
       <div className={`h-4 rounded-full mb-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} style={{ width: '40%' }} />
@@ -186,50 +184,51 @@ export default function Hadith() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
 
-      <div className="text-center mb-6 mt-4 px-2">
-        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 border-2 shadow-sm transition-colors ${
+    <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
+
+      <div className="text-center mb-4 md:mb-6 mt-0 md:mt-2 px-2">
+        <div className={`w-12 h-12 md:w-16 md:h-16 mx-auto rounded-full flex items-center justify-center mb-3 md:mb-4 border-2 shadow-sm transition-colors ${
           isDarkMode ? "bg-gray-800 border-[#E6B981] text-[#E6B981]" : "bg-[#FDFBF7] border-[#D4A373] text-[#D4A373]"
         }`}>
-          <ScrollText size={32} />
+          <ScrollText size={24} className="md:w-8 md:h-8" />
         </div>
-        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-3 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-2 md:mb-3 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
           {t.title}
         </h2>
-        <p className="text-gray-500 text-xs md:text-sm font-medium mb-6">{t.subtitle}</p>
+        <p className="text-gray-500 text-[10px] md:text-sm font-medium mb-4 md:mb-6">{t.subtitle}</p>
       </div>
 
-      <div className="relative mb-6 max-w-2xl mx-auto">
+      <div className="relative mb-5 md:mb-6 max-w-2xl mx-auto">
         <input
           type="text"
           placeholder={t.search}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full p-4 ${isAr ? 'pr-14' : 'pl-14'} rounded-2xl border focus:outline-none shadow-sm transition-colors font-medium text-sm md:text-base ${
+          className={`w-full p-3.5 md:p-4 ${isAr ? 'pr-12 md:pr-14' : 'pl-12 md:pl-14'} rounded-2xl border focus:outline-none shadow-sm transition-colors font-medium text-xs md:text-base ${
             isDarkMode ? 'bg-gray-800 border-gray-700 text-[#E6B981] focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'
           }`}
         />
-        <Search className={`absolute ${isAr ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} size={20} />
+        <Search className={`absolute ${isAr ? 'right-4 md:right-5' : 'left-4 md:left-5'} top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} size={18} />
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-4 mb-6">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-4 mb-4 md:mb-6">
         <button
           onClick={() => { setActiveBook(FAVORITES_ID); setSearchQuery(""); }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-sm shrink-0 transition-all whitespace-nowrap ${
             activeBook === FAVORITES_ID
               ? (isDarkMode ? "bg-[#E6B981] text-gray-900 shadow-md" : "bg-[#D4A373] text-white shadow-md")
               : (isDarkMode ? "bg-gray-800 text-[#E6B981] hover:text-gray-200" : "bg-white border border-[#F0EBE1] text-[#D4A373] hover:bg-gray-50")
           }`}
         >
-          <Bookmark size={16} className={activeBook === FAVORITES_ID ? "fill-current" : ""} />
+          <Bookmark size={14} className={activeBook === FAVORITES_ID ? "fill-current" : ""} />
           {t.favorites}
         </button>
         {BOOKS.map(book => (
           <button
             key={book.id}
             onClick={() => { setActiveBook(book.id); setSearchQuery(""); }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-sm shrink-0 transition-all whitespace-nowrap ${
               activeBook === book.id
                 ? (isDarkMode ? "bg-[#E6B981] text-gray-900 shadow-md" : "bg-[#D4A373] text-white shadow-md")
                 : (isDarkMode ? "bg-gray-800 text-gray-400 hover:text-[#E6B981]" : "bg-white border border-[#F0EBE1] text-gray-600 hover:bg-gray-50")
@@ -242,44 +241,44 @@ export default function Hadith() {
 
       <div>
         {loadingInitial && activeBook !== FAVORITES_ID ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <HadithSkeleton /><HadithSkeleton /><HadithSkeleton /><HadithSkeleton />
           </div>
         ) : loadError ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <WifiOff size={40} className={isDarkMode ? "text-gray-600 mb-4" : "text-gray-300 mb-4"} />
-            <p className="text-gray-500 font-medium mb-5">{t.loadError}</p>
+          <div className="flex flex-col items-center justify-center py-10 md:py-16 text-center">
+            <WifiOff size={36} className={isDarkMode ? "text-gray-600 mb-3" : "text-gray-300 mb-3"} />
+            <p className="text-gray-500 font-medium text-sm md:text-base mb-4">{t.loadError}</p>
             <button
               onClick={() => loadNextSection(activeBook, true)}
-              className={`px-6 py-2.5 rounded-full font-bold text-sm ${isDarkMode ? 'bg-gray-800 text-[#E6B981] border border-gray-700' : 'bg-white text-[#D4A373] border border-[#F0EBE1] shadow-sm'}`}
+              className={`px-5 py-2 rounded-full font-bold text-xs md:text-sm ${isDarkMode ? 'bg-gray-800 text-[#E6B981] border border-gray-700' : 'bg-white text-[#D4A373] border border-[#F0EBE1] shadow-sm'}`}
             >
               {t.retry}
             </button>
           </div>
         ) : displayedList.length === 0 ? (
-          <div className="text-center py-16 text-gray-500 font-medium">
+          <div className="text-center py-12 md:py-16 text-gray-500 text-sm md:text-base font-medium">
             {activeBook === FAVORITES_ID ? t.emptyFav : (searchQuery ? t.emptySearch : "")}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start">
+
             {showDaily && (
               <div 
                 onClick={() => setSelectedHadith(dailyHadith)}
-                className={`col-span-1 md:col-span-2 cursor-pointer p-6 rounded-3xl shadow-md border transition-all hover:scale-[1.01] overflow-hidden ${
+                className={`col-span-1 md:col-span-2 cursor-pointer p-5 md:p-6 rounded-3xl shadow-md border transition-all hover:scale-[1.01] overflow-hidden ${
                   isDarkMode ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700" : "bg-gradient-to-br from-[#FDFBF7] to-white border-[#D4A373]/30"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles size={18} className={isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"} />
-                  <h3 className={`font-bold text-sm ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>{t.daily}</h3>
+                  <Sparkles size={16} className={isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"} />
+                  <h3 className={`font-bold text-xs md:text-sm ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>{t.daily}</h3>
                 </div>
-                <p className={`text-lg md:text-xl font-medium line-clamp-3 leading-relaxed ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-gray-800"}`}>
+                <p className={`text-base md:text-xl font-medium line-clamp-3 leading-relaxed ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}>
                   {dailyHadith.text}
                 </p>
                 <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50 flex justify-between items-center">
-                  <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{sourceLabelFor(dailyHadith.bookId, dailyHadith.hadithnumber)}</span>
-                  <span className={`text-xs font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.readMore}</span>
+                  <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{sourceLabelFor(dailyHadith.bookId, dailyHadith.hadithnumber)}</span>
+                  <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.readMore}</span>
                 </div>
               </div>
             )}
@@ -292,13 +291,13 @@ export default function Hadith() {
                 <div 
                   key={hadith.id}
                   onClick={() => setSelectedHadith(hadith)}
-                  className={`cursor-pointer flex flex-col p-5 rounded-3xl shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                  className={`cursor-pointer flex flex-col p-4 md:p-5 rounded-3xl shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
                     isDarkMode ? "bg-gray-800 border-gray-700 hover:border-[#E6B981]/50" : "bg-white border-[#F0EBE1] hover:border-[#D4A373]/60"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     {hadith.grade && (
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                      <span className={`text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-full ${
                         isDarkMode ? 'bg-[#E6B981]/15 text-[#E6B981]' : 'bg-[#D4A373]/10 text-[#B5793A]'
                       }`}>
                         {hadith.grade}
@@ -306,25 +305,26 @@ export default function Hadith() {
                     )}
                     <button
                       onClick={(e) => toggleBookmark(e, hadith, sourceLabel)}
-                      className={`p-1.5 rounded-lg transition-colors ${bookmarked ? (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') : 'text-gray-400 hover:text-[#D4A373]'}`}
+                      className={`p-1 md:p-1.5 rounded-lg transition-colors ${bookmarked ? (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') : 'text-gray-400 hover:text-[#D4A373]'}`}
                     >
-                      {bookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+                      {bookmarked ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
                     </button>
                   </div>
 
-                  <div className="relative mb-4">
-                    <p className={`text-[15px] md:text-base leading-loose font-medium line-clamp-3 ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-gray-700"}`}>
+              
+                  <div className="relative mb-3 md:mb-4">
+                    <p className={`text-[14px] md:text-base leading-loose font-medium line-clamp-3 ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-gray-700"}`}>
                       {hadith.text}
                     </p>
-                   
-                    <div className={`absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t ${isDarkMode ? 'from-gray-800' : 'from-white'} to-transparent`} />
+                  
+                    <div className={`absolute bottom-0 left-0 w-full h-6 md:h-8 bg-gradient-to-t ${isDarkMode ? 'from-gray-800' : 'from-white'} to-transparent`} />
                   </div>
 
                   <div className={`mt-auto pt-3 border-t flex items-center justify-between gap-2 ${isDarkMode ? "border-gray-700/50" : "border-[#F0EBE1]"}`}>
-                    <span className={`text-[11px] font-bold truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className={`text-[10px] md:text-[11px] font-bold truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {sourceLabel}
                     </span>
-                    <span className={`text-[11px] font-bold shrink-0 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+                    <span className={`text-[10px] md:text-[11px] font-bold shrink-0 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
                       {t.readMore}
                     </span>
                   </div>
@@ -334,16 +334,15 @@ export default function Hadith() {
           </div>
         )}
 
-        {/* زرار تحميل المزيد */}
         {activeBook !== FAVORITES_ID && !searchQuery && !loadingInitial && !loadError && (
-          <div className="flex flex-col items-center pt-8">
+          <div className="flex flex-col items-center pt-6 md:pt-8">
             {hasMoreByBook[activeBook] === false ? (
-              <p className="text-xs text-gray-400 font-medium">{t.endOfBook}</p>
+              <p className="text-[10px] md:text-xs text-gray-400 font-medium">{t.endOfBook}</p>
             ) : (
               <button
                 onClick={() => loadNextSection(activeBook, false)}
                 disabled={loadingMore}
-                className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all shadow-sm ${
+                className={`flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm transition-all shadow-sm ${
                   isDarkMode ? 'bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700' : 'bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50'
                 }`}
               >
@@ -354,6 +353,7 @@ export default function Hadith() {
           </div>
         )}
       </div>
+
       {selectedHadith && (
         <div 
           className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4"
@@ -365,25 +365,25 @@ export default function Hadith() {
             }`}
             onClick={e => e.stopPropagation()}
           >
-         
-            <div className={`flex items-center justify-between p-5 md:p-6 border-b shrink-0 ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+            {/* هيدر المودال */}
+            <div className={`flex items-center justify-between p-4 md:p-6 border-b shrink-0 ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="flex items-center gap-2">
-                <BookOpen size={18} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
-                <span className={`font-bold text-sm md:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                <BookOpen size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <span className={`font-bold text-xs md:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                   {sourceLabelFor(selectedHadith.bookId, selectedHadith.hadithnumber)}
                 </span>
               </div>
               <button 
                 onClick={() => setSelectedHadith(null)}
-                className={`p-2 rounded-full transition-colors ${isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-red-400' : 'bg-gray-100 text-gray-500 hover:text-red-500'}`}
+                className={`p-1.5 md:p-2 rounded-full transition-colors ${isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-red-400' : 'bg-gray-100 text-gray-500 hover:text-red-500'}`}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 md:p-8 overflow-y-auto relative">
+            <div className="p-5 md:p-8 overflow-y-auto relative">
               {selectedHadith.grade && (
-                <span className={`inline-block mb-5 text-[11px] font-bold px-3 py-1.5 rounded-full ${
+                <span className={`inline-block mb-4 md:mb-5 text-[10px] md:text-[11px] font-bold px-3 py-1 md:py-1.5 rounded-full ${
                   isDarkMode ? 'bg-[#E6B981]/15 text-[#E6B981]' : 'bg-[#D4A373]/10 text-[#B5793A]'
                 }`}>
                   {selectedHadith.grade}
@@ -391,35 +391,35 @@ export default function Hadith() {
               )}
 
               <div className="relative">
-                <span className={`absolute -top-6 -right-2 text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
-                <p className={`text-[19px] md:text-2xl leading-[2.4] font-medium ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-[#2b241d]"}`}>
+                <span className={`absolute -top-5 md:-top-6 -right-2 md:-right-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
+                <p className={`text-[17px] md:text-2xl leading-[2.2] md:leading-[2.4] font-medium ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-[#2b241d]"}`}>
                   {selectedHadith.text}
                 </p>
-                <span className={`absolute -bottom-6 -left-2 text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
+                <span className={`absolute -bottom-5 md:-bottom-6 -left-2 md:-left-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
               </div>
             </div>
 
-            <div className={`p-5 md:p-6 border-t shrink-0 flex items-center justify-between gap-3 ${isDarkMode ? 'bg-gray-900 border-gray-800 rounded-b-[2.5rem]' : 'bg-white border-gray-200 rounded-b-[2.5rem]'}`}>
+            <div className={`p-4 md:p-6 border-t shrink-0 flex items-center justify-between gap-2 md:gap-3 ${isDarkMode ? 'bg-gray-900 border-gray-800 rounded-b-[2.5rem]' : 'bg-white border-gray-200 rounded-b-[2.5rem]'}`}>
               <button
                 onClick={(e) => handleCopy(e, selectedHadith, sourceLabelFor(selectedHadith.bookId, selectedHadith.hadithnumber))}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all border shadow-sm ${
+                className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all border shadow-sm ${
                   copiedId === selectedHadith.id 
                     ? "bg-green-500 text-white border-green-500" 
                     : (isDarkMode ? "bg-gray-800 border-gray-700 text-[#E6B981] hover:bg-gray-700" : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100")
                 }`}
               >
-                {copiedId === selectedHadith.id ? <><Check size={18} /> {isAr ? "تم النسخ" : "Copied"}</> : <><Copy size={18} /> {isAr ? "نسخ" : "Copy"}</>}
+                {copiedId === selectedHadith.id ? <><Check size={16} /> {isAr ? "تم النسخ" : "Copied"}</> : <><Copy size={16} /> {isAr ? "نسخ" : "Copy"}</>}
               </button>
 
               <button
                 onClick={(e) => toggleBookmark(e, selectedHadith, sourceLabelFor(selectedHadith.bookId, selectedHadith.hadithnumber))}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all border shadow-sm ${
+                className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all border shadow-sm ${
                   isBookmarked(selectedHadith.id)
                     ? (isDarkMode ? "bg-amber-950/60 border-[#E6B981] text-[#E6B981]" : "bg-amber-50 border-[#D4A373] text-[#D4A373]")
                     : (isDarkMode ? "bg-[#E6B981] text-gray-900 border-[#E6B981] hover:bg-[#d6a575]" : "bg-[#D4A373] text-white border-[#D4A373] hover:bg-[#b58555]")
                 }`}
               >
-                {isBookmarked(selectedHadith.id) ? <><BookmarkCheck size={18} /> {isAr ? "محفوظ" : "Saved"}</> : <><Bookmark size={18} /> {isAr ? "حفظ" : "Save"}</>}
+                {isBookmarked(selectedHadith.id) ? <><BookmarkCheck size={16} /> {isAr ? "محفوظ" : "Saved"}</> : <><Bookmark size={16} /> {isAr ? "حفظ" : "Save"}</>}
               </button>
             </div>
           </div>

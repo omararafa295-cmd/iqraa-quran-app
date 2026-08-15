@@ -285,7 +285,7 @@ export default function PrayerTimes() {
   }, [arcData]);
 
   return (
-    <div className="max-w-md mx-auto p-4 md:p-6 pt-20" dir={isAr ? "rtl" : "ltr"}>
+    <div className="max-w-4xl mx-auto px-4 md:px-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
       <style>{`
         @keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
