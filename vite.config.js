@@ -9,29 +9,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg}'],
-        maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
-        runtimeCaching: [
-          {
-            urlPattern: /\/images\/.*\.(webp|png|jpg|svg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'quran-images-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // تخزين لمدة 30 يوم
-              }
-            }
-          }
-        ]
-      },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.png', 'icon-192.png', 'logo.png'], 
       manifest: {
         id: '/',
         start_url: '/',
-        name: 'اقرأ | Iqraa', 
-        short_name: 'Iqraa', 
+        name: 'اقرأ | Iqraa',
+        short_name: 'Iqraa',
         description: 'تطبيق إسلامي شامل يحتوي على القرآن، الأذكار، التسميع، مواقيت الصلاة، والقبلة.',
         theme_color: '#D4A373',
         background_color: '#FDFBF7',
@@ -65,16 +48,28 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg}'],
+        maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
         runtimeCaching: [
+          {
+            urlPattern: /\/images\/.*\.(webp|png|jpg|svg)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'quran-images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // تخزين لمدة 30 يوم
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'quran-text-cache',
               expiration: {
-                maxEntries: 150, 
-                maxAgeSeconds: 60 * 60 * 24 * 365 
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
