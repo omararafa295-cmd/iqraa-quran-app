@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate 
 import { 
   BookOpen, Compass, Clock, Moon, Sun, SunMoon, 
   Radio as RadioIcon, Mic, Download, Info, Bookmark, 
-  Trash2, X 
+  Trash2, X, ScrollText 
 } from "lucide-react";
 import SurahList from "./components/SurahList";
 import SurahDetail from "./components/SurahDetail";
@@ -17,6 +17,7 @@ import DeveloperModal from './components/DeveloperModal';
 import UpdateBanner from './components/UpdateBanner';
 import { sendKhatmaReminderNotification } from './utils/notificationHelper';
 import FloatingPlayer from "./components/FloatingPlayer";
+import Hadith from "./components/Hadith";
 
 export const AppContext = createContext();
 
@@ -70,7 +71,7 @@ const TopBar = () => {
       <div className="w-full pt-4 pb-1 px-4 md:px-6 relative z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           
-          {/* الأزرار على اليسار */}
+          
           <div className="flex items-center gap-2" dir="ltr">
             {deferredPrompt && (
               <button 
@@ -137,7 +138,6 @@ const TopBar = () => {
       </div>
 
       <DeveloperModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
 
       {isBookmarkDrawerOpen && (
         <div 
@@ -251,34 +251,62 @@ const BottomNav = () => {
   if (location.pathname.includes('/surah/') || location.pathname.includes('/juz/')) return null;
 
   return (
-    <div className={`fixed bottom-0 left-0 w-full border-t shadow-[0_-4px_20px_rgba(0,0,0,0.02)] z-50 rounded-t-3xl pb-safe transition-colors ${
+    <div className={`fixed bottom-0 left-0 w-full border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 rounded-t-3xl pb-safe transition-colors ${
       isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-[#F0EBE1]"
     }`}>
-      <div className="flex justify-between items-center p-1.5 max-w-md mx-auto px-2" dir={isAr ? "rtl" : "ltr"}>
-        <Link to="/" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <BookOpen size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القرآن' : 'Quran'}</span>
-        </Link>
-        <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <RadioIcon size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الراديو' : 'Radio'}</span>
-        </Link>
-        <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <Mic size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'التسميع' : 'Memorize'}</span>
-        </Link>
-        <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <SunMoon size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأذكار' : 'Azkar'}</span>
-        </Link>
-        <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <Clock size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'المواقيت' : 'Prayers'}</span>
-        </Link>
-        <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4A373]' : 'text-gray-400'}`}>
-          <Compass size={20} />
-          <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القبلة' : 'Qibla'}</span>
-        </Link>
+      <div className="relative max-w-md mx-auto px-3 h-16 flex justify-between items-center" dir={isAr ? "rtl" : "ltr"}>
+        
+        
+        <div className="flex w-[39%] justify-between items-center">
+          <Link to="/hadith" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/hadith' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <ScrollText size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأحاديث' : 'Hadiths'}</span>
+          </Link>
+          <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <SunMoon size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأذكار' : 'Azkar'}</span>
+          </Link>
+          <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <RadioIcon size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الراديو' : 'Radio'}</span>
+          </Link>
+        </div>
+
+          <div className="absolute left-1/2 -translate-x-1/2 -top-8 z-50">
+          <Link 
+            to="/" 
+            className={`flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full border-[6px] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${
+              location.pathname === '/' 
+                ? (isDarkMode ? 'bg-[#E6B981] border-gray-900 text-gray-900 shadow-[#E6B981]/20' : 'bg-[#D4A373] border-white text-white shadow-[#D4A373]/30')
+                : (isDarkMode ? 'bg-gray-800 border-gray-900 text-gray-400 hover:text-[#E6B981]' : 'bg-[#FDFBF7] border-white text-gray-400 hover:text-[#D4A373]')
+            }`}
+            title={isAr ? 'القرآن الكريم' : 'Quran'}
+          >
+            <BookOpen 
+              size={24} 
+              strokeWidth={location.pathname === '/' ? 2.5 : 2} 
+              className={location.pathname === '/' ? "animate-pulse" : ""} 
+            />
+            <span className={`text-[10px] font-bold mt-1 ${!isAr && 'font-sans tracking-wide'}`}>
+              {isAr ? 'القرآن' : 'Quran'}
+            </span>
+          </Link>
+        </div>
+        <div className="flex w-[39%] justify-between items-center">
+          <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <Mic size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'التسميع' : 'Memorize'}</span>
+          </Link>
+          <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <Clock size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'المواقيت' : 'Prayers'}</span>
+          </Link>
+          <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+            <Compass size={20} />
+            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القبلة' : 'Qibla'}</span>
+          </Link>
+        </div>
+
       </div>
     </div>
   );
@@ -347,6 +375,7 @@ export default function App() {
             <Route path="/azkar" element={<Azkar />} />
             <Route path="/radio" element={<Radio />} />
             <Route path="/memorize" element={<Memorize />} />
+            <Route path="/hadith" element={<Hadith />} />
           </Routes>
           <BottomNav />
         </Router>
