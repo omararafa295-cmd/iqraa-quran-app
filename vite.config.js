@@ -31,7 +31,7 @@ export default defineConfig({
         id: '/',
         start_url: '/',
         name: 'اقرأ | Iqraa', 
-        short_name: 'اقرأ', 
+        short_name: 'Iqraa', 
         description: 'تطبيق إسلامي شامل يحتوي على القرآن، الأذكار، التسميع، مواقيت الصلاة، والقبلة.',
         theme_color: '#D4A373',
         background_color: '#FDFBF7',
