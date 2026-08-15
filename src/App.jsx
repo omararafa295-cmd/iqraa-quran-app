@@ -21,29 +21,13 @@ import FloatingPlayer from "./components/FloatingPlayer";
 export const AppContext = createContext();
 
 const TopBar = () => {
-  const { isDarkMode, setIsDarkMode, lang, setLang } = useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, lang, setLang, bookmarks, setBookmarks } = useContext(AppContext);
   const isAr = lang === 'ar';
   const navigate = useNavigate();
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [bookmarks, setBookmarks] = useState([]);
   const [isBookmarkDrawerOpen, setIsBookmarkDrawerOpen] = useState(false);
-
-  const loadBookmarks = () => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("quran_bookmarks") || "[]");
-      setBookmarks(saved);
-    } catch {
-      setBookmarks([]);
-    }
-  };
-
-  useEffect(() => {
-    loadBookmarks();
-    window.addEventListener("storage", loadBookmarks);
-    return () => window.removeEventListener("storage", loadBookmarks);
-  }, []);
 
   useEffect(() => {
     const handlePrompt = (e) => {
@@ -62,11 +46,6 @@ const TopBar = () => {
         setDeferredPrompt(null);
       }
     }
-  };
-
-  const openBookmarkDrawer = () => {
-    loadBookmarks();
-    setIsBookmarkDrawerOpen(true);
   };
 
   const deleteBookmark = (e, index) => {
@@ -88,7 +67,6 @@ const TopBar = () => {
 
   return (
     <>
-      {/* ✅ شريط علوي طبيعي التدفق (Normal Flow) لمنع أي تداخل مع الهيرو نهائياً */}
       <div className="w-full pt-4 pb-1 px-4 md:px-6 relative z-30">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           
@@ -136,9 +114,8 @@ const TopBar = () => {
             </button>
           </div>
 
-          {/* زر العلامات المرجعية على اليمين */}
           <button
-            onClick={openBookmarkDrawer}
+            onClick={() => setIsBookmarkDrawerOpen(true)}
             className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
               isDarkMode 
                 ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" 
@@ -161,7 +138,7 @@ const TopBar = () => {
 
       <DeveloperModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-      {/* 📚 الدرج الجانبي للعلامات المرجعية */}
+
       {isBookmarkDrawerOpen && (
         <div 
           className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300"
@@ -314,6 +291,14 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRadioPlaying, setIsRadioPlaying] = useState(false);
 
+  const [bookmarks, setBookmarks] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("quran_bookmarks") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
     localStorage.setItem("darkMode", isDarkMode);
   }, [isDarkMode]);
@@ -345,7 +330,8 @@ export default function App() {
       lang, setLang, 
       currentAudio, setCurrentAudio, 
       isPlaying, setIsPlaying, 
-      isRadioPlaying, setIsRadioPlaying 
+      isRadioPlaying, setIsRadioPlaying,
+      bookmarks, setBookmarks
     }}>
       <div className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FFFdf9] text-gray-900"}`}>
         <Router>

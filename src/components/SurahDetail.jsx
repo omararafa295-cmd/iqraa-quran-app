@@ -14,7 +14,7 @@ export default function SurahDetail() {
   const navigate = useNavigate();
   const location = useLocation(); 
   
-  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, setIsRadioPlaying } = useContext(AppContext);
+  const { isDarkMode, lang, currentAudio, setCurrentAudio, isPlaying, setIsPlaying, setIsRadioPlaying, bookmarks, setBookmarks } = useContext(AppContext);
   const isAr = lang === 'ar'; 
   
   const [surah, setSurah] = useState(null);
@@ -39,14 +39,12 @@ export default function SurahDetail() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
-  // 🎯 حالات قائمة الخيارات المنبثقة الذكية وموضعها
   const [activeAyahMenu, setActiveAyahMenu] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedAyahForTafsir, setSelectedAyahForTafsir] = useState(null);
   const [selectedTafsirEdition, setSelectedTafsirEdition] = useState("ar.muyassar");
   const [dynamicTafsirText, setDynamicTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
-  const [bookmarks, setBookmarks] = useState(() => JSON.parse(localStorage.getItem("quran_bookmarks") || "[]"));
 
   const [touchStartX, setTouchStartX] = useState(null);
   const [touchEndX, setTouchEndX] = useState(null);
@@ -483,6 +481,7 @@ export default function SurahDetail() {
     setActiveAyahMenu(ayah);
   };
 
+  // 🔖 تحديث العلامات المرجعية اللحظي (Real-time)
   const toggleBookmark = (ayah) => {
     const isBookmarked = bookmarks.some(b => b.surahNumber === surah.number && b.ayahNumberInSurah === ayah.numberInSurah);
     let updated;
@@ -518,7 +517,9 @@ export default function SurahDetail() {
     return paragraphs.map((para, idx) => (
       <p 
         key={idx} 
-        className="mb-3.5 leading-[2.3] text-justify text-base md:text-[17px] text-gray-700 dark:text-gray-200"
+        className={`mb-4 leading-[2.4] text-justify text-base md:text-lg font-medium transition-colors ${
+          isDarkMode ? "text-gray-100" : "text-[#2b241d]"
+        }`}
       >
         {para}
       </p>
@@ -622,7 +623,7 @@ export default function SurahDetail() {
         </div>
       )}
 
-      {/* ✅ الهيدر العلوي مع رفع z-index وتفعيل الضغطات بدقة */}
+      {/* الهيدر العلوي */}
       <div className="relative z-30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6 px-2 w-full">
         <h2 className={`text-2xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
           {isAr ? surah?.name : surah?.englishName}
@@ -744,7 +745,6 @@ export default function SurahDetail() {
         </div>
       </div>
 
-      {/* صفحة المصحف */}
       <div 
         className={`px-4 md:px-12 py-8 rounded-2xl md:rounded-3xl shadow-lg border transition-colors duration-300 min-h-[75vh] flex flex-col justify-between ${
           isDarkMode ? "bg-gray-800 border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"
@@ -829,7 +829,6 @@ export default function SurahDetail() {
                 >
                   {cleanAyahText}
                   
-                  {/* رقم الآية الدائري */}
                   <span 
                     className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all relative ${
                       isAyahPlaying || isMenuActive
@@ -889,7 +888,6 @@ export default function SurahDetail() {
         </div>
       </div>
 
-      {/* 🎯 قائمة خيارات الآية العائمة الذكية */}
       {activeAyahMenu && (
         <>
           <div 
@@ -907,7 +905,6 @@ export default function SurahDetail() {
             }`}
             dir={isAr ? "rtl" : "ltr"}
           >
-            {/* 1. التفسير */}
             <button
               onClick={() => {
                 setSelectedAyahForTafsir(activeAyahMenu);
@@ -921,7 +918,6 @@ export default function SurahDetail() {
               <BookOpen size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
             </button>
 
-            {/* 2. الاستماع للآية */}
             <button
               onClick={() => handlePlaySingleAyah(activeAyahMenu)}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
@@ -932,7 +928,6 @@ export default function SurahDetail() {
               <Volume2 size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
             </button>
 
-            {/* 3. إضافة / إزالة علامة مرجعية */}
             <button
               onClick={() => toggleBookmark(activeAyahMenu)}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
@@ -954,11 +949,10 @@ export default function SurahDetail() {
         </>
       )}
 
-      {/* 📖 مودال التفاسير المتعددة */}
       {selectedAyahForTafsir && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAyahForTafsir(null)}>
           <div className={`w-full max-w-xl p-5 md:p-6 rounded-[2.5rem] shadow-2xl border transform transition-all ${
-            isDarkMode ? "bg-gray-900 border-gray-700 text-gray-200" : "bg-white border-[#F0EBE1] text-gray-800"
+            isDarkMode ? "bg-gray-900 border-gray-700 text-gray-100" : "bg-white border-[#F0EBE1] text-[#2b241d]"
           }`} onClick={e => e.stopPropagation()} dir={isAr ? 'rtl' : 'ltr'}>
             
             <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -974,21 +968,19 @@ export default function SurahDetail() {
             </div>
             
             <p className={`${isAr ? 'font-quran text-center' : 'font-sans font-medium text-left'} text-lg md:text-xl leading-loose mb-3 p-3 rounded-2xl border ${
-              isDarkMode ? 'bg-gray-800/60 border-gray-700 text-gray-200' : 'bg-[#FDFBF7] border-[#F0EBE1] text-gray-700'
+              isDarkMode ? 'bg-gray-800/60 border-gray-700 text-gray-100' : 'bg-[#FDFBF7] border-[#F0EBE1] text-[#2b241d]'
             }`}>
               {formatAyahText(selectedAyahForTafsir.text, selectedAyahForTafsir.numberInSurah, surah?.number)}
             </p>
-
-            {/* شريط اختيار المفسر */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none">
               {tafsirEditionsList.map(ed => (
                 <button
                   key={ed.id}
                   onClick={() => setSelectedTafsirEdition(ed.id)}
-                  className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
                     selectedTafsirEdition === ed.id
                       ? (isDarkMode ? 'bg-[#E6B981] text-gray-900 shadow-md' : 'bg-[#D4A373] text-white shadow-md')
-                      : (isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-gray-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                      : (isDarkMode ? 'bg-gray-800 text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
                   }`}
                 >
                   {ed.name}
@@ -996,7 +988,7 @@ export default function SurahDetail() {
               ))}
             </div>
             
-            <div className={`p-4 md:p-5 rounded-2xl shadow-inner border max-h-[42vh] overflow-y-auto ${
+            <div className={`p-4 md:p-5 rounded-2xl shadow-inner border max-h-[44vh] overflow-y-auto ${
               isDarkMode ? "bg-[#161b22] border-gray-700" : "bg-[#FDFBF7] border-[#F0EBE1]"
             }`}>
               {isTafsirLoading ? (
@@ -1013,8 +1005,6 @@ export default function SurahDetail() {
           </div>
         </div>
       )}
-
-      {/* مودال إعدادات حجم الخط */}
       {showSettings && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
           <div className={`w-full max-w-sm p-5 md:p-6 rounded-3xl shadow-xl ${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"}`} onClick={e => e.stopPropagation()} dir={isAr ? "rtl" : "ltr"}>
