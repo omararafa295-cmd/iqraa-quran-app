@@ -1,51 +1,115 @@
 import { useState, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"; 
+import { ArrowLeft, ArrowRight, Loader2, WifiOff, RefreshCw } from "lucide-react"; 
 import { AppContext } from "../App";
 
 export default function JuzDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { isDarkMode, lang } = useContext(AppContext);
   const isAr = lang === 'ar';
 
   const [surahsInJuz, setSurahsInJuz] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [offlineError, setOfflineError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     setLoading(true);
+    setOfflineError(false);
+
     const cachedSurahs = JSON.parse(localStorage.getItem('offline_surahs_list') || "[]");
+    const juzUrl = `https://api.alquran.cloud/v1/juz/${id}/quran-uthmani`;
 
-    axios.get(`https://api.alquran.cloud/v1/juz/${id}`)
-      .then(res => {
-        const ayahs = res.data?.data?.ayahs || [];
-        const surahsMap = {};
+    const processJuzData = (ayahs) => {
+      const surahsMap = {};
 
-        ayahs.forEach(ayah => {
-          if (!surahsMap[ayah.surah.number]) {
-            const cachedSurah = cachedSurahs.find(s => s.number === ayah.surah.number);
-            
-            surahsMap[ayah.surah.number] = {
-              ...ayah.surah,
-              englishName: cachedSurah ? cachedSurah.englishName : `Surah ${ayah.surah.number}`,
-              startAyah: ayah.numberInSurah,
-              endAyah: ayah.numberInSurah
-            };
-          } else {
-            surahsMap[ayah.surah.number].endAyah = ayah.numberInSurah;
-          }
-        });
-
-        setSurahsInJuz(Object.values(surahsMap));
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching Juz details:", err);
-        setLoading(false);
+      ayahs.forEach(ayah => {
+        if (!surahsMap[ayah.surah.number]) {
+          const cachedSurah = cachedSurahs.find(s => s.number === ayah.surah.number);
+          
+          surahsMap[ayah.surah.number] = {
+            ...ayah.surah,
+            englishName: ayah.surah.englishName || cachedSurah?.englishName || `Surah ${ayah.surah.number}`,
+            startAyah: ayah.numberInSurah,
+            endAyah: ayah.numberInSurah
+          };
+        } else {
+          surahsMap[ayah.surah.number].endAyah = ayah.numberInSurah;
+        }
       });
-  }, [id]);
+
+      setSurahsInJuz(Object.values(surahsMap));
+      setLoading(false);
+    };
+
+    const loadJuzData = async () => {
+      try {
+        const res = await axios.get(juzUrl);
+        const ayahs = res.data?.data?.ayahs || [];
+
+        try {
+          if ('caches' in window) {
+            const cache = await caches.open('quran-text-cache-v1');
+            cache.put(juzUrl, new Response(JSON.stringify(res.data)));
+          }
+        } catch (e) {}
+
+        processJuzData(ayahs);
+      } catch (networkError) {
+        try {
+          if ('caches' in window) {
+            const cache = await caches.open('quran-text-cache-v1');
+            const cachedRes = await cache.match(juzUrl);
+            if (cachedRes) {
+              const cachedData = await cachedRes.json();
+              processJuzData(cachedData?.data?.ayahs || []);
+              return;
+            }
+          }
+        } catch (cacheError) {}
+
+        setOfflineError(true);
+        setLoading(false);
+      }
+    };
+
+    loadJuzData();
+  }, [id, retryCount]);
 
   const BackIcon = isAr ? ArrowLeft : ArrowRight;
+
+  if (offlineError) {
+    return (
+      <div className={`flex flex-col justify-center items-center min-h-screen p-6 text-center ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FDFBF7] text-gray-800"}`} dir={isAr ? "rtl" : "ltr"}>
+        <div className={`w-20 h-20 mb-5 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-800 text-[#E5C158]" : "bg-white border-[#F0EBE1] border text-[#D4AF37] shadow-md"}`}>
+          <WifiOff size={40} />
+        </div>
+        <h2 className="text-2xl font-bold mb-3">{isAr ? "تعذر جلب بيانات الجزء" : "Connection Error"}</h2>
+        <p className="text-gray-500 mb-6 max-w-sm text-sm leading-relaxed">
+          {isAr ? "تأكد من اتصالك بالإنترنت ثم حاول مرة أخرى." : "Check your internet connection and try again."}
+        </p>
+        
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setRetryCount(prev => prev + 1)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm ${isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"}`}
+          >
+            <RefreshCw size={18} />
+            {isAr ? "إعادة المحاولة" : "Retry"}
+          </button>
+          <button 
+            onClick={() => navigate("/")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md ${isDarkMode ? "bg-[#E5C158] text-gray-900 hover:bg-[#d6b047]" : "bg-[#D4AF37] text-white hover:bg-[#bf9b2e]"}`}
+          >
+            <BackIcon size={18} />
+            {isAr ? "الرئيسية" : "Home"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -56,9 +120,7 @@ export default function JuzDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
-      
-      {/* الهيدر */}
+    <div className="max-w-5xl mx-auto p-4 md:p-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
       <div className="flex items-center justify-between mb-8 px-2 mt-4">
         <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
           {isAr ? `فهرس الجزء ${id}` : `Juz ${id} Index`}
