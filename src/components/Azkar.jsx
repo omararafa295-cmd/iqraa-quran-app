@@ -167,9 +167,9 @@ export default function Azkar() {
     if (remainingAzkar.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Heart size={64} className="text-[#D4A373] mb-4 opacity-50" />
-          <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.done}</h3>
-          <button onClick={() => requestReset(type)} className="mt-6 flex items-center gap-2 text-gray-500 hover:text-[#D4A373] transition-colors">
+          <Heart size={64} className="text-[#D4AF37] mb-4 opacity-50" />
+          <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.done}</h3>
+          <button onClick={() => requestReset(type)} className="mt-6 flex items-center gap-2 text-gray-500 hover:text-[#D4AF37] transition-colors">
             <RotateCcw size={18} /> {t.reset}
           </button>
         </div>
@@ -180,7 +180,7 @@ export default function Azkar() {
       // 🌟 أزلنا الـ padding المكرر هنا لأن الحاوية الرئيسية هتشيله
       <div className="w-full flex flex-col gap-4">
         <div className="flex justify-end mb-2">
-          <button onClick={() => requestReset(type)} className="flex items-center gap-2 text-xs md:text-sm text-gray-500 hover:text-[#D4A373] transition-colors">
+          <button onClick={() => requestReset(type)} className="flex items-center gap-2 text-xs md:text-sm text-gray-500 hover:text-[#D4AF37] transition-colors">
             <RotateCcw size={16} /> {t.reset}
           </button>
         </div>
@@ -189,11 +189,11 @@ export default function Azkar() {
             key={zikr.id} 
             onClick={() => handleZikrClick(zikr.id, type)}
             className={`p-5 md:p-6 rounded-3xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 border shadow-sm relative overflow-hidden ${
-              isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+              isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]'
             }`}
           >
             <div 
-              className="absolute top-0 left-0 h-full bg-[#D4A373]/10 transition-all duration-300"
+              className="absolute top-0 left-0 h-full bg-[#D4AF37]/10 transition-all duration-300"
               style={{ width: `${((zikr.originalCount - zikr.count) / zikr.originalCount) * 100}%` }}
             ></div>
             
@@ -202,9 +202,9 @@ export default function Azkar() {
             </p>
             <div className="relative z-10 flex justify-between items-center mt-5 md:mt-6 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
               <span className={`text-xs md:text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {isAr ? 'المتبقي:' : 'Remaining:'} <span className={`text-lg md:text-xl mx-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{zikr.count}</span>
+                {isAr ? 'المتبقي:' : 'Remaining:'} <span className={`text-lg md:text-xl mx-1 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{zikr.count}</span>
               </span>
-              <div className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full font-bold text-sm bg-[#D4A373] text-white shadow-md`}>
+              <div className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full font-bold text-sm bg-[#D4AF37] text-white shadow-md`}>
                 {zikr.originalCount}
               </div>
             </div>
@@ -218,22 +218,22 @@ export default function Azkar() {
     <div className="max-w-2xl mx-auto px-4 md:px-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
       
       <div className="text-center mb-6 md:mb-8 mt-2 md:mt-4">
-        <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif'} ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
           {t.title}
         </h2>
       </div>
 
       <div className={`grid grid-cols-4 gap-1 p-1 sm:gap-2 sm:p-2 rounded-2xl mb-6 md:mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-[#F0EBE1]/50'}`}>
-        <button onClick={() => setActiveTab("tasbih")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "tasbih" ? (isDarkMode ? "bg-gray-700 text-[#E6B981]" : "bg-white text-[#D4A373] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
+        <button onClick={() => setActiveTab("tasbih")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "tasbih" ? (isDarkMode ? "bg-gray-700 text-[#E5C158]" : "bg-white text-[#D4AF37] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
           <Heart size={18} className="shrink-0" /> <span className="text-center">{t.tasbih}</span>
         </button>
-        <button onClick={() => setActiveTab("morning")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "morning" ? (isDarkMode ? "bg-gray-700 text-[#E6B981]" : "bg-white text-[#D4A373] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
+        <button onClick={() => setActiveTab("morning")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "morning" ? (isDarkMode ? "bg-gray-700 text-[#E5C158]" : "bg-white text-[#D4AF37] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
           <Sun size={18} className="shrink-0" /> <span className="text-center">{t.morning}</span>
         </button>
-        <button onClick={() => setActiveTab("evening")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "evening" ? (isDarkMode ? "bg-gray-700 text-[#E6B981]" : "bg-white text-[#D4A373] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
+        <button onClick={() => setActiveTab("evening")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "evening" ? (isDarkMode ? "bg-gray-700 text-[#E5C158]" : "bg-white text-[#D4AF37] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
           <Moon size={18} className="shrink-0" /> <span className="text-center">{t.evening}</span>
         </button>
-        <button onClick={() => setActiveTab("sleep")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "sleep" ? (isDarkMode ? "bg-gray-700 text-[#E6B981]" : "bg-white text-[#D4A373] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
+        <button onClick={() => setActiveTab("sleep")} className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs md:text-sm transition-all ${activeTab === "sleep" ? (isDarkMode ? "bg-gray-700 text-[#E5C158]" : "bg-white text-[#D4AF37] shadow-sm") : "text-gray-500 hover:text-gray-400"}`}>
           <Bed size={18} className="shrink-0" /> <span className="text-center">{t.sleep}</span>
         </button>
       </div>
@@ -241,7 +241,7 @@ export default function Azkar() {
       {activeTab === "tasbih" && (
         <div className="flex flex-col items-center justify-center py-4 md:py-6">
 
-          <div className={`mb-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+          <div className={`mb-1 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
             <ChevronDown size={22} strokeWidth={3} />
           </div>
 
@@ -266,9 +266,9 @@ export default function Azkar() {
                       key={i}
                       className={`absolute rounded-full transition-colors duration-200 ${
                         isFilled
-                          ? (isDarkMode ? 'bg-[#E6B981] shadow-[0_0_10px_rgba(230,185,129,0.55)]' : 'bg-[#D4A373] shadow-[0_0_10px_rgba(212,163,115,0.45)]')
+                          ? (isDarkMode ? 'bg-[#E5C158] shadow-[0_0_10px_rgba(230,185,129,0.55)]' : 'bg-[#D4AF37] shadow-[0_0_10px_rgba(212,163,115,0.45)]')
                           : isNext
-                            ? (isDarkMode ? 'bg-gray-800 border-2 border-[#E6B981] animate-pulse' : 'bg-white border-2 border-[#D4A373] animate-pulse')
+                            ? (isDarkMode ? 'bg-gray-800 border-2 border-[#E5C158] animate-pulse' : 'bg-white border-2 border-[#D4AF37] animate-pulse')
                             : (isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-[#F0EBE1] border border-[#E2D8C3]')
                       }`}
                       style={{
@@ -282,7 +282,7 @@ export default function Azkar() {
                 })}
 
                 <div
-                  className={`absolute rounded-full shadow-md ${isDarkMode ? 'bg-[#b58555]' : 'bg-[#9c6b3f]'}`}
+                  className={`absolute rounded-full shadow-md ${isDarkMode ? 'bg-[#B8942E]' : 'bg-[#B8942E]'}`}
                   style={{ 
                     width: '24px', 
                     height: '24px', 
@@ -296,7 +296,7 @@ export default function Azkar() {
             <button 
               onClick={handleTasbihClick}
               className={`relative z-10 w-44 h-44 md:w-52 md:h-52 rounded-full flex flex-col items-center justify-center shadow-[0_10px_40px_rgba(212,163,115,0.3)] border-8 active:scale-95 transition-transform duration-100 ${
-                isDarkMode ? 'bg-gray-800 border-[#E6B981] text-[#E6B981]' : 'bg-white border-[#D4A373] text-[#D4A373]'
+                isDarkMode ? 'bg-gray-800 border-[#E5C158] text-[#E5C158]' : 'bg-white border-[#D4AF37] text-[#D4AF37]'
               }`}
             >
               <span className="text-5xl md:text-6xl font-bold font-sans">{tasbihCount}</span>
@@ -307,7 +307,7 @@ export default function Azkar() {
           <div className={`text-xs md:text-sm font-bold mb-6 md:mb-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             {t.lap} {filledBeads} {t.of} {BEADS_PER_LAP}
             {completedLaps > 0 && (
-              <span className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}> · {completedLaps} {t.laps}</span>
+              <span className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}> · {completedLaps} {t.laps}</span>
             )}
           </div>
           

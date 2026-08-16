@@ -295,7 +295,7 @@ export default function PrayerTimes() {
       `}</style>
 
       <div className="mb-6 mt-4 rise-in">
-        <h2 className={`text-3xl font-bold mb-6 text-center ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-3xl font-bold mb-6 text-center ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
           {t.title}
         </h2>
         
@@ -305,7 +305,7 @@ export default function PrayerTimes() {
             placeholder={t.search} 
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-all focus:shadow-md ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'}`}
+            className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-all focus:shadow-md ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E5C158]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4AF37]'}`}
             dir="ltr"
           />
           <Search className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
@@ -313,7 +313,7 @@ export default function PrayerTimes() {
         
         {city && (
           <div className="flex flex-col items-center gap-2">
-            <div className={`flex items-center justify-center gap-2 font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+            <div className={`flex items-center justify-center gap-2 font-bold ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
               <MapPin size={20} />
               <span>{city}{country ? `, ${country}` : ''}</span>
               <button 
@@ -329,7 +329,7 @@ export default function PrayerTimes() {
               <div className={`flex flex-wrap items-center justify-center gap-2 text-xs font-bold mt-1 px-3.5 py-1.5 rounded-full border shadow-sm ${
                 isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-[#F0EBE1] text-gray-600'
               }`}>
-                <Calendar size={14} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <Calendar size={14} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
                 <span>{isAr ? dateInfo.dayNameAr : dateInfo.dayNameEn}</span>
                 <span>•</span>
                 <span>{dateInfo.gregorian}</span>
@@ -341,10 +341,10 @@ export default function PrayerTimes() {
       </div>
 
       {loading ? (
-        <div className={`text-center py-10 font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.loading}</div>
+        <div className={`text-center py-10 font-bold ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.loading}</div>
       ) : fetchError && !timings ? (
         <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-gray-800 text-[#E6B981]' : 'bg-red-50 text-red-500'}`}>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-gray-800 text-[#E5C158]' : 'bg-red-50 text-red-500'}`}>
             <WifiOff size={32} />
           </div>
           <p className={`font-bold mb-6 max-w-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -352,7 +352,7 @@ export default function PrayerTimes() {
           </p>
           <button 
             onClick={fetchPrayerTimes}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-md ${isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'}`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-md ${isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-[#D4AF37] text-white'}`}
           >
             <RefreshCw size={18} /> {t.retry}
           </button>
@@ -373,7 +373,7 @@ export default function PrayerTimes() {
                   {[...Array(14)].map((_, i) => (
                     <span
                       key={i}
-                      className="absolute rounded-full bg-[#E6B981]"
+                      className="absolute rounded-full bg-[#E5C158]"
                       style={{
                         width: '2px', height: '2px',
                         left: `${(i * 37) % 100}%`,
@@ -388,10 +388,10 @@ export default function PrayerTimes() {
               )}
 
               <div className="relative z-10 flex items-center justify-between mb-1">
-                <span className={`text-xs font-bold uppercase tracking-wide ${arcData.isNight ? 'text-[#c9a879]' : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}>
+                <span className={`text-xs font-bold uppercase tracking-wide ${arcData.isNight ? 'text-[#D9BB63]' : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}>
                   {t.next}
                 </span>
-                <span className={`flex items-center gap-1 text-xs font-bold ${arcData.isNight ? 'text-[#E6B981]' : (isDarkMode ? 'text-[#E6B981]' : 'text-[#B5793A]')}`}>
+                <span className={`flex items-center gap-1 text-xs font-bold ${arcData.isNight ? 'text-[#E5C158]' : (isDarkMode ? 'text-[#E5C158]' : 'text-[#B8942E]')}`}>
                   <Sparkles size={12} /> {t.now}
                 </span>
               </div>
@@ -400,7 +400,7 @@ export default function PrayerTimes() {
                 <h3 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif'} ${arcData.isNight ? 'text-white' : (isDarkMode ? 'text-white' : 'text-[#3a2a1a]')}`}>
                   {arcData.nextPrayer.name}
                 </h3>
-                <div className={`text-sm font-bold ${arcData.isNight ? 'text-[#E6B981]' : (isDarkMode ? 'text-[#E6B981]' : 'text-[#B5793A]')}`}>
+                <div className={`text-sm font-bold ${arcData.isNight ? 'text-[#E5C158]' : (isDarkMode ? 'text-[#E5C158]' : 'text-[#B8942E]')}`}>
                   {isAr ? (
                     <div className="inline-flex items-center gap-1" dir="rtl">
                       <span className="opacity-70 font-medium">{t.remaining}</span>
@@ -439,7 +439,7 @@ export default function PrayerTimes() {
                     top: `${((60 + arcY(arcData.nowProgress)) / 60) * 100}%`,
                   }}
                 >
-                  <div className={`w-3 h-3 rounded-full ${arcData.isNight ? 'bg-[#E6B981]' : 'bg-[#D4A373]'}`} style={{ animation: 'glowPulse 2s ease-in-out infinite' }} />
+                  <div className={`w-3 h-3 rounded-full ${arcData.isNight ? 'bg-[#E5C158]' : 'bg-[#D4AF37]'}`} style={{ animation: 'glowPulse 2s ease-in-out infinite' }} />
                 </div>
 
                 {arcData.points.map((p, i) => {
@@ -455,9 +455,9 @@ export default function PrayerTimes() {
                       <div
                         className={`flex items-center justify-center rounded-full transition-all ${
                           isNext
-                            ? (arcData.isNight ? 'bg-[#E6B981] text-[#241a12]' : 'bg-[#D4A373] text-white') + ' w-7 h-7 shadow-md'
+                            ? (arcData.isNight ? 'bg-[#E5C158] text-[#241a12]' : 'bg-[#D4AF37] text-white') + ' w-7 h-7 shadow-md'
                             : isCurrent
-                              ? (arcData.isNight ? 'bg-[#3a2b1c] text-[#E6B981] border border-[#E6B981]' : (isDarkMode ? 'bg-gray-700 text-[#E6B981] border border-[#E6B981]' : 'bg-white text-[#D4A373] border border-[#D4A373]')) + ' w-6 h-6'
+                              ? (arcData.isNight ? 'bg-[#3a2b1c] text-[#E5C158] border border-[#E5C158]' : (isDarkMode ? 'bg-gray-700 text-[#E5C158] border border-[#E5C158]' : 'bg-white text-[#D4AF37] border border-[#D4AF37]')) + ' w-6 h-6'
                               : (arcData.isNight ? 'bg-[#2a1f16] text-[#7a6a55]' : (isDarkMode ? 'bg-gray-700 text-gray-500' : 'bg-white text-gray-400')) + ' w-5 h-5 opacity-70'
                         }`}
                       >
@@ -479,17 +479,17 @@ export default function PrayerTimes() {
                   key={prayer.id}
                   className={`relative p-5 rounded-2xl shadow-sm border flex flex-col items-center justify-center gap-2 transition-all duration-300 rise-in ${
                     isNext
-                      ? (isDarkMode ? 'bg-gray-800 border-[#E6B981] shadow-[0_0_0_1px_rgba(230,185,129,0.3)]' : 'bg-white border-[#D4A373] shadow-[0_4px_20px_rgba(212,163,115,0.25)]') + ' scale-[1.03]'
-                      : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]')
+                      ? (isDarkMode ? 'bg-gray-800 border-[#E5C158] shadow-[0_0_0_1px_rgba(230,185,129,0.3)]' : 'bg-white border-[#D4AF37] shadow-[0_4px_20px_rgba(212,163,115,0.25)]') + ' scale-[1.03]'
+                      : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]')
                   }`}
                   style={{ animationDelay: `${120 + i * 60}ms` }}
                 >
                   {isNext && (
-                    <span className={`absolute -top-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'}`}>
+                    <span className={`absolute -top-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-[#D4AF37] text-white'}`}>
                       {t.next}
                     </span>
                   )}
-                  <div className={isCurrent || isNext ? (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') : (isDarkMode ? 'text-gray-500' : 'text-gray-400')}>
+                  <div className={isCurrent || isNext ? (isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]') : (isDarkMode ? 'text-gray-500' : 'text-gray-400')}>
                     <Icon size={26} />
                   </div>
                   <h3 className={`font-bold text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{prayer.name}</h3>
@@ -503,7 +503,7 @@ export default function PrayerTimes() {
 
           {nightTimes && (
             <div className={`relative p-6 rounded-3xl shadow-lg border overflow-hidden rise-in ${
-              isDarkMode ? 'bg-gradient-to-br from-gray-900 to-[#1a1c23] border-[#E6B981]/30' : 'bg-gradient-to-br from-[#2a1f18] to-[#1e1510] border-[#D4A373]'
+              isDarkMode ? 'bg-gradient-to-br from-gray-900 to-[#1a1c23] border-[#E5C158]/30' : 'bg-gradient-to-br from-[#2a1f18] to-[#1e1510] border-[#D4AF37]'
             }`} style={{ animationDelay: '340ms' }}>
 
               {[...Array(10)].map((_, i) => (
@@ -521,13 +521,13 @@ export default function PrayerTimes() {
               ))}
 
               <div className="absolute -top-4 -left-4 opacity-10">
-                <Star size={100} className="text-[#E6B981]" />
+                <Star size={100} className="text-[#E5C158]" />
               </div>
               
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-4">
-                  <Moon size={22} className="text-[#E6B981]" />
-                  <h3 className="text-xl font-bold font-quran text-[#E6B981]">
+                  <Moon size={22} className="text-[#E5C158]" />
+                  <h3 className="text-xl font-bold font-quran text-[#E5C158]">
                     {isAr ? 'حاسبة قيام الليل' : 'Tahajjud Calculator'}
                   </h3>
                 </div>
@@ -536,12 +536,12 @@ export default function PrayerTimes() {
                   <div className="flex flex-col">
                     <span className="text-gray-400 text-xs font-bold mb-1">{isAr ? 'منتصف الليل (نهاية وقت العشاء)' : 'Midnight'}</span>
                     <div className="flex items-center gap-2 text-white font-bold text-lg" dir="ltr">
-                      <Clock3 size={16} className="text-[#E6B981]" /> {nightTimes.midnight}
+                      <Clock3 size={16} className="text-[#E5C158]" /> {nightTimes.midnight}
                     </div>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-gray-400 text-xs font-bold mb-1">{isAr ? 'الثلث الأخير (أفضل وقت للدعاء)' : 'Last Third'}</span>
-                    <div className="flex items-center gap-2 text-[#E6B981] font-bold text-lg" dir="ltr">
+                    <div className="flex items-center gap-2 text-[#E5C158] font-bold text-lg" dir="ltr">
                       <Star size={16} /> {nightTimes.lastThird}
                     </div>
                   </div>

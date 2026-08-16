@@ -7,9 +7,9 @@ import { motion } from "framer-motion";
 const KaabaIcon = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M4 8L12 4L20 8V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V8Z" fill="#1A1A1A"/>
-    <path d="M4 8L12 12L20 8" stroke="#D4A373" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M12 12V20" stroke="#D4A373" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M4 11H20" stroke="#D4A373" strokeWidth="1.5"/>
+    <path d="M4 8L12 12L20 8" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 12V20" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M4 11H20" stroke="#D4AF37" strokeWidth="1.5"/>
   </svg>
 );
 
@@ -160,7 +160,7 @@ export default function Qibla() {
       className="max-w-md mx-auto p-4 md:p-6 text-center pt-20 pb-24" 
       dir={isAr ? "rtl" : "ltr"}
     >
-      <h2 className={`text-3xl font-bold mb-8 mt-4 ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+      <h2 className={`text-3xl font-bold mb-8 mt-4 ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
         {t.title}
       </h2>
       
@@ -192,10 +192,10 @@ export default function Qibla() {
           <div className={`absolute right-4 font-bold text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>{t.east}</div>
           <div className={`absolute left-4 font-bold text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>{t.west}</div>
           
-          <div className="absolute top-10 right-10 w-1.5 h-1.5 bg-[#D4A373] rounded-full"></div>
-          <div className="absolute top-10 left-10 w-1.5 h-1.5 bg-[#D4A373] rounded-full"></div>
-          <div className="absolute bottom-10 right-10 w-1.5 h-1.5 bg-[#D4A373] rounded-full"></div>
-          <div className="absolute bottom-10 left-10 w-1.5 h-1.5 bg-[#D4A373] rounded-full"></div>
+          <div className="absolute top-10 right-10 w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></div>
+          <div className="absolute top-10 left-10 w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></div>
+          <div className="absolute bottom-10 right-10 w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></div>
+          <div className="absolute bottom-10 left-10 w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></div>
 
           <div className="relative flex flex-col items-center justify-center">
              <div className="w-1.5 h-16 bg-gradient-to-t from-[#FF6B00] to-[#FFA756] rounded-t-full mb-1"></div>
@@ -216,7 +216,7 @@ export default function Qibla() {
                 <p className={`w-full font-bold py-2.5 px-4 rounded-xl border transition-colors ${
                   isAligned 
                     ? (isDarkMode ? 'bg-green-900/30 text-green-400 border-green-800' : 'bg-green-50 text-green-600 border-green-200') 
-                    : (isDarkMode ? 'bg-gray-900 text-[#E6B981] border-gray-700' : 'bg-[#FFFdf9] text-[#D4A373] border-[#F0EBE1]')
+                    : (isDarkMode ? 'bg-gray-900 text-[#E5C158] border-gray-700' : 'bg-[#FFFdf9] text-[#D4AF37] border-[#F0EBE1]')
                 }`}>
                   {isAligned ? t.correctMsg : t.wrongMsg}
                 </p>
@@ -234,7 +234,7 @@ export default function Qibla() {
           onClick={startCompass}
           disabled={loading}
           className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-colors shadow-md ${
-            isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-[#D4A373] text-white hover:bg-[#b58555]'
+            isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'
           }`}
         >
           <Compass size={24} className={loading ? "animate-spin" : ""} />

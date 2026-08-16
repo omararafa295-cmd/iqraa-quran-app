@@ -22,11 +22,11 @@ export default function UpdateBanner() {
   return (
     <div className={`fixed top-0 left-0 w-full z-[100] px-4 py-3 shadow-2xl flex items-center justify-between border-b backdrop-blur-md transition-all ${
       isDarkMode 
-        ? 'bg-gray-900/95 border-[#E6B981]/40 text-gray-100' 
-        : 'bg-[#FDFBF7]/95 border-[#D4A373]/40 text-gray-800'
+        ? 'bg-gray-900/95 border-[#E5C158]/40 text-gray-100' 
+        : 'bg-[#FDFBF7]/95 border-[#D4AF37]/40 text-gray-800'
     }`} dir={isAr ? 'rtl' : 'ltr'}>
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-[#E6B981]/20 text-[#E6B981]' : 'bg-[#D4A373]/20 text-[#D4A373]'}`}>
+        <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-[#E5C158]/20 text-[#E5C158]' : 'bg-[#D4AF37]/20 text-[#D4AF37]'}`}>
           <Sparkles size={20} className="animate-pulse" />
         </div>
         <div className="flex flex-col">
@@ -44,8 +44,8 @@ export default function UpdateBanner() {
           onClick={() => updateServiceWorker(true)}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-all ${
             isDarkMode
-              ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]'
-              : 'bg-[#D4A373] text-white hover:bg-[#b58555]'
+              ? 'bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]'
+              : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'
           }`}
         >
           <RefreshCw size={14} />

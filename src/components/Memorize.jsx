@@ -427,7 +427,7 @@ export default function Memorize() {
     <div className="max-w-4xl mx-auto px-4 md:px-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
       
       <div className="text-center mb-6 mt-4 px-2">
-        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-7 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-7 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
           {t.title}
         </h2>
         <p className="text-gray-500 text-xs md:text-sm">{t.subtitle}</p>
@@ -452,8 +452,8 @@ export default function Memorize() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className={`flex items-center justify-between w-full px-5 py-3.5 rounded-xl font-bold text-sm md:text-base transition-all shadow-sm border ${
               isDarkMode 
-                ? "bg-gray-800 border-gray-700 text-[#E6B981] hover:border-[#E6B981]" 
-                : "bg-white border-[#F0EBE1] text-[#D4A373] hover:border-[#D4A373]"
+                ? "bg-gray-800 border-gray-700 text-[#E5C158] hover:border-[#E5C158]" 
+                : "bg-white border-[#F0EBE1] text-[#D4AF37] hover:border-[#D4AF37]"
             }`}
           >
             <div className="flex items-center gap-3 truncate">
@@ -472,7 +472,7 @@ export default function Memorize() {
                   key={s.number}
                   onClick={() => loadSurahForMemorization(s.number)}
                   className={`w-full ${isAr ? 'text-right' : 'text-left'} px-5 py-3.5 text-sm font-medium transition-colors border-b last:border-0 ${
-                    isDarkMode ? "border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-[#E6B981]" : "border-gray-50 text-gray-700 hover:bg-[#FDFBF7] hover:text-[#D4A373]"
+                    isDarkMode ? "border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-[#E5C158]" : "border-gray-50 text-gray-700 hover:bg-[#FDFBF7] hover:text-[#D4AF37]"
                   }`}
                 >
                   <span className={`inline-block ${isAr ? 'ml-3' : 'mr-3'} font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{s.number}.</span> 
@@ -485,14 +485,14 @@ export default function Memorize() {
       </div>
 
       {loading ? (
-        <div className={`text-center py-10 font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>جاري التحميل...</div>
+        <div className={`text-center py-10 font-bold ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>جاري التحميل...</div>
       ) : selectedSurah && currentWords.length > 0 ? (
         <div className={`px-4 md:px-12 py-8 rounded-2xl shadow-lg border transition-colors duration-300 min-h-[60vh] flex flex-col justify-between ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFdf9] border-[#E8E1D3]'
         }`}>
           
           <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${
-            isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"
+            isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4AF37]/30 text-gray-400"
           } font-bold text-sm md:text-base`}>
             <span>{isAr ? selectedSurah.name : selectedSurah.englishName}</span>
             <span>{t.juz} {currentJuz}</span>
@@ -501,7 +501,7 @@ export default function Memorize() {
           <div className={`transition-opacity duration-300 ease-in-out text-center flex-1 ${isAnimating ? "opacity-0" : "opacity-100"}`}>
             
             {currentPage === 0 && selectedSurah.number !== 1 && selectedSurah.number !== 9 && (
-              <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+              <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
                 {isAr ? "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" : "In the name of Allah..."}
               </div>
             )}
@@ -529,7 +529,7 @@ export default function Memorize() {
                         isRevealed 
                           ? status === 'missed'
                             ? (isDarkMode ? 'text-red-400 bg-red-950/50 border border-red-500/60 font-bold shadow-sm' : 'text-red-600 bg-red-50 border border-red-300 font-bold shadow-sm')
-                            : (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') 
+                            : (isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]') 
                           : 'opacity-15 blur-[4px] select-none text-gray-500'
                       }`}
                       style={{ fontSize: `${fontSize}px` }}
@@ -541,7 +541,7 @@ export default function Memorize() {
                       <span 
                         className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all ${
                           isRevealed
-                            ? (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]") 
+                            ? (isDarkMode ? "text-[#E5C158] border-[#E5C158]" : "text-[#D4AF37] border-[#D4AF37]") 
                             : "opacity-15 blur-[2px] text-gray-500 border-gray-500"
                         }`}
                         style={{ 
@@ -573,7 +573,7 @@ export default function Memorize() {
                     className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm md:text-base transition-all transform hover:scale-105 shadow-md ${
                       isListening 
                         ? 'bg-red-500 text-white animate-pulse' 
-                        : 'bg-[#D4A373] text-white hover:bg-[#b58555]'
+                        : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'
                     }`}
                   >
                     {isListening ? <MicOff size={20} /> : <Mic size={20} />}
@@ -583,7 +583,7 @@ export default function Memorize() {
                   <button 
                     onClick={handleHintClick}
                     className={`p-3 rounded-full font-bold transition-all border shadow-sm ${
-                      isDarkMode ? 'border-gray-700 text-[#E6B981] hover:bg-gray-700' : 'border-[#F0EBE1] text-[#D4A373] hover:bg-[#FDFBF7]'
+                      isDarkMode ? 'border-gray-700 text-[#E5C158] hover:bg-gray-700' : 'border-[#F0EBE1] text-[#D4AF37] hover:bg-[#FDFBF7]'
                     }`}
                     title={t.hint}
                   >
@@ -613,7 +613,7 @@ export default function Memorize() {
               className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
                 selectedSurah.number === 1 && currentPage === 0
                   ? "opacity-50 cursor-not-allowed text-gray-400" 
-                  : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
+                  : (isDarkMode ? "text-[#E5C158] hover:bg-gray-700" : "text-[#D4AF37] hover:bg-[#f4efe6]")
               }`}
             >
               <PrevPageIcon size={18} />
@@ -630,7 +630,7 @@ export default function Memorize() {
               className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
                 selectedSurah.number === 114 && currentPage === totalPages - 1
                   ? "opacity-50 cursor-not-allowed text-gray-400" 
-                  : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
+                  : (isDarkMode ? "text-[#E5C158] hover:bg-gray-700" : "text-[#D4AF37] hover:bg-[#f4efe6]")
               }`}
             >
               <span>{currentPage === totalPages - 1 ? t.nextSurah : t.nextPage}</span>

@@ -150,7 +150,7 @@ export default function FloatingPlayer() {
     >
       <div className="absolute top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-800">
         <div 
-          className={`h-full transition-all duration-300 ${isDarkMode ? 'bg-[#E6B981]' : 'bg-[#D4A373]'}`}
+          className={`h-full transition-all duration-300 ${isDarkMode ? 'bg-[#E5C158]' : 'bg-[#D4AF37]'}`}
           style={{ width: `${progress}%` }}
         ></div>
       </div>
@@ -158,7 +158,7 @@ export default function FloatingPlayer() {
       <div className="p-3 md:p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
-            isDarkMode ? 'bg-gray-800 text-[#E6B981]' : 'bg-[#F0EBE1] text-[#D4A373]'
+            isDarkMode ? 'bg-gray-800 text-[#E5C158]' : 'bg-[#F0EBE1] text-[#D4AF37]'
           }`}>
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Volume2 size={18} />}
           </div>
@@ -193,7 +193,7 @@ export default function FloatingPlayer() {
               setIsPlaying(!isPlaying);
             }}
             className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-all ${
-              isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'
+              isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-[#D4AF37] text-white'
             }`}
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} className={isAr ? "mr-0.5" : "ml-0.5"} />}

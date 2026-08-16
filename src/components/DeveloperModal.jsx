@@ -32,7 +32,7 @@ export default function DeveloperModal({ isOpen, onClose }) {
 
           <div className="flex flex-col items-center text-center mt-2">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-md ${
-              isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373] border border-[#E8DCC4]'
+              isDarkMode ? 'bg-gray-700 text-[#E5C158]' : 'bg-[#FDFBF7] text-[#D4AF37] border border-[#E8DCC4]'
             }`}>
               <Code2 size={32} />
             </div>
@@ -40,7 +40,7 @@ export default function DeveloperModal({ isOpen, onClose }) {
             <h3 className={`text-2xl font-bold mb-1 ${isAr ? 'font-quran' : 'font-serif'}`}>
               Omar Mounir Arafa
             </h3>
-            <p className="text-xs text-[#D4A373] font-bold mb-4">
+            <p className="text-xs text-[#D4AF37] font-bold mb-4">
               {isAr ? "مطور التطبيق & Software Developer" : "Lead Developer"}
             </p>
 

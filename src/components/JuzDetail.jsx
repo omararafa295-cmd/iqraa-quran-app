@@ -50,7 +50,7 @@ export default function JuzDetail() {
   if (loading) {
     return (
       <div className={`flex justify-center items-center min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[#FDFBF7]"}`}>
-        <Loader2 size={40} className={`animate-spin ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`} />
+        <Loader2 size={40} className={`animate-spin ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`} />
       </div>
     );
   }
@@ -60,10 +60,10 @@ export default function JuzDetail() {
       
       {/* الهيدر */}
       <div className="flex items-center justify-between mb-8 px-2 mt-4">
-        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
           {isAr ? `فهرس الجزء ${id}` : `Juz ${id} Index`}
         </h2>
-        <Link to="/" className={`p-2 rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]"}`}>
+        <Link to="/" className={`p-2 rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E5C158]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4AF37]"}`}>
           <BackIcon size={20} />
         </Link>
       </div>
@@ -74,12 +74,12 @@ export default function JuzDetail() {
             state={{ startAyah: surah.startAyah }} 
             key={surah.number}
             className={`flex items-center justify-between p-4 md:p-5 rounded-2xl shadow-sm border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group ${
-              isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+              isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]'
             }`}
           >
             <div className="flex items-center gap-3 md:gap-4">
               <div className={`relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl rotate-45 border-2 transition-all shrink-0 ${
-                isDarkMode ? 'border-gray-700 group-hover:bg-[#E6B981] group-hover:border-[#E6B981]' : 'border-[#F0EBE1] group-hover:bg-[#D4A373] group-hover:border-[#D4A373]'
+                isDarkMode ? 'border-gray-700 group-hover:bg-[#E5C158] group-hover:border-[#E5C158]' : 'border-[#F0EBE1] group-hover:bg-[#D4AF37] group-hover:border-[#D4AF37]'
               }`}>
                 <span className={`absolute -rotate-45 font-bold text-sm md:text-base ${
                   isDarkMode ? 'text-gray-400 group-hover:text-gray-900' : 'text-gray-500 group-hover:text-white'
@@ -98,7 +98,7 @@ export default function JuzDetail() {
               </div>
             </div>
             <div className={`text-xl md:text-2xl font-bold font-quran transition-colors ${
-              isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'
+              isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'
             }`}>
               {(surah.name || "").replace('سُورَةُ ', '')}
             </div>

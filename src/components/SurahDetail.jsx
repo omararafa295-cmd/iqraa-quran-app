@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { 
@@ -31,6 +31,8 @@ export default function SurahDetail() {
 
   const [reciter, setReciter] = useState("ar.alafasy"); 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const reciterBtnRef = useRef(null);
 
   const [isMemorizationMode, setIsMemorizationMode] = useState(false);
   const [revealedAyahs, setRevealedAyahs] = useState([]); 
@@ -46,6 +48,7 @@ export default function SurahDetail() {
   const [dynamicTafsirText, setDynamicTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
 
+  // كارت الآية للمشاركة
   const [selectedAyahForCard, setSelectedAyahForCard] = useState(null);
   const [isCardCopied, setIsCardCopied] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -98,8 +101,8 @@ export default function SurahDetail() {
     showTafsir: isAr ? "التفسير" : "Tafsir",
     addBookmark: isAr ? "إضافة علامة مرجعية" : "Add Bookmark",
     removeBookmark: isAr ? "إزالة العلامة المرجعية" : "Remove Bookmark",
-    shareCard: isAr ? "كارت الآية" : "Ayah Card",
-    downloadCard: isAr ? "تحميل كصورة " : "Download Image",
+    shareCard: isAr ? "كارت الآية (ستوري)" : "Ayah Card (Story)",
+    downloadCard: isAr ? "تحميل كصورة ستوري" : "Download Story Image",
     copyCardText: isAr ? "نسخ النص" : "Copy Text",
     shareAction: isAr ? "مشاركة" : "Share",
     copied: isAr ? "تم النسخ" : "Copied!",
@@ -366,6 +369,24 @@ export default function SurahDetail() {
     }, 300);
   };
 
+  // تتبّع الآية اللي بتتشغل وتقليب الصفحة تلقائيًا لما القارئ يوصل لصفحة جديدة
+  useEffect(() => {
+    if (!currentAudio || currentAudio.playSingle) return;
+    if (currentAudio.surahId !== surah?.number) return;
+    if (!surahPages.length) return;
+
+    const playingAyah = currentAudio.ayahs?.[currentAudio.currentAyahIndex];
+    if (!playingAyah) return;
+
+    const targetPageIndex = surahPages.findIndex(
+      (pageAyahs) => pageAyahs[0]?.page === playingAyah.page
+    );
+
+    if (targetPageIndex !== -1 && targetPageIndex !== currentPage && !isAnimating) {
+      changePage(targetPageIndex);
+    }
+  }, [currentAudio?.currentAyahIndex, currentAudio?.surahId, surahPages]);
+
   const handleNextPage = () => {
     if (currentPage < surahPages.length - 1) {
       changePage(currentPage + 1);
@@ -514,13 +535,15 @@ export default function SurahDetail() {
     setActiveAyahMenu(null);
   };
 
+  // 🎨 رسم وتصدير كارت الآية بخلفية إسلامية فنية واقعية (محراب، فوانيس متدلية، هلال، إطارات ذهبية)
+  // تحميل الخط العربي فعليًا قبل الرسم على الـ canvas
+  // (من غير الخطوة دي، الكانفاس بيرسم بخط افتراضي فورًا قبل ما يجهز الخط المخصص،
+  // فالصورة اللي بتتنزل بتطلع بخط عادي مش أنيق حتى لو الشكل في المعاينة تمام)
   const ensureFontsReady = async () => {
     try {
       await Promise.all([
-        document.fonts.load('bold 52px "Amiri"'),
-        document.fonts.load('bold 44px "Amiri"'),
-        document.fonts.load('bold 36px "Amiri"'),
-        document.fonts.load('600 32px "Amiri"'),
+        document.fonts.load('bold 64px "Amiri"'),
+        document.fonts.load('bold 40px "Amiri"'),
         document.fonts.load('600 34px "Amiri"'),
       ]);
       await document.fonts.ready;
@@ -540,14 +563,12 @@ export default function SurahDetail() {
       canvas.height = H;
       const ctx = canvas.getContext('2d');
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
       const GOLD_LIGHT = '#F3D9A4';
-      const GOLD = '#D4A373';
-      const GOLD_SOFT = '#E6B981';
+      const GOLD = '#D4AF37';
+      const GOLD_SOFT = '#E5C158';
       const CREAM = '#FBF3E7';
 
+      // ===== 1. خلفية "أونيكس وذهب" فاخرة (عمق أسود دافئ بدل الأزرق الليلي) =====
       const bg = ctx.createLinearGradient(0, 0, W, H);
       bg.addColorStop(0, '#0d0b08');
       bg.addColorStop(0.45, '#171310');
@@ -555,26 +576,30 @@ export default function SurahDetail() {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      const glow = ctx.createRadialGradient(W / 2, 210, 20, W / 2, 210, 560);
+      // توهج ذهبي دافئ في المنتصف العلوي (خلف الهلال والبسملة)
+      const glow = ctx.createRadialGradient(W / 2, 300, 20, W / 2, 300, 560);
       glow.addColorStop(0, 'rgba(230, 185, 129, 0.22)');
       glow.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, W, 900);
 
+      // توهج خفيف تاني حول النص
       const midGlow = ctx.createRadialGradient(W / 2, H * 0.52, 30, W / 2, H * 0.52, 620);
       midGlow.addColorStop(0, 'rgba(212, 163, 115, 0.10)');
       midGlow.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = midGlow;
       ctx.fillRect(0, 0, W, H);
 
+      // فينيت خفيف على الحواف يركّز النظر في النص
       const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.72);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
       vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, W, H);
 
+      // ===== 2. زخرفة هندسية إسلامية خفيفة جدًا (نجمة ثمانية متكررة) في الخلفية =====
       ctx.save();
-      ctx.globalAlpha = 0.045;
+      ctx.globalAlpha = 0.05;
       ctx.strokeStyle = GOLD_SOFT;
       ctx.lineWidth = 1.2;
       const drawStar8 = (cx, cy, r) => {
@@ -598,47 +623,51 @@ export default function SurahDetail() {
         }
       }
       ctx.restore();
+
+      // ===== 3. هلال ونجمة أعلى الكارت (نفس روح شعار التطبيق) =====
       ctx.save();
-      const moonGlow = ctx.createRadialGradient(W / 2, 130, 5, W / 2, 130, 75);
-      moonGlow.addColorStop(0, 'rgba(230, 185, 129, 0.4)');
-      moonGlow.addColorStop(0.6, 'rgba(230, 185, 129, 0.1)');
+      const moonGlow = ctx.createRadialGradient(W / 2, 165, 5, W / 2, 165, 100);
+      moonGlow.addColorStop(0, 'rgba(243, 217, 164, 0.55)');
       moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = moonGlow;
       ctx.beginPath();
-      ctx.arc(W / 2, 130, 75, 0, Math.PI * 2);
+      ctx.arc(W / 2, 165, 100, 0, Math.PI * 2);
       ctx.fill();
-      const moonPath = new Path2D("M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z");
-      ctx.translate(W / 2 - 28, 98);
-      ctx.scale(2.6, 2.6);
 
-      ctx.fillStyle = GOLD;
-      ctx.shadowColor = 'rgba(230, 185, 129, 0.8)';
-      ctx.shadowBlur = 12;
-      ctx.fill(moonPath);
-      ctx.strokeStyle = GOLD_LIGHT;
-      ctx.lineWidth = 0.6;
-      ctx.stroke(moonPath);
-      ctx.restore();
-      ctx.save();
-      const drawSparkle = (cx, cy, size) => {
-        ctx.fillStyle = GOLD_LIGHT;
+      // نرسم القرص الذهبي، وبعدين "نقطع" منه هلال حقيقي بشفافية فعلية
+      // (destination-out) بدل ما نغطي بلون غامق تقيل بيبان كنقطة سودا فوق التوهج
+      const moonCx = W / 2, moonCy = 168, moonR = 26;
+      ctx.beginPath();
+      const moonGrad = ctx.createLinearGradient(moonCx - moonR, moonCy - moonR, moonCx + moonR, moonCy + moonR);
+      moonGrad.addColorStop(0, GOLD_LIGHT);
+      moonGrad.addColorStop(1, GOLD);
+      ctx.fillStyle = moonGrad;
+      ctx.arc(moonCx, moonCy, moonR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(moonCx + 13, moonCy - 7, moonR - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+
+      // نجمة صغيرة أربعة أطراف بجانب الهلال
+      ctx.fillStyle = GOLD_LIGHT;
+      const drawSparkle = (x, y, s) => {
         ctx.beginPath();
-        ctx.moveTo(cx, cy - size);
-        ctx.lineTo(cx + size * 0.28, cy - size * 0.28);
-        ctx.lineTo(cx + size, cy);
-        ctx.lineTo(cx + size * 0.28, cy + size * 0.28);
-        ctx.lineTo(cx, cy + size);
-        ctx.lineTo(cx - size * 0.28, cy + size * 0.28);
-        ctx.lineTo(cx - size, cy);
-        ctx.lineTo(cx - size * 0.28, cy - size * 0.28);
+        ctx.moveTo(x, y - s); ctx.lineTo(x + s * 0.28, y - s * 0.28);
+        ctx.lineTo(x + s, y); ctx.lineTo(x + s * 0.28, y + s * 0.28);
+        ctx.lineTo(x, y + s); ctx.lineTo(x - s * 0.28, y + s * 0.28);
+        ctx.lineTo(x - s, y); ctx.lineTo(x - s * 0.28, y - s * 0.28);
         ctx.closePath();
         ctx.fill();
       };
-      drawSparkle(W / 2 + 30, 106, 9);
+      drawSparkle(W / 2 + 60, 138, 10);
       ctx.restore();
 
-      const frameX = 84, frameY = 230, frameW = W - frameX * 2, frameH = 1530;
-      const archH = 90;
+      // ===== 4. إطار مزدوج بزاوية علوية على شكل قوس محراب (يتماشى مع شعار التطبيق) =====
+      const frameX = 84, frameY = 250, frameW = W - frameX * 2, frameH = 1330;
+      const archH = 90; // ارتفاع قوس المحراب أعلى الإطار
 
       const drawMihrabFrame = (x, y, w, h, arch, color, lw) => {
         ctx.save();
@@ -647,6 +676,7 @@ export default function SurahDetail() {
         ctx.beginPath();
         ctx.moveTo(x, y + h);
         ctx.lineTo(x, y + arch);
+        // القوس المدبب أعلى الإطار
         ctx.quadraticCurveTo(x, y - arch * 0.15, x + w / 2, y - arch * 0.55);
         ctx.quadraticCurveTo(x + w, y - arch * 0.15, x + w, y + arch);
         ctx.lineTo(x + w, y + h);
@@ -657,6 +687,7 @@ export default function SurahDetail() {
       drawMihrabFrame(frameX, frameY, frameW, frameH, archH, GOLD, 2.5);
       drawMihrabFrame(frameX + 20, frameY + 18, frameW - 40, frameH - 36, archH - 14, 'rgba(230, 185, 129, 0.45)', 1.2);
 
+      // زوايا أندلسية مزخرفة سفلية
       const drawCorner = (x, y, dx, dy) => {
         ctx.save();
         ctx.strokeStyle = GOLD_SOFT;
@@ -675,148 +706,120 @@ export default function SurahDetail() {
       drawCorner(frameX, frameY + frameH, 1, -1);
       drawCorner(frameX + frameW, frameY + frameH, -1, -1);
 
-      ctx.save();
-      ctx.fillStyle = GOLD_LIGHT;
-      ctx.font = 'bold 44px "Amiri", "Traditional Arabic", serif';
+      // ===== 5. البسملة =====
+      ctx.fillStyle = GOLD_SOFT;
+      ctx.font = '600 34px "Amiri", "Traditional Arabic", serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 8;
-      ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', W / 2, 320);
-      ctx.restore();
+      ctx.direction = 'rtl';
+      ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', W / 2, 340);
 
-      ctx.save();
+      // فاصل زخرفي مع معينة مركزية
       ctx.strokeStyle = 'rgba(212, 163, 115, 0.55)';
       ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(frameX + 90, 365);
-      ctx.lineTo(W / 2 - 18, 365);
+      ctx.moveTo(frameX + 90, 380);
+      ctx.lineTo(W / 2 - 16, 380);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(W / 2 + 18, 365);
-      ctx.lineTo(frameX + frameW - 90, 365);
+      ctx.moveTo(W / 2 + 16, 380);
+      ctx.lineTo(frameX + frameW - 90, 380);
       ctx.stroke();
-      ctx.translate(W / 2, 365);
+      ctx.save();
+      ctx.translate(W / 2, 380);
       ctx.rotate(Math.PI / 4);
       ctx.fillStyle = GOLD_SOFT;
       ctx.fillRect(-5, -5, 10, 10);
       ctx.restore();
 
+      // ===== 6. نص الآية بتدرج "ذهب مطلي" مع ظل خفيف للعمق =====
       const cleanAyah = formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah.number);
       const fullText = `﴿ ${cleanAyah} ﴾`;
+
+      ctx.font = 'bold 46px "Amiri", "Traditional Arabic", serif';
+      ctx.textAlign = 'center';
+      ctx.direction = 'rtl';
+
       const maxTextWidth = frameW - 160;
-      const textAreaTop = 415;
-      const textAreaBottom = 1480;
-      const maxAvailableHeight = textAreaBottom - textAreaTop;
-
       const words = fullText.split(' ');
-      let optimalFontSize = 52;
-      let optimalLineHeight = 100;
-      let lines = [];
-
-      const computeLines = (size) => {
-        ctx.font = `bold ${size}px "Amiri", "Traditional Arabic", serif`;
-        const res = [];
-        let cur = '';
-        for (let word of words) {
-          const test = cur ? `${cur} ${word}` : word;
-          if (ctx.measureText(test).width > maxTextWidth) {
-            res.push(cur);
-            cur = word;
-          } else {
-            cur = test;
-          }
+      const lines = [];
+      let currentLine = '';
+      for (let word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxTextWidth) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
         }
-        if (cur) res.push(cur);
-        return res;
-      };
-
-      while (optimalFontSize >= 24) {
-        optimalLineHeight = Math.round(optimalFontSize * 2.0);
-        lines = computeLines(optimalFontSize);
-        const totalH = lines.length * optimalLineHeight;
-        if (totalH <= maxAvailableHeight) {
-          break;
-        }
-        optimalFontSize -= 2;
       }
+      if (currentLine) lines.push(currentLine);
 
-      const totalTextHeight = lines.length * optimalLineHeight;
-      let startY = textAreaTop + (maxAvailableHeight - totalTextHeight) / 2 + (optimalLineHeight * 0.4);
+      const lineHeight = 92;
+      const totalTextHeight = lines.length * lineHeight;
+      const textAreaTop = 430, textAreaBottom = frameY + frameH - 220;
+      let startY = textAreaTop + (textAreaBottom - textAreaTop - totalTextHeight) / 2 + 30;
+      if (startY < textAreaTop + 30) startY = textAreaTop + 30;
 
-      const textGrad = ctx.createLinearGradient(0, startY - 40, 0, startY + totalTextHeight);
+      const textGrad = ctx.createLinearGradient(0, startY - 50, 0, startY + totalTextHeight);
       textGrad.addColorStop(0, CREAM);
       textGrad.addColorStop(0.5, GOLD_LIGHT);
       textGrad.addColorStop(1, CREAM);
 
       ctx.save();
-      ctx.font = `bold ${optimalFontSize}px "Amiri", "Traditional Arabic", serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.direction = 'rtl';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(0,0,0,0.45)';
+      ctx.shadowBlur = 14;
       ctx.shadowOffsetY = 3;
       ctx.fillStyle = textGrad;
-
       lines.forEach((line, idx) => {
-        ctx.fillText(line, W / 2, startY + idx * optimalLineHeight);
+        ctx.fillText(line, W / 2, startY + idx * lineHeight);
       });
       ctx.restore();
 
+      // ===== 7. شارة اسم السورة ورقم الآية =====
       const cleanSurahName = surah.name.replace('سُورَةُ ', '');
       const refText = `سورة ${cleanSurahName}  ·  آية ${selectedAyahForCard.numberInSurah}`;
 
-      ctx.save();
       ctx.font = '600 32px "Amiri", "Traditional Arabic", sans-serif';
-      const badgeTextMetrics = ctx.measureText(refText);
-      const badgeWidth = badgeTextMetrics.width + 90;
-      const badgeHeight = 60;
+      const badgeY = frameY + frameH - 150;
+      const badgeWidth = ctx.measureText(refText).width + 96;
       const badgeX = (W - badgeWidth) / 2;
-      const badgeY = 1530;
 
+      ctx.save();
       const badgeGrad = ctx.createLinearGradient(badgeX, 0, badgeX + badgeWidth, 0);
       badgeGrad.addColorStop(0, 'rgba(212, 163, 115, 0.06)');
-      badgeGrad.addColorStop(0.5, 'rgba(212, 163, 115, 0.20)');
+      badgeGrad.addColorStop(0.5, 'rgba(212, 163, 115, 0.18)');
       badgeGrad.addColorStop(1, 'rgba(212, 163, 115, 0.06)');
-      
       ctx.fillStyle = badgeGrad;
       ctx.strokeStyle = 'rgba(230, 185, 129, 0.5)';
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 30);
+      ctx.roundRect(badgeX, badgeY, badgeWidth, 64, 32);
       ctx.fill();
       ctx.stroke();
+      ctx.restore();
 
       ctx.fillStyle = GOLD_LIGHT;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(refText, W / 2, badgeY + badgeHeight / 2);
-      ctx.restore();
-      ctx.save();
+      ctx.fillText(refText, W / 2, badgeY + 42);
+
+      // خط فاصل رفيع + اسم التطبيق
       ctx.strokeStyle = 'rgba(230, 185, 129, 0.35)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(W / 2 - 50, 1625);
-      ctx.lineTo(W / 2 + 50, 1625);
+      ctx.moveTo(W / 2 - 60, badgeY + 96);
+      ctx.lineTo(W / 2 + 60, badgeY + 96);
       ctx.stroke();
-      ctx.restore();
 
-      ctx.save();
       ctx.fillStyle = 'rgba(243, 217, 164, 0.65)';
       ctx.font = '600 24px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.direction = 'ltr';
-      ctx.fillText('اقرأ  •  Iqraa', W / 2, 1665);
-      ctx.restore();
+      ctx.fillText('اقرأ  •  Iqraa', W / 2, badgeY + 138);
 
+      // ===== تنزيل الصورة =====
       const link = document.createElement('a');
       link.download = `Iqraa-${cleanSurahName}-ayah-${selectedAyahForCard.numberInSurah}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
+      link.href = canvas.toDataURL('image/png');
       link.click();
 
-      showNotification(isAr ? "تم تحميل كارت الآية بنجاح!" : "Image downloaded!", "success");
+      showNotification(isAr ? "تم تحميل كارت الآية بنجاح!" : "Story Image downloaded!", "success");
     } catch (e) {
       console.error(e);
       showNotification(isAr ? "حدث خطأ أثناء تحميل الصورة" : "Error generating image", "error");
@@ -913,7 +916,7 @@ export default function SurahDetail() {
   if (offlineError) {
     return (
       <div className={`flex flex-col justify-center items-center min-h-screen p-6 text-center ${isDarkMode ? "bg-gray-900 text-white" : "bg-[#FDFBF7] text-gray-800"}`} dir={isAr ? "rtl" : "ltr"}>
-        <div className={`w-24 h-24 mb-6 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-800 text-[#E6B981]" : "bg-white border-[#F0EBE1] border text-[#D4A373] shadow-md"}`}>
+        <div className={`w-24 h-24 mb-6 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-800 text-[#E5C158]" : "bg-white border-[#F0EBE1] border text-[#D4AF37] shadow-md"}`}>
           <WifiOff size={48} />
         </div>
         <h2 className="text-2xl md:text-3xl font-bold mb-4">{t.offlineTitle}</h2>
@@ -922,7 +925,7 @@ export default function SurahDetail() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button 
             onClick={() => setRetryCount(prev => prev + 1)}
-            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm ${isDarkMode ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"}`}
+            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm ${isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"}`}
           >
             <RefreshCw size={20} />
             {t.retry}
@@ -930,7 +933,7 @@ export default function SurahDetail() {
 
           <button 
             onClick={() => navigate("/")}
-            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-full font-bold transition-all shadow-md ${isDarkMode ? "bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]" : "bg-[#D4A373] text-white hover:bg-[#b58555]"}`}
+            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-full font-bold transition-all shadow-md ${isDarkMode ? "bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]" : "bg-[#D4AF37] text-white hover:bg-[#B8942E]"}`}
           >
             <BackIcon size={20} />
             {t.goBack}
@@ -942,7 +945,7 @@ export default function SurahDetail() {
 
   if (loading || surahPages.length === 0) {
     return (
-      <div className={`flex justify-center items-center min-h-screen font-bold text-xl font-sans ${isDarkMode ? "bg-gray-900 text-[#E6B981]" : "bg-[#FDFBF7] text-[#D4A373]"}`}>
+      <div className={`flex justify-center items-center min-h-screen font-bold text-xl font-sans ${isDarkMode ? "bg-gray-900 text-[#E5C158]" : "bg-[#FDFBF7] text-[#D4AF37]"}`}>
         {t.loading}
       </div>
     );
@@ -953,7 +956,7 @@ export default function SurahDetail() {
   const currentReciterName = recitersList.find(r => r.id === reciter)?.name;
   const realMushafPage = currentAyahs[0]?.page;
   const currentJuz = currentAyahs[0]?.juz;
-  const themeColor = isDarkMode ? "#E6B981" : "#D4A373";
+  const themeColor = isDarkMode ? "#E5C158" : "#D4AF37";
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
@@ -972,106 +975,121 @@ export default function SurahDetail() {
       )}
 
       {/* الهيدر العلوي */}
-      <div className="relative z-30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6 px-2 w-full">
-        <h2 className={`text-2xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+      <div className="relative z-30 flex flex-col md:flex-row gap-3 md:gap-4 items-center justify-between mb-6 px-2 w-full">
+        <h2 className={`text-xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
           {isAr ? surah?.name : surah?.englishName}
         </h2>
 
-        <div className={`flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto ${isAr ? 'justify-end' : 'justify-start'}`}>
+        <div className="flex flex-nowrap items-center justify-between gap-1 md:gap-3 overflow-x-auto scrollbar-none w-full md:w-auto py-0.5 px-0.5">
           
           <button 
             onClick={(e) => handlePlaySurahGlobal(e, 0)}
-            className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-bold transition-all shadow-sm ${!isAr && 'font-sans'} ${
+            className={`flex flex-shrink-0 items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl font-bold transition-all shadow-sm whitespace-nowrap ${!isAr && 'font-sans'} ${
               isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle
                 ? "bg-red-50 text-red-500 border border-red-200 hover:bg-red-100" 
-                : "bg-[#D4A373] text-white hover:bg-[#b58555]"
+                : "bg-[#D4AF37] text-white hover:bg-[#B8942E]"
             }`}
           >
-            {isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
-            <span className="text-xs md:text-sm">{isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? t.pause : t.play}</span>
+            {isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? <PauseCircle size={15} className="md:w-[18px] md:h-[18px]" /> : <PlayCircle size={15} className="md:w-[18px] md:h-[18px]" />}
+            <span className="text-[10px] md:text-sm">{isCurrentAudioSurah && isPlaying && !currentAudio?.playSingle ? t.pause : t.play}</span>
           </button>
 
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button 
+              ref={reciterBtnRef}
               onClick={(e) => {
                 e.stopPropagation();
+                if (!isDropdownOpen && reciterBtnRef.current) {
+                  const rect = reciterBtnRef.current.getBoundingClientRect();
+                  const dropdownWidth = 192; // w-48
+                  const margin = 10;
+                  let left = rect.left + rect.width / 2 - dropdownWidth / 2;
+                  left = Math.max(margin, Math.min(left, window.innerWidth - dropdownWidth - margin));
+                  setDropdownPos({ top: rect.bottom + 8, left });
+                }
                 setIsDropdownOpen(!isDropdownOpen);
               }}
-              className={`flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-xl font-medium text-xs md:text-sm transition-all shadow-sm border ${!isAr && 'font-sans'} ${
+              className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl font-medium text-[10px] md:text-sm transition-all shadow-sm border whitespace-nowrap ${!isAr && 'font-sans'} ${
                 isDarkMode 
-                  ? "bg-gray-800 border-gray-700 text-gray-200 hover:border-[#E6B981]" 
-                  : "bg-white border-[#F0EBE1] text-gray-700 hover:border-[#D4A373]"
+                  ? "bg-gray-800 border-gray-700 text-gray-200 hover:border-[#E5C158]" 
+                  : "bg-white border-[#F0EBE1] text-gray-700 hover:border-[#D4AF37]"
               }`}
             >
-              <span className="truncate max-w-[90px] md:max-w-none">{currentReciterName}</span>
-              <ChevronDown size={16} className={`transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`} />
+              <span className="truncate max-w-[46px] md:max-w-none">{currentReciterName}</span>
+              <ChevronDown size={13} className={`transition-transform duration-300 flex-shrink-0 md:w-4 md:h-4 ${isDropdownOpen ? "rotate-180" : ""} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`} />
             </button>
 
             {isDropdownOpen && (
-              <div className={`absolute top-full mt-2 ${isAr ? 'left-0 md:right-0 md:left-auto' : 'right-0 md:left-0 md:right-auto'} w-48 rounded-2xl shadow-xl overflow-hidden z-50 border ${!isAr && 'font-sans'} ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#F0EBE1]"
-              }`}>
-                {recitersList.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setReciter(r.id);
-                      setIsDropdownOpen(false);
-                      if (isPlaying) setIsPlaying(false); 
-                    }}
-                    className={`w-full ${isAr ? 'text-right' : 'text-left'} px-4 py-3 text-sm transition-colors ${
-                      reciter === r.id 
-                        ? (isDarkMode ? `bg-gray-900 text-[#E6B981] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#E6B981]` : `bg-[#FDFBF7] text-[#D4A373] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#D4A373]`) 
-                        : (isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-[#E6B981]" : "text-gray-600 hover:bg-gray-50 hover:text-[#D4A373]")
-                    }`}
-                  >
-                    {r.name}
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                <div
+                  className={`fixed w-48 rounded-2xl shadow-xl overflow-hidden z-50 border ${!isAr && 'font-sans'} ${
+                    isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#F0EBE1]"
+                  }`}
+                  style={{ top: dropdownPos.top, left: dropdownPos.left }}
+                >
+                  {recitersList.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReciter(r.id);
+                        setIsDropdownOpen(false);
+                        if (isPlaying) setIsPlaying(false); 
+                      }}
+                      className={`w-full ${isAr ? 'text-right' : 'text-left'} px-4 py-3 text-sm transition-colors ${
+                        reciter === r.id 
+                          ? (isDarkMode ? `bg-gray-900 text-[#E5C158] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#E5C158]` : `bg-[#FDFBF7] text-[#D4AF37] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#D4AF37]`) 
+                          : (isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-[#E5C158]" : "text-gray-600 hover:bg-gray-50 hover:text-[#D4AF37]")
+                      }`}
+                    >
+                      {r.name}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
           {isDownloaded ? (
             <button 
-              className={`flex items-center gap-1 p-2 rounded-xl shadow-sm border transition-colors cursor-default ${isDarkMode ? "bg-green-900/30 border-green-800 text-green-400" : "bg-green-50 border-green-200 text-green-600"}`}
+              className={`flex flex-shrink-0 items-center gap-1 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-sm border transition-colors cursor-default ${isDarkMode ? "bg-green-900/30 border-green-800 text-green-400" : "bg-green-50 border-green-200 text-green-600"}`}
               title={isAr ? `محملة بصوت ${currentReciterName}` : `Downloaded (${currentReciterName})`}
             >
-              <CheckCircle size={20} />
+              <CheckCircle size={16} className="md:w-5 md:h-5" />
             </button>
           ) : (
             <button 
               onClick={downloadSurahAudio}
               disabled={isDownloading}
-              className={`flex items-center gap-1 p-2 rounded-xl shadow-sm border transition-colors ${
+              className={`flex flex-shrink-0 items-center gap-1 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-sm border transition-colors ${
                 isDownloading 
-                  ? (isDarkMode ? "bg-gray-800 border-gray-700 text-[#E6B981]" : "bg-gray-50 border-gray-200 text-[#D4A373]") 
-                  : (isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]")
+                  ? (isDarkMode ? "bg-gray-800 border-gray-700 text-[#E5C158]" : "bg-gray-50 border-gray-200 text-[#D4AF37]") 
+                  : (isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E5C158]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4AF37]")
               }`}
               title={isAr ? "تحميل للاستماع أوفلاين" : "Download for offline"}
             >
               {isDownloading ? (
                 <>
-                  <RefreshCw size={20} className="animate-spin" />
-                  <span className="text-[10px] font-bold px-1">{downloadProgress}%</span>
+                  <RefreshCw size={16} className="animate-spin md:w-5 md:h-5" />
+                  <span className="text-[9px] md:text-[10px] font-bold px-1">{downloadProgress}%</span>
                 </>
               ) : (
-                <Download size={20} />
+                <Download size={16} className="md:w-5 md:h-5" />
               )}
             </button>
           )}
 
           <button 
             onClick={toggleMemorizationMode}
-            className={`p-2 rounded-xl shadow-sm border transition-colors ${
+            className={`flex-shrink-0 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-sm border transition-colors ${
               isMemorizationMode 
-                ? "bg-[#D4A373] text-white border-[#D4A373]" 
-                : (isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]")
+                ? "bg-[#D4AF37] text-white border-[#D4AF37]" 
+                : (isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E5C158]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4AF37]")
             }`}
             title={t.memorize}
           >
-            <Brain size={20} />
+            <Brain size={16} className="md:w-5 md:h-5" />
           </button>
 
           <button 
@@ -1079,16 +1097,16 @@ export default function SurahDetail() {
               e.stopPropagation();
               setShowSettings(true);
             }}
-            className={`p-2 rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]"}`}
+            className={`flex-shrink-0 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E5C158]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4AF37]"}`}
           >
-            <Settings size={20} />
+            <Settings size={16} className="md:w-5 md:h-5" />
           </button>
 
           <button 
             onClick={() => navigate("/")}
-            className={`p-2 rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E6B981]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4A373]"}`}
+            className={`flex-shrink-0 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-sm border transition-colors ${isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:text-[#E5C158]" : "bg-white border-[#F0EBE1] text-gray-500 hover:text-[#D4AF37]"}`}
           >
-            <BackIcon size={20} />
+            <BackIcon size={16} className="md:w-5 md:h-5" />
           </button>
         </div>
       </div>
@@ -1103,7 +1121,7 @@ export default function SurahDetail() {
       >
         
         <div className={`flex justify-between items-center w-full pb-2 mb-4 border-b-2 ${!isAr && 'font-sans'} ${
-          isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4A373]/30 text-gray-400"
+          isDarkMode ? "border-gray-700 text-gray-400" : "border-[#D4AF37]/30 text-gray-400"
         } font-bold text-sm md:text-base`}>
           <span>{isAr ? surah?.name : surah?.englishName}</span>
           <span>{t.juz} {currentJuz}</span>
@@ -1124,14 +1142,14 @@ export default function SurahDetail() {
                   <rect x="10" y="10" width="380" height="60" fill={isDarkMode ? "#1f2937" : "#Fdfbf7"} className="opacity-50" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center pb-2 md:pb-3">
-                  <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} pt-1 ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+                  <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} pt-1 ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
                     {isAr ? surah?.name : surah?.englishName}
                   </h2>
                 </div>
               </div>
 
               {surah?.number !== 1 && surah?.number !== 9 && (
-                <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+                <div className={`text-center ${isAr ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'} mb-6 md:mb-8 ${isAr ? 'font-quran' : 'font-serif font-medium tracking-wide'} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
                   {isAr ? "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" : "In the name of Allah..."}
                 </div>
               )}
@@ -1168,11 +1186,11 @@ export default function SurahDetail() {
                   onClick={(e) => handleAyahClick(e, ayah)} 
                   className={`transition-all duration-300 cursor-pointer inline rounded px-1 py-0.5 ${
                     isAyahPlaying 
-                      ? (isDarkMode ? "text-[#E6B981] bg-[#E6B981]/15 font-bold rounded-lg" : "text-[#D4A373] bg-[#D4A373]/15 font-bold rounded-lg") 
+                      ? (isDarkMode ? "text-[#E5C158] bg-[#E5C158]/15 font-bold rounded-lg" : "text-[#D4AF37] bg-[#D4AF37]/15 font-bold rounded-lg") 
                       : isMenuActive
-                        ? (isDarkMode ? "text-[#E6B981] bg-[#E6B981]/25 font-bold rounded-lg shadow-sm" : "text-[#D4A373] bg-[#D4A373]/25 font-bold rounded-lg shadow-sm")
-                        : (isDarkMode ? "text-gray-200 hover:text-[#E6B981]" : "text-gray-800 hover:text-[#D4A373]")
-                  } ${isHidden ? "blur-[6px] opacity-40 select-none" : ""} ${isTargetAyah && !isMemorizationMode ? (isDarkMode ? "bg-[#E6B981]/20 rounded-lg" : "bg-[#D4A373]/20 rounded-lg") : ""}`}
+                        ? (isDarkMode ? "text-[#E5C158] bg-[#E5C158]/25 font-bold rounded-lg shadow-sm" : "text-[#D4AF37] bg-[#D4AF37]/25 font-bold rounded-lg shadow-sm")
+                        : (isDarkMode ? "text-gray-200 hover:text-[#E5C158]" : "text-gray-800 hover:text-[#D4AF37]")
+                  } ${isHidden ? "blur-[6px] opacity-40 select-none" : ""} ${isTargetAyah && !isMemorizationMode ? (isDarkMode ? "bg-[#E5C158]/20 rounded-lg" : "bg-[#D4AF37]/20 rounded-lg") : ""}`}
                   style={{ fontSize: `${fontSize}px` }}
                 >
                   {cleanAyahText}
@@ -1180,10 +1198,10 @@ export default function SurahDetail() {
                   <span 
                     className={`inline-flex items-center justify-center mx-1.5 md:mx-2 rounded-full font-sans border-[2.5px] border-double transition-all relative ${
                       isAyahPlaying || isMenuActive
-                        ? "bg-[#D4A373] text-white border-[#D4A373] scale-105 shadow-sm" 
+                        ? "bg-[#D4AF37] text-white border-[#D4AF37] scale-105 shadow-sm" 
                         : isBookmarked
-                          ? (isDarkMode ? "bg-amber-950/60 text-[#E6B981] border-[#E6B981]" : "bg-amber-100 text-[#D4A373] border-[#D4A373]")
-                          : (isDarkMode ? "text-[#E6B981] border-[#E6B981]" : "text-[#D4A373] border-[#D4A373]")
+                          ? (isDarkMode ? "bg-amber-950/60 text-[#E5C158] border-[#E5C158]" : "bg-amber-100 text-[#D4AF37] border-[#D4AF37]")
+                          : (isDarkMode ? "text-[#E5C158] border-[#E5C158]" : "text-[#D4AF37] border-[#D4AF37]")
                     } ${isHidden ? "opacity-0" : "opacity-100"}`}
                     style={{ 
                       width: `${fontSize * (isAr ? 1.3 : 1.1)}px`, 
@@ -1210,7 +1228,7 @@ export default function SurahDetail() {
             className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
               surah?.number === 1 && currentPage === 0
                 ? "opacity-50 cursor-not-allowed text-gray-400" 
-                : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
+                : (isDarkMode ? "text-[#E5C158] hover:bg-gray-700" : "text-[#D4AF37] hover:bg-[#f4efe6]")
             }`}
           >
             <PrevPageIcon size={18} />
@@ -1227,7 +1245,7 @@ export default function SurahDetail() {
             className={`flex items-center gap-1 md:gap-2 px-3 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${!isAr && 'font-sans'} ${
               surah?.number === 114 && currentPage === totalPages - 1
                 ? "opacity-50 cursor-not-allowed text-gray-400" 
-                : (isDarkMode ? "text-[#E6B981] hover:bg-gray-700" : "text-[#D4A373] hover:bg-[#f4efe6]")
+                : (isDarkMode ? "text-[#E5C158] hover:bg-gray-700" : "text-[#D4AF37] hover:bg-[#f4efe6]")
             }`}
           >
             <span>{currentPage === totalPages - 1 ? t.nextSurah : t.nextPage}</span>
@@ -1249,8 +1267,8 @@ export default function SurahDetail() {
             onClick={(e) => e.stopPropagation()}
             className={`fixed z-[9999] w-48 rounded-2xl shadow-[0_10px_35px_rgba(212,163,115,0.25)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.7)] border backdrop-blur-xl transform transition-all animate-in fade-in zoom-in-95 duration-150 overflow-hidden ${
               isDarkMode 
-                ? "bg-gray-900/95 border-[#E6B981]/40 text-gray-100 divide-y divide-gray-800" 
-                : "bg-white/95 border-[#D4A373]/40 text-gray-800 divide-y divide-[#F0EBE1]"
+                ? "bg-gray-900/95 border-[#E5C158]/40 text-gray-100 divide-y divide-gray-800" 
+                : "bg-white/95 border-[#D4AF37]/40 text-gray-800 divide-y divide-[#F0EBE1]"
             }`}
             dir={isAr ? "rtl" : "ltr"}
           >
@@ -1260,11 +1278,11 @@ export default function SurahDetail() {
                 setActiveAyahMenu(null);
               }}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
-                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E5C158]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4AF37]'
               }`}
             >
               <span>{t.shareCard}</span>
-              <Sparkles size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+              <Sparkles size={16} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
             </button>
 
             <button
@@ -1273,27 +1291,27 @@ export default function SurahDetail() {
                 setActiveAyahMenu(null);
               }}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
-                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E5C158]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4AF37]'
               }`}
             >
               <span>{t.showTafsir}</span>
-              <BookOpen size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+              <BookOpen size={16} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
             </button>
 
             <button
               onClick={() => handlePlaySingleAyah(activeAyahMenu)}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
-                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E5C158]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4AF37]'
               }`}
             >
               <span>{t.listenAyah}</span>
-              <Volume2 size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+              <Volume2 size={16} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
             </button>
 
             <button
               onClick={() => toggleBookmark(activeAyahMenu)}
               className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
-                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E5C158]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4AF37]'
               }`}
             >
               <span>
@@ -1304,13 +1322,14 @@ export default function SurahDetail() {
               {bookmarks.some(b => b.surahNumber === surah?.number && b.ayahNumberInSurah === activeAyahMenu.numberInSurah) ? (
                 <BookmarkCheck size={16} className="text-amber-500" />
               ) : (
-                <Bookmark size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <Bookmark size={16} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
               )}
             </button>
           </div>
         </>
       )}
 
+      {/* 🌟 نافذة كارت الآية للمشاركة (Ayah Story Card Modal) 🌟 */}
       {selectedAyahForCard && (
         <div 
           className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
@@ -1321,7 +1340,7 @@ export default function SurahDetail() {
             onClick={e => e.stopPropagation()}
             dir={isAr ? "rtl" : "ltr"}
           >
-         
+            {/* زر الإغلاق العلوي */}
             <div className="w-full flex justify-end">
               <button 
                 onClick={() => setSelectedAyahForCard(null)}
@@ -1331,70 +1350,78 @@ export default function SurahDetail() {
               </button>
             </div>
 
-            <div className="w-full relative aspect-[9/16] rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(212,163,115,0.35)] border border-[#D4A373]/50 bg-gradient-to-b from-[#171310] via-[#0d0b08] to-[#0a0806] text-[#FBF3E7] overflow-hidden">
+            {/* 🌟 كارت "أونيكس وذهب" الفاخر — بقوس محراب علوي بروح شعار التطبيق 🌟 */}
+            <div className="w-full relative aspect-[9/16] rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(212,163,115,0.35)] border border-[#D4AF37]/50 bg-gradient-to-b from-[#171310] via-[#0d0b08] to-[#0a0806] text-[#FBF3E7] overflow-hidden">
 
+              {/* نسيج هندسي إسلامي خفيف جدًا في الخلفية */}
               <div
                 className="absolute inset-0 opacity-[0.05] pointer-events-none"
                 style={{
                   backgroundImage:
-                    'repeating-linear-gradient(45deg, #E6B981 0, #E6B981 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-45deg, #E6B981 0, #E6B981 1px, transparent 1px, transparent 26px)',
+                    'repeating-linear-gradient(45deg, #E5C158 0, #E5C158 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-45deg, #E5C158 0, #E5C158 1px, transparent 1px, transparent 26px)',
                 }}
               />
 
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-[#E6B981]/20 blur-3xl pointer-events-none" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#D4A373]/10 blur-3xl pointer-events-none" />
+              {/* توهجات ذهبية */}
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-[#E5C158]/20 blur-3xl pointer-events-none" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#D4AF37]/10 blur-3xl pointer-events-none" />
               <div className="absolute inset-0 [background:radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)] pointer-events-none" />
 
+              {/* قوس محراب علوي بروح شعار التطبيق + إطار داخلي رفيع */}
               <div className="absolute inset-x-5 top-6 bottom-24 pointer-events-none">
                 <svg viewBox="0 0 100 170" preserveAspectRatio="none" className="w-full h-full">
                   <path
                     d="M 2 170 L 2 18 Q 2 4 50 -6 Q 98 4 98 18 L 98 170"
-                    fill="none" stroke="#D4A373" strokeWidth="0.6"
+                    fill="none" stroke="#D4AF37" strokeWidth="0.6"
                   />
                   <path
                     d="M 6 170 L 6 20 Q 6 9 50 0 Q 94 9 94 20 L 94 170"
-                    fill="none" stroke="#E6B981" strokeWidth="0.3" opacity="0.5"
+                    fill="none" stroke="#E5C158" strokeWidth="0.3" opacity="0.5"
                   />
                 </svg>
               </div>
-     
-              <div className="absolute bottom-24 left-5 w-8 h-8 border-b border-l border-[#E6B981]/60 rounded-bl-lg pointer-events-none" />
-              <div className="absolute bottom-24 right-5 w-8 h-8 border-b border-r border-[#E6B981]/60 rounded-br-lg pointer-events-none" />
+              {/* زوايا سفلية مزخرفة */}
+              <div className="absolute bottom-24 left-5 w-8 h-8 border-b border-l border-[#E5C158]/60 rounded-bl-lg pointer-events-none" />
+              <div className="absolute bottom-24 right-5 w-8 h-8 border-b border-r border-[#E5C158]/60 rounded-br-lg pointer-events-none" />
 
-              
-              <div className="relative z-10 h-full flex flex-col items-center text-center px-7 pt-7 pb-6">
+              {/* المحتوى */}
+              <div className="relative z-10 h-full flex flex-col items-center text-center px-7 pt-10 pb-6">
 
-                <div className="relative mb-2 flex items-center justify-center w-12 h-12">
-                  <div className="absolute inset-0 rounded-full bg-[#E6B981]/25 blur-xl" />
-                  <Moon size={24} className="relative text-[#F3D9A4] fill-[#D4A373] drop-shadow-[0_0_6px_rgba(230,185,129,0.6)]" />
-                  <Sparkles size={12} className="absolute -top-0.5 -right-0.5 text-[#F3D9A4]" />
+                {/* هلال ونجمة أعلى الكارت */}
+                <div className="relative mb-3 flex items-center justify-center w-14 h-14">
+                  <div className="absolute inset-0 rounded-full bg-[#E5C158]/25 blur-xl" />
+                  <Moon size={26} className="relative text-[#F3D9A4] fill-[#D4AF37] drop-shadow-[0_0_6px_rgba(230,185,129,0.6)]" />
+                  <Sparkles size={13} className="absolute -top-0.5 -right-0.5 text-[#F3D9A4]" />
                 </div>
 
-                <span className="text-base md:text-lg font-bold text-[#F3D9A4] tracking-wide block mb-2 drop-shadow-sm" style={{ fontFamily: '"Amiri", serif' }}>
+                <span className="text-sm md:text-base font-bold text-[#E5C158] tracking-wide block mb-2" style={{ fontFamily: '"Amiri", serif' }}>
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </span>
 
+                {/* فاصل بمعينة مركزية */}
                 <div className="flex items-center gap-2 w-full max-w-[70%] mb-auto">
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D4A373]/70" />
-                  <div className="w-1.5 h-1.5 rotate-45 bg-[#E6B981]" />
-                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D4A373]/70" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D4AF37]/70" />
+                  <div className="w-1.5 h-1.5 rotate-45 bg-[#E5C158]" />
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D4AF37]/70" />
                 </div>
 
+                {/* متن الآية الكريمة بتدرج ذهبي */}
                 <div className="flex-1 flex items-center justify-center px-1 overflow-y-auto scrollbar-none">
                   <p
-                    className="font-bold font-quran leading-[2.3] bg-clip-text text-transparent bg-gradient-to-b from-[#FBF3E7] via-[#F3D9A4] to-[#FBF3E7] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] text-lg sm:text-xl md:text-2xl"
+                    className="text-xl md:text-2xl font-bold font-quran leading-[2.4] bg-clip-text text-transparent bg-gradient-to-b from-[#FBF3E7] via-[#F3D9A4] to-[#FBF3E7] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
                   >
                     ﴿ {formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah?.number)} ﴾
                   </p>
                 </div>
 
+                {/* أسفل الكارت: شارة اسم السورة ورقم الآية + اسم التطبيق */}
                 <div className="mt-auto w-full flex flex-col items-center gap-3 pt-3">
-                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#E6B981]/50 bg-gradient-to-r from-[#D4A373]/5 via-[#D4A373]/20 to-[#D4A373]/5 shadow-sm">
+                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#E5C158]/50 bg-gradient-to-r from-[#D4AF37]/5 via-[#D4AF37]/20 to-[#D4AF37]/5 shadow-sm">
                     <span className="text-xs md:text-sm font-bold text-[#F3D9A4]" style={{ fontFamily: '"Amiri", serif' }}>
                       سورة {surah?.name.replace('سُورَةُ ', '')} · آية {selectedAyahForCard.numberInSurah}
                     </span>
                   </div>
-                  <div className="w-14 h-px bg-[#E6B981]/40" />
+                  <div className="w-14 h-px bg-[#E5C158]/40" />
                   <p className="text-[11px] font-semibold text-[#F3D9A4]/65 tracking-widest">
                     اقرأ  •  Iqraa
                   </p>
@@ -1402,11 +1429,12 @@ export default function SurahDetail() {
               </div>
             </div>
 
+            {/* 🌟 أزرار التفاعل والإجراءات 🌟 */}
             <div className="w-full flex items-center justify-between gap-2 pt-1">
               <button
                 onClick={handleDownloadCardImage}
                 disabled={isGeneratingImage}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs md:text-sm bg-gradient-to-r from-[#D4A373] to-[#c28e5c] hover:from-[#c28e5c] hover:to-[#a87445] text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs md:text-sm bg-gradient-to-r from-[#D4AF37] to-[#B8942E] hover:from-[#B8942E] hover:to-[#B8942E] text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
               >
                 {isGeneratingImage ? <RefreshCw size={16} className="animate-spin" /> : <ImageIcon size={16} />}
                 <span>{t.downloadCard}</span>
@@ -1414,7 +1442,7 @@ export default function SurahDetail() {
 
               <button
                 onClick={handleNativeShare}
-                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E6B981] border border-[#E6B981]/30 transition-all active:scale-95"
+                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E5C158] border border-[#E5C158]/30 transition-all active:scale-95"
                 title={t.shareAction}
               >
                 <Share2 size={18} />
@@ -1422,7 +1450,7 @@ export default function SurahDetail() {
 
               <button
                 onClick={handleCopyCardText}
-                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E6B981] border border-[#E6B981]/30 transition-all active:scale-95"
+                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E5C158] border border-[#E5C158]/30 transition-all active:scale-95"
                 title={t.copyCardText}
               >
                 {isCardCopied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
@@ -1433,6 +1461,7 @@ export default function SurahDetail() {
         </div>
       )}
 
+      {/* نافذة التفسير */}
       {selectedAyahForTafsir && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAyahForTafsir(null)}>
           <div className={`w-full max-w-xl p-5 md:p-6 rounded-[2.5rem] shadow-2xl border transform transition-all ${
@@ -1441,8 +1470,8 @@ export default function SurahDetail() {
             
             <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2">
-                <BookOpen size={20} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
-                <h3 className={`font-bold text-base md:text-lg ${!isAr && 'font-sans'} ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>
+                <BookOpen size={20} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
+                <h3 className={`font-bold text-base md:text-lg ${!isAr && 'font-sans'} ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
                   {t.tafsirTitle} ({selectedAyahForTafsir.numberInSurah})
                 </h3>
               </div>
@@ -1463,7 +1492,7 @@ export default function SurahDetail() {
                   onClick={() => setSelectedTafsirEdition(ed.id)}
                   className={`px-3.5 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
                     selectedTafsirEdition === ed.id
-                      ? (isDarkMode ? 'bg-[#E6B981] text-gray-900 shadow-md' : 'bg-[#D4A373] text-white shadow-md')
+                      ? (isDarkMode ? 'bg-[#E5C158] text-gray-900 shadow-md' : 'bg-[#D4AF37] text-white shadow-md')
                       : (isDarkMode ? 'bg-gray-800 text-gray-300 hover:text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
                   }`}
                 >
@@ -1489,6 +1518,8 @@ export default function SurahDetail() {
           </div>
         </div>
       )}
+
+      {/* نافذة الإعدادات */}
       {showSettings && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
           <div className={`w-full max-w-sm p-5 md:p-6 rounded-3xl shadow-xl ${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"}`} onClick={e => e.stopPropagation()} dir={isAr ? "rtl" : "ltr"}>
@@ -1499,12 +1530,12 @@ export default function SurahDetail() {
             <div className={`mb-4 ${!isAr && 'font-sans'}`}>
               <div className="flex justify-between font-bold mb-2 text-sm md:text-base">
                 <span>{t.fontSize}</span>
-                <span className="text-[#D4A373]">{fontSize}px</span>
+                <span className="text-[#D4AF37]">{fontSize}px</span>
               </div>
               <input 
                 type="range" min="16" max="60" value={fontSize} 
                 onChange={(e) => setFontSize(parseInt(e.target.value))}
-                className="w-full accent-[#D4A373]" style={{ direction: 'ltr' }}
+                className="w-full accent-[#D4AF37]" style={{ direction: 'ltr' }}
               />
             </div>
           </div>

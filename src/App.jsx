@@ -81,7 +81,7 @@ const TopBar = () => {
               <button 
                 onClick={handleInstall}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full shadow-sm font-bold text-xs transition-colors ${
-                  isDarkMode ? "bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]" : "bg-[#D4A373] text-white hover:bg-[#c7915b]"
+                  isDarkMode ? "bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]" : "bg-[#D4AF37] text-white hover:bg-[#B8942E]"
                 }`}
               >
                 <Download size={15} />
@@ -91,18 +91,18 @@ const TopBar = () => {
 
             <button 
               onClick={() => setIsModalOpen(true)}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
-                isDarkMode ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"
+              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-colors ${
+                isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
               title={isAr ? "معلومات المطور" : "Developer Info"}
             >
-              <Info size={17} />
+              <Info size={21} />
             </button>
 
             <button 
               onClick={() => setLang(isAr ? 'en' : 'ar')}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm font-bold text-xs transition-colors ${
-                isDarkMode ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"
+              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm font-bold text-sm transition-colors ${
+                isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
             >
               {isAr ? 'EN' : 'ع'}
@@ -110,28 +110,28 @@ const TopBar = () => {
           
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
-                isDarkMode ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"
+              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-colors ${
+                isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
               title={isAr ? "تبديل المظهر" : "Toggle Theme"}
             >
-              {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
+              {isDarkMode ? <Sun size={21} /> : <Moon size={21} />}
             </button>
           </div>
 
           <button
             onClick={() => setIsBookmarkDrawerOpen(true)}
-            className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
+            className={`relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-all ${
               isDarkMode 
-                ? "bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700" 
-                : "bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50"
+                ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" 
+                : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
             }`}
             title={isAr ? "العلامات المرجعية" : "Bookmarks"}
           >
-            <Bookmark size={17} />
+            <Bookmark size={21} />
             {bookmarks.length > 0 && (
               <span className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${
-                isDarkMode ? "bg-[#E6B981] text-gray-900" : "bg-[#D4A373] text-white"
+                isDarkMode ? "bg-[#E5C158] text-gray-900" : "bg-[#D4AF37] text-white"
               }`}>
                 {bookmarks.length}
               </span>
@@ -162,12 +162,12 @@ const TopBar = () => {
             }`}>
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  isDarkMode ? "bg-[#E6B981]/20 text-[#E6B981]" : "bg-[#D4A373]/20 text-[#D4A373]"
+                  isDarkMode ? "bg-[#E5C158]/20 text-[#E5C158]" : "bg-[#D4AF37]/20 text-[#D4AF37]"
                 }`}>
                   <Bookmark size={18} />
                 </div>
                 <h3 className={`font-bold text-base md:text-lg ${
-                  isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"
+                  isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"
                 }`}>
                   {isAr ? "العلامات المرجعية" : "Bookmarks"} ({bookmarks.length})
                 </h3>
@@ -203,13 +203,13 @@ const TopBar = () => {
                     onClick={() => handleNavigateToBookmark(b)}
                     className={`p-3.5 rounded-2xl border shadow-sm cursor-pointer transition-all duration-200 hover:scale-[1.01] flex items-center justify-between ${
                       isDarkMode 
-                        ? "bg-gray-800/80 border-gray-700/80 hover:border-[#E6B981]/60 hover:bg-gray-800" 
-                        : "bg-white border-[#F0EBE1] hover:border-[#D4A373]/60 hover:bg-[#FDFBF7]"
+                        ? "bg-gray-800/80 border-gray-700/80 hover:border-[#E5C158]/60 hover:bg-gray-800" 
+                        : "bg-white border-[#F0EBE1] hover:border-[#D4AF37]/60 hover:bg-[#FDFBF7]"
                     }`}
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs font-quran ${
-                        isDarkMode ? "bg-gray-900 text-[#E6B981]" : "bg-[#FDFBF7] text-[#D4A373]"
+                        isDarkMode ? "bg-gray-900 text-[#E5C158]" : "bg-[#FDFBF7] text-[#D4AF37]"
                       }`}>
                         {b.ayahNumberInSurah}
                       </div>
@@ -262,15 +262,15 @@ const BottomNav = () => {
         
         
         <div className="flex w-[39%] justify-between items-center">
-          <Link to="/hadith" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/hadith' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/hadith" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/hadith' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <ScrollText size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأحاديث' : 'Hadiths'}</span>
           </Link>
-          <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <SunMoon size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأذكار' : 'Azkar'}</span>
           </Link>
-          <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <RadioIcon size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الراديو' : 'Radio'}</span>
           </Link>
@@ -281,8 +281,8 @@ const BottomNav = () => {
             to="/" 
             className={`flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full border-[6px] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${
               location.pathname === '/' 
-                ? (isDarkMode ? 'bg-[#E6B981] border-gray-900 text-gray-900 shadow-[#E6B981]/20' : 'bg-[#D4A373] border-white text-white shadow-[#D4A373]/30')
-                : (isDarkMode ? 'bg-gray-800 border-gray-900 text-gray-400 hover:text-[#E6B981]' : 'bg-[#FDFBF7] border-white text-gray-400 hover:text-[#D4A373]')
+                ? (isDarkMode ? 'bg-[#E5C158] border-gray-900 text-gray-900 shadow-[#E5C158]/20' : 'bg-[#D4AF37] border-white text-white shadow-[#D4AF37]/30')
+                : (isDarkMode ? 'bg-gray-800 border-gray-900 text-gray-400 hover:text-[#E5C158]' : 'bg-[#FDFBF7] border-white text-gray-400 hover:text-[#D4AF37]')
             }`}
             title={isAr ? 'القرآن الكريم' : 'Quran'}
           >
@@ -297,15 +297,15 @@ const BottomNav = () => {
           </Link>
         </div>
         <div className="flex w-[39%] justify-between items-center">
-          <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <Mic size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'التسميع' : 'Memorize'}</span>
           </Link>
-          <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <Clock size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'المواقيت' : 'Prayers'}</span>
           </Link>
-          <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4A373]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
             <Compass size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القبلة' : 'Qibla'}</span>
           </Link>

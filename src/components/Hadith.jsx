@@ -189,11 +189,11 @@ export default function Hadith() {
 
       <div className="text-center mb-4 md:mb-6 mt-0 md:mt-2 px-2">
         <div className={`w-12 h-12 md:w-16 md:h-16 mx-auto rounded-full flex items-center justify-center mb-3 md:mb-4 border-2 shadow-sm transition-colors ${
-          isDarkMode ? "bg-gray-800 border-[#E6B981] text-[#E6B981]" : "bg-[#FDFBF7] border-[#D4A373] text-[#D4A373]"
+          isDarkMode ? "bg-gray-800 border-[#E5C158] text-[#E5C158]" : "bg-[#FDFBF7] border-[#D4AF37] text-[#D4AF37]"
         }`}>
           <ScrollText size={24} className="md:w-8 md:h-8" />
         </div>
-        <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-2 md:mb-3 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-2xl md:text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} mb-2 md:mb-3 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
           {t.title}
         </h2>
         <p className="text-gray-500 text-[10px] md:text-sm font-medium mb-4 md:mb-6">{t.subtitle}</p>
@@ -206,7 +206,7 @@ export default function Hadith() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`w-full p-3.5 md:p-4 ${isAr ? 'pr-12 md:pr-14' : 'pl-12 md:pl-14'} rounded-2xl border focus:outline-none shadow-sm transition-colors font-medium text-xs md:text-base ${
-            isDarkMode ? 'bg-gray-800 border-gray-700 text-[#E6B981] focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'
+            isDarkMode ? 'bg-gray-800 border-gray-700 text-[#E5C158] focus:border-[#E5C158]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4AF37]'
           }`}
         />
         <Search className={`absolute ${isAr ? 'right-4 md:right-5' : 'left-4 md:left-5'} top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} size={18} />
@@ -217,8 +217,8 @@ export default function Hadith() {
           onClick={() => { setActiveBook(FAVORITES_ID); setSearchQuery(""); }}
           className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-sm shrink-0 transition-all whitespace-nowrap ${
             activeBook === FAVORITES_ID
-              ? (isDarkMode ? "bg-[#E6B981] text-gray-900 shadow-md" : "bg-[#D4A373] text-white shadow-md")
-              : (isDarkMode ? "bg-gray-800 text-[#E6B981] hover:text-gray-200" : "bg-white border border-[#F0EBE1] text-[#D4A373] hover:bg-gray-50")
+              ? (isDarkMode ? "bg-[#E5C158] text-gray-900 shadow-md" : "bg-[#D4AF37] text-white shadow-md")
+              : (isDarkMode ? "bg-gray-800 text-[#E5C158] hover:text-gray-200" : "bg-white border border-[#F0EBE1] text-[#D4AF37] hover:bg-gray-50")
           }`}
         >
           <Bookmark size={14} className={activeBook === FAVORITES_ID ? "fill-current" : ""} />
@@ -230,8 +230,8 @@ export default function Hadith() {
             onClick={() => { setActiveBook(book.id); setSearchQuery(""); }}
             className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-xs md:text-sm shrink-0 transition-all whitespace-nowrap ${
               activeBook === book.id
-                ? (isDarkMode ? "bg-[#E6B981] text-gray-900 shadow-md" : "bg-[#D4A373] text-white shadow-md")
-                : (isDarkMode ? "bg-gray-800 text-gray-400 hover:text-[#E6B981]" : "bg-white border border-[#F0EBE1] text-gray-600 hover:bg-gray-50")
+                ? (isDarkMode ? "bg-[#E5C158] text-gray-900 shadow-md" : "bg-[#D4AF37] text-white shadow-md")
+                : (isDarkMode ? "bg-gray-800 text-gray-400 hover:text-[#E5C158]" : "bg-white border border-[#F0EBE1] text-gray-600 hover:bg-gray-50")
             }`}
           >
             {isAr ? book.nameAr : book.nameEn}
@@ -250,7 +250,7 @@ export default function Hadith() {
             <p className="text-gray-500 font-medium text-sm md:text-base mb-4">{t.loadError}</p>
             <button
               onClick={() => loadNextSection(activeBook, true)}
-              className={`px-5 py-2 rounded-full font-bold text-xs md:text-sm ${isDarkMode ? 'bg-gray-800 text-[#E6B981] border border-gray-700' : 'bg-white text-[#D4A373] border border-[#F0EBE1] shadow-sm'}`}
+              className={`px-5 py-2 rounded-full font-bold text-xs md:text-sm ${isDarkMode ? 'bg-gray-800 text-[#E5C158] border border-gray-700' : 'bg-white text-[#D4AF37] border border-[#F0EBE1] shadow-sm'}`}
             >
               {t.retry}
             </button>
@@ -266,19 +266,19 @@ export default function Hadith() {
               <div 
                 onClick={() => setSelectedHadith(dailyHadith)}
                 className={`col-span-1 md:col-span-2 cursor-pointer p-5 md:p-6 rounded-3xl shadow-md border transition-all hover:scale-[1.01] overflow-hidden ${
-                  isDarkMode ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700" : "bg-gradient-to-br from-[#FDFBF7] to-white border-[#D4A373]/30"
+                  isDarkMode ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700" : "bg-gradient-to-br from-[#FDFBF7] to-white border-[#D4AF37]/30"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles size={16} className={isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"} />
-                  <h3 className={`font-bold text-xs md:text-sm ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`}>{t.daily}</h3>
+                  <Sparkles size={16} className={isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"} />
+                  <h3 className={`font-bold text-xs md:text-sm ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>{t.daily}</h3>
                 </div>
                 <p className={`text-base md:text-xl font-medium line-clamp-3 leading-relaxed ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}>
                   {dailyHadith.text}
                 </p>
                 <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50 flex justify-between items-center">
                   <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{sourceLabelFor(dailyHadith.bookId, dailyHadith.hadithnumber)}</span>
-                  <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.readMore}</span>
+                  <span className={`text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.readMore}</span>
                 </div>
               </div>
             )}
@@ -292,20 +292,20 @@ export default function Hadith() {
                   key={hadith.id}
                   onClick={() => setSelectedHadith(hadith)}
                   className={`cursor-pointer flex flex-col p-4 md:p-5 rounded-3xl shadow-sm border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-                    isDarkMode ? "bg-gray-800 border-gray-700 hover:border-[#E6B981]/50" : "bg-white border-[#F0EBE1] hover:border-[#D4A373]/60"
+                    isDarkMode ? "bg-gray-800 border-gray-700 hover:border-[#E5C158]/50" : "bg-white border-[#F0EBE1] hover:border-[#D4AF37]/60"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     {hadith.grade && (
                       <span className={`text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-full ${
-                        isDarkMode ? 'bg-[#E6B981]/15 text-[#E6B981]' : 'bg-[#D4A373]/10 text-[#B5793A]'
+                        isDarkMode ? 'bg-[#E5C158]/15 text-[#E5C158]' : 'bg-[#D4AF37]/10 text-[#B8942E]'
                       }`}>
                         {hadith.grade}
                       </span>
                     )}
                     <button
                       onClick={(e) => toggleBookmark(e, hadith, sourceLabel)}
-                      className={`p-1 md:p-1.5 rounded-lg transition-colors ${bookmarked ? (isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]') : 'text-gray-400 hover:text-[#D4A373]'}`}
+                      className={`p-1 md:p-1.5 rounded-lg transition-colors ${bookmarked ? (isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]') : 'text-gray-400 hover:text-[#D4AF37]'}`}
                     >
                       {bookmarked ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
                     </button>
@@ -313,7 +313,7 @@ export default function Hadith() {
 
               
                   <div className="relative mb-3 md:mb-4">
-                    <p className={`text-[14px] md:text-base leading-loose font-medium line-clamp-3 ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-gray-700"}`}>
+                    <p className={`text-[14px] md:text-base leading-loose font-medium line-clamp-3 ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E5C158]" : "text-gray-700"}`}>
                       {hadith.text}
                     </p>
                   
@@ -324,7 +324,7 @@ export default function Hadith() {
                     <span className={`text-[10px] md:text-[11px] font-bold truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {sourceLabel}
                     </span>
-                    <span className={`text-[10px] md:text-[11px] font-bold shrink-0 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+                    <span className={`text-[10px] md:text-[11px] font-bold shrink-0 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
                       {t.readMore}
                     </span>
                   </div>
@@ -343,7 +343,7 @@ export default function Hadith() {
                 onClick={() => loadNextSection(activeBook, false)}
                 disabled={loadingMore}
                 className={`flex items-center gap-2 px-6 md:px-8 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm transition-all shadow-sm ${
-                  isDarkMode ? 'bg-gray-800 text-[#E6B981] border border-gray-700 hover:bg-gray-700' : 'bg-white text-[#D4A373] border border-[#F0EBE1] hover:bg-gray-50'
+                  isDarkMode ? 'bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700' : 'bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50'
                 }`}
               >
                 {loadingMore ? <Loader2 size={16} className="animate-spin" /> : <ChevronDown size={16} />}
@@ -368,7 +368,7 @@ export default function Hadith() {
             {/* هيدر المودال */}
             <div className={`flex items-center justify-between p-4 md:p-6 border-b shrink-0 ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="flex items-center gap-2">
-                <BookOpen size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+                <BookOpen size={16} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
                 <span className={`font-bold text-xs md:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                   {sourceLabelFor(selectedHadith.bookId, selectedHadith.hadithnumber)}
                 </span>
@@ -384,18 +384,18 @@ export default function Hadith() {
             <div className="p-5 md:p-8 overflow-y-auto relative">
               {selectedHadith.grade && (
                 <span className={`inline-block mb-4 md:mb-5 text-[10px] md:text-[11px] font-bold px-3 py-1 md:py-1.5 rounded-full ${
-                  isDarkMode ? 'bg-[#E6B981]/15 text-[#E6B981]' : 'bg-[#D4A373]/10 text-[#B5793A]'
+                  isDarkMode ? 'bg-[#E5C158]/15 text-[#E5C158]' : 'bg-[#D4AF37]/10 text-[#B8942E]'
                 }`}>
                   {selectedHadith.grade}
                 </span>
               )}
 
               <div className="relative">
-                <span className={`absolute -top-5 md:-top-6 -right-2 md:-right-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
-                <p className={`text-[17px] md:text-2xl leading-[2.2] md:leading-[2.4] font-medium ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E6B981]" : "text-[#2b241d]"}`}>
+                <span className={`absolute -top-5 md:-top-6 -right-2 md:-right-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>"</span>
+                <p className={`text-[17px] md:text-2xl leading-[2.2] md:leading-[2.4] font-medium ${isAr ? 'font-sans text-justify' : 'font-serif text-left'} ${isDarkMode ? "text-[#E5C158]" : "text-[#2b241d]"}`}>
                   {selectedHadith.text}
                 </p>
-                <span className={`absolute -bottom-5 md:-bottom-6 -left-2 md:-left-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>"</span>
+                <span className={`absolute -bottom-5 md:-bottom-6 -left-2 md:-left-2 text-5xl md:text-6xl opacity-15 font-serif ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>"</span>
               </div>
             </div>
 
@@ -405,7 +405,7 @@ export default function Hadith() {
                 className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all border shadow-sm ${
                   copiedId === selectedHadith.id 
                     ? "bg-green-500 text-white border-green-500" 
-                    : (isDarkMode ? "bg-gray-800 border-gray-700 text-[#E6B981] hover:bg-gray-700" : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100")
+                    : (isDarkMode ? "bg-gray-800 border-gray-700 text-[#E5C158] hover:bg-gray-700" : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100")
                 }`}
               >
                 {copiedId === selectedHadith.id ? <><Check size={16} /> {isAr ? "تم النسخ" : "Copied"}</> : <><Copy size={16} /> {isAr ? "نسخ" : "Copy"}</>}
@@ -415,8 +415,8 @@ export default function Hadith() {
                 onClick={(e) => toggleBookmark(e, selectedHadith, sourceLabelFor(selectedHadith.bookId, selectedHadith.hadithnumber))}
                 className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-3 md:py-3.5 rounded-xl md:rounded-2xl font-bold text-xs md:text-sm transition-all border shadow-sm ${
                   isBookmarked(selectedHadith.id)
-                    ? (isDarkMode ? "bg-amber-950/60 border-[#E6B981] text-[#E6B981]" : "bg-amber-50 border-[#D4A373] text-[#D4A373]")
-                    : (isDarkMode ? "bg-[#E6B981] text-gray-900 border-[#E6B981] hover:bg-[#d6a575]" : "bg-[#D4A373] text-white border-[#D4A373] hover:bg-[#b58555]")
+                    ? (isDarkMode ? "bg-amber-950/60 border-[#E5C158] text-[#E5C158]" : "bg-amber-50 border-[#D4AF37] text-[#D4AF37]")
+                    : (isDarkMode ? "bg-[#E5C158] text-gray-900 border-[#E5C158] hover:bg-[#D4AF37]" : "bg-[#D4AF37] text-white border-[#D4AF37] hover:bg-[#B8942E]")
                 }`}
               >
                 {isBookmarked(selectedHadith.id) ? <><BookmarkCheck size={16} /> {isAr ? "محفوظ" : "Saved"}</> : <><Bookmark size={16} /> {isAr ? "حفظ" : "Save"}</>}

@@ -248,7 +248,7 @@ export default function SurahList() {
       <div className={`relative overflow-hidden rounded-[3rem] mb-8 shadow-2xl transition-all duration-500 ${
         isDarkMode 
           ? 'bg-gradient-to-b from-gray-950 via-[#18120c] to-gray-950 border border-gray-800' 
-          : 'bg-gradient-to-b from-[#dfaa77] via-[#d6a575] to-[#ba824e]'
+          : 'bg-gradient-to-b from-[#E8C766] via-[#D4AF37] to-[#B8942E]'
       }`}>
 
         <div 
@@ -260,7 +260,7 @@ export default function SurahList() {
           style={{ backgroundImage: `url('${mosqueBgSrc}')` }}
         ></div>
         <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full blur-[90px] pointer-events-none ${
-          isDarkMode ? 'bg-[#E6B981]/25' : 'bg-white/40'
+          isDarkMode ? 'bg-[#E5C158]/25' : 'bg-white/40'
         }`}></div>
 
         <div className="relative z-10 p-6 md:p-10 flex flex-col items-center text-center">
@@ -273,12 +273,12 @@ export default function SurahList() {
             className="w-48 sm:w-56 md:w-72 lg:w-80 h-auto max-h-[220px] md:max-h-[300px] object-contain animate-quran-hero cursor-pointer transition-transform duration-300 hover:scale-105 drop-shadow-[0_10px_25px_rgba(230,185,129,0.5)]"
           />
 
-          <h1 className={`text-4xl md:text-5xl font-quran mb-6 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E6B981]' : 'text-white'}`}>
+          <h1 className={`text-4xl md:text-5xl font-quran mb-6 leading-normal drop-shadow-xl ${isDarkMode ? 'text-[#E5C158]' : 'text-white'}`}>
             {isAr ? 'القرآن الكريم' : 'The Noble Quran'}
           </h1>
 
           <div className={`relative px-5 py-3 md:py-4 rounded-3xl backdrop-blur-sm mb-6 border shadow-lg max-w-xl ${
-            isDarkMode ? 'bg-black/40 border-[#E6B981]/20' : 'bg-white/15 border-white/30'
+            isDarkMode ? 'bg-black/40 border-[#E5C158]/20' : 'bg-white/15 border-white/30'
           }`}>
             <p className={`text-sm md:text-lg font-medium leading-loose ${isDarkMode ? 'text-[#f4e6d3]' : 'text-white'}`}>
               « كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ وَلِيَتَذَكَّرَ أُولُو الْأَلْبَابِ »
@@ -290,7 +290,7 @@ export default function SurahList() {
               to={`/surah/${lastRead.id || 1}`} 
               state={{ targetPage: lastRead.page !== undefined ? lastRead.page : 0 }}
               className={`group relative overflow-hidden inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs md:text-sm transition-all transform hover:scale-105 shadow-xl ${
-                isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-white text-[#D4A373]'
+                isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-white text-[#D4AF37]'
               }`}
             >
               <Sparkles size={16} className="animate-pulse" />
@@ -307,7 +307,7 @@ export default function SurahList() {
 
       {!isAppInstalled && deferredPrompt && (
         <div className={`max-w-2xl mx-auto mb-6 p-4 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm border ${
-          isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-[#E6B981]/30' : 'bg-gradient-to-r from-[#FDFBF7] to-white border-[#D4A373]/30'
+          isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-[#E5C158]/30' : 'bg-gradient-to-r from-[#FDFBF7] to-white border-[#D4AF37]/30'
         }`}>
           <div className="flex items-center gap-4 text-center md:text-start">
             <img src="/icon-192.png" alt="App Icon" className="w-14 h-14 rounded-2xl shadow-sm hidden sm:block" />
@@ -323,7 +323,7 @@ export default function SurahList() {
           <button 
             onClick={handleInstallApp}
             className={`w-full md:w-auto shrink-0 px-6 py-3 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md ${
-              isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#b58555]'
+              isDarkMode ? 'bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]' : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'
             }`}
           >
             {isAr ? 'تثبيت التطبيق' : 'Install App'}
@@ -336,7 +336,7 @@ export default function SurahList() {
         <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full relative overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-[#F0EBE1]'}`}>
           {!khatma ? (
             <div className="flex flex-col items-center text-center h-full justify-between gap-2">
-              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]'}`}>
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E5C158]' : 'bg-[#FDFBF7] text-[#D4AF37]'}`}>
                 <Target size={22} />
               </div>
               <div>
@@ -347,7 +347,7 @@ export default function SurahList() {
               </div>
               <button 
                 onClick={() => setShowKhatmaModal(true)}
-                className={`w-full py-2.5 mt-2 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md hover:shadow-lg ${isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'}`}
+                className={`w-full py-2.5 mt-2 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md hover:shadow-lg ${isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-[#D4AF37] text-white'}`}
               >
                 {t.createPlan}
               </button>
@@ -362,12 +362,12 @@ export default function SurahList() {
                 <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 flex items-center justify-center">
                   <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" className={isDarkMode ? "text-gray-700" : "text-gray-100"} />
-                    <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className={`transition-all duration-1000 ease-out ${isDarkMode ? "text-[#E6B981]" : "text-[#D4A373]"}`} />
+                    <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className={`transition-all duration-1000 ease-out ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`} />
                   </svg>
                   <span className={`absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{percentage}%</span>
                 </div>
                 <div className={`flex flex-col ${isAr ? 'text-right' : 'text-left'}`}>
-                  <h3 className={`font-bold text-xs md:text-sm font-quran mb-1 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.khatmaTitle}</h3>
+                  <h3 className={`font-bold text-xs md:text-sm font-quran mb-1 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.khatmaTitle}</h3>
                   <span className={`text-[9px] md:text-[11px] font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t.dailyGoal}: {khatma.pagesPerDay} {t.pages}</span>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function SurahList() {
 
               {safePagesRead < 604 ? (
                 <div className="flex gap-1.5 w-full mt-auto">
-                  <button onClick={() => addPages(khatma.pagesPerDay)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-all shadow-sm ${isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#c7915b]'}`}>
+                  <button onClick={() => addPages(khatma.pagesPerDay)} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-all shadow-sm ${isDarkMode ? 'bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]' : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'}`}>
                     <CheckCircle size={14} /> {isAr ? 'ورد اليوم' : 'Done'}
                   </button>
                   <button onClick={() => addPages(1)} className={`px-2.5 py-2 rounded-xl font-bold text-[10px] md:text-xs transition-colors border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
@@ -395,9 +395,9 @@ export default function SurahList() {
           )}
         </div>
 
-        <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full justify-between items-center text-center ${isDarkMode ? 'bg-gray-800 border-[#E6B981]/30' : 'bg-[#FDFBF7] border-[#D4A373]/30'}`}>
+        <div className={`flex flex-col p-4 md:p-5 rounded-[2rem] shadow-sm border transition-all h-full justify-between items-center text-center ${isDarkMode ? 'bg-gray-800 border-[#E5C158]/30' : 'bg-[#FDFBF7] border-[#D4AF37]/30'}`}>
           <div className="flex flex-col items-center gap-2 mb-3 mt-1">
-            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-white text-[#D4A373] shadow-sm'}`}>
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 mb-1 ${isDarkMode ? 'bg-gray-700 text-[#E5C158]' : 'bg-white text-[#D4AF37] shadow-sm'}`}>
               <CloudDownload size={22} />
             </div>
             <h3 className={`font-bold text-sm md:text-base ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{t.quranDownloadTitle}</h3>
@@ -412,13 +412,13 @@ export default function SurahList() {
                 <CheckCircle size={16} /> {t.downloaded}
               </span>
             ) : isDownloadingQuran ? (
-              <span className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-[#E6B981]' : 'bg-white border-[#F0EBE1] text-[#D4A373]'}`}>
+              <span className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-[#E5C158]' : 'bg-white border-[#F0EBE1] text-[#D4AF37]'}`}>
                 <RefreshCw size={14} className="animate-spin" /> {t.downloading} {quranProgress}%
               </span>
             ) : (
               <button 
                 onClick={downloadFullQuranText}
-                className={`w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs transition-colors shadow-sm ${isDarkMode ? 'bg-[#E6B981] text-gray-900 hover:bg-[#d6a575]' : 'bg-[#D4A373] text-white hover:bg-[#b58555]'}`}
+                className={`w-full py-2.5 rounded-xl font-bold text-[11px] md:text-xs transition-colors shadow-sm ${isDarkMode ? 'bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]' : 'bg-[#D4AF37] text-white hover:bg-[#B8942E]'}`}
               >
                 {t.downloadNow}
               </button>
@@ -461,7 +461,7 @@ export default function SurahList() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex flex-col items-center text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-gray-700 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]'}`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-gray-700 text-[#E5C158]' : 'bg-[#FDFBF7] text-[#D4AF37]'}`}>
                 <Calendar size={32} />
               </div>
               <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? "text-gray-100" : "text-gray-800"}`}>
@@ -478,7 +478,7 @@ export default function SurahList() {
                     onClick={() => setKhatmaDays(days)}
                     className={`flex-1 py-2 rounded-xl font-bold text-sm transition-colors border ${
                       khatmaDays === days 
-                        ? (isDarkMode ? 'bg-[#E6B981] text-gray-900 border-[#E6B981]' : 'bg-[#D4A373] text-white border-[#D4A373]') 
+                        ? (isDarkMode ? 'bg-[#E5C158] text-gray-900 border-[#E5C158]' : 'bg-[#D4AF37] text-white border-[#D4AF37]') 
                         : (isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-50 text-gray-600 border-gray-200')
                     }`}
                   >
@@ -495,7 +495,7 @@ export default function SurahList() {
                   value={khatmaDays}
                   onChange={(e) => setKhatmaDays(parseInt(e.target.value) || 30)}
                   className={`w-full p-4 text-center rounded-xl font-bold text-xl border focus:outline-none transition-colors ${
-                    isDarkMode ? 'bg-gray-900 border-gray-700 text-white focus:border-[#E6B981]' : 'bg-white border-gray-200 text-gray-800 focus:border-[#D4A373]'
+                    isDarkMode ? 'bg-gray-900 border-gray-700 text-white focus:border-[#E5C158]' : 'bg-white border-gray-200 text-gray-800 focus:border-[#D4AF37]'
                   }`}
                   dir="ltr"
                 />
@@ -504,7 +504,7 @@ export default function SurahList() {
               <button 
                 onClick={startKhatma}
                 className={`w-full py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-lg ${
-                  isDarkMode ? 'bg-[#E6B981] text-gray-900' : 'bg-[#D4A373] text-white'
+                  isDarkMode ? 'bg-[#E5C158] text-gray-900' : 'bg-[#D4AF37] text-white'
                 }`}
               >
                 {isAr ? 'توكلنا على الله' : 'Start Plan'}
@@ -521,7 +521,7 @@ export default function SurahList() {
           value={searchQuery} 
           onChange={(e) => setSearchQuery(e.target.value)} 
           className={`w-full p-4 ${isAr ? 'pr-14' : 'pl-14'} rounded-2xl border focus:outline-none shadow-sm transition-colors font-medium text-lg ${
-            isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'
+            isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E5C158]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4AF37]'
           }`} 
         />
         <Search className={`absolute ${isAr ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} size={22} />
@@ -532,7 +532,7 @@ export default function SurahList() {
           onClick={() => setActiveTab("surahs")} 
           className={`flex-1 flex justify-center items-center gap-2 py-3.5 rounded-xl font-bold transition-all text-sm md:text-base ${
             activeTab === "surahs" 
-              ? (isDarkMode ? "bg-gray-700 text-[#E6B981] shadow-md" : "bg-white text-[#D4A373] shadow-md") 
+              ? (isDarkMode ? "bg-gray-700 text-[#E5C158] shadow-md" : "bg-white text-[#D4AF37] shadow-md") 
               : "text-gray-500 hover:text-gray-400"
           }`}
         >
@@ -542,7 +542,7 @@ export default function SurahList() {
           onClick={() => setActiveTab("ajzaa")} 
           className={`flex-1 flex justify-center items-center gap-2 py-3.5 rounded-xl font-bold transition-all text-sm md:text-base ${
             activeTab === "ajzaa" 
-              ? (isDarkMode ? "bg-gray-700 text-[#E6B981] shadow-md" : "bg-white text-[#D4A373] shadow-md") 
+              ? (isDarkMode ? "bg-gray-700 text-[#E5C158] shadow-md" : "bg-white text-[#D4AF37] shadow-md") 
               : "text-gray-500 hover:text-gray-400"
           }`}
         >
@@ -552,7 +552,7 @@ export default function SurahList() {
 
       {loading ? (
         <div className="flex flex-col justify-center items-center py-20">
-          <Loader2 size={40} className={`animate-spin mb-4 ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`} />
+          <Loader2 size={40} className={`animate-spin mb-4 ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`} />
         </div>
       ) : error ? (
         <div className="text-center py-10 font-bold text-red-500 bg-red-50 rounded-2xl max-w-md mx-auto">{error}</div>
@@ -564,11 +564,11 @@ export default function SurahList() {
                 to={`/surah/${surah.number}`} 
                 key={surah.number} 
                 className={`flex flex-col items-center justify-center text-center p-3 md:p-4 rounded-2xl shadow-sm border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md group ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+                  isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]'
                 }`}
               >
                 <div className={`relative flex items-center justify-center w-10 h-10 mb-3 rounded-xl rotate-45 border-2 transition-all shrink-0 ${
-                  isDarkMode ? 'border-gray-700 group-hover:bg-[#E6B981] group-hover:border-[#E6B981]' : 'border-[#F0EBE1] group-hover:bg-[#D4A373] group-hover:border-[#D4A373]'
+                  isDarkMode ? 'border-gray-700 group-hover:bg-[#E5C158] group-hover:border-[#E5C158]' : 'border-[#F0EBE1] group-hover:bg-[#D4AF37] group-hover:border-[#D4AF37]'
                 }`}>
                   <span className={`absolute -rotate-45 font-bold text-xs md:text-sm ${
                     isDarkMode ? 'text-gray-400 group-hover:text-gray-900' : 'text-gray-500 group-hover:text-white'
@@ -578,7 +578,7 @@ export default function SurahList() {
                 </div>
                 
                 <h3 className={`text-xl md:text-2xl font-bold font-quran mb-4 pb-1 leading-relaxed transition-colors ${
-                  isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'
+                  isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'
                 }`}>
                   {(surah.name || "").replace('سُورَةُ ', '')}
                 </h3>
@@ -601,11 +601,11 @@ export default function SurahList() {
               to={`/juz/${juz.id}`} 
               key={juz.id} 
               className={`relative flex flex-col items-center text-center p-4 rounded-2xl border shadow-sm transition-all duration-300 group hover:-translate-y-1 hover:shadow-lg overflow-hidden ${
-                isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]'
+                isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]'
               }`}
             >
               <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold text-lg border-[2px] transition-all mb-3 ${
-                isDarkMode ? 'border-gray-700 text-[#E6B981] group-hover:bg-[#E6B981] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4A373] group-hover:bg-[#D4A373] group-hover:border-[#D4A373] group-hover:text-white'
+                isDarkMode ? 'border-gray-700 text-[#E5C158] group-hover:bg-[#E5C158] group-hover:text-gray-900' : 'border-[#F0EBE1] text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:border-[#D4AF37] group-hover:text-white'
               }`}>
                 {juz.id}
               </div>

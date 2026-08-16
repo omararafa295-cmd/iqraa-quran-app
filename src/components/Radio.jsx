@@ -139,15 +139,15 @@ export default function Radio() {
         onClick={() => togglePlay(radio)}
         className={`flex items-center justify-between p-3 rounded-2xl shadow-sm border cursor-pointer transition-all duration-200 transform hover:scale-[1.01] ${
           isActive
-            ? (isDarkMode ? 'bg-gray-800 border-[#E6B981] shadow-[#E6B981]/10' : 'bg-[#FDFBF7] border-[#D4A373] shadow-[#D4A373]/10')
-            : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E6B981]' : 'bg-white border-[#F0EBE1] hover:border-[#D4A373]')
+            ? (isDarkMode ? 'bg-gray-800 border-[#E5C158] shadow-[#E5C158]/10' : 'bg-[#FDFBF7] border-[#D4AF37] shadow-[#D4AF37]/10')
+            : (isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-[#E5C158]' : 'bg-white border-[#F0EBE1] hover:border-[#D4AF37]')
         }`}
       >
         <div className={`flex items-center gap-3 w-full truncate ${!isAr && 'flex-row-reverse'}`}>
           <button className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-full transition-colors ${
             isActive
-              ? 'bg-[#D4A373] text-white shadow-md'
-              : (isDarkMode ? 'bg-gray-900 text-[#E6B981]' : 'bg-[#FDFBF7] text-[#D4A373]')
+              ? 'bg-[#D4AF37] text-white shadow-md'
+              : (isDarkMode ? 'bg-gray-900 text-[#E5C158]' : 'bg-[#FDFBF7] text-[#D4AF37]')
           }`}>
             {isActive && isPlaying ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
           </button>
@@ -157,7 +157,7 @@ export default function Radio() {
         </div>
 
         {isActive && isPlaying && (
-          <Activity size={18} className={`shrink-0 mx-2 animate-pulse ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`} />
+          <Activity size={18} className={`shrink-0 mx-2 animate-pulse ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`} />
         )}
       </div>
     );
@@ -165,7 +165,7 @@ export default function Radio() {
 
   if (loading) {
     return (
-      <div className={`flex justify-center items-center min-h-screen font-bold text-xl ${!isAr && 'font-sans'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+      <div className={`flex justify-center items-center min-h-screen font-bold text-xl ${!isAr && 'font-sans'} ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
         {t.loading}
       </div>
     );
@@ -180,7 +180,7 @@ export default function Radio() {
       />
 
       <div className="flex items-center justify-center gap-3 mb-8 mt-4">
-        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>
+        <h2 className={`text-3xl font-bold ${isAr ? 'font-quran' : 'font-serif tracking-wide'} ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>
           {t.title}
         </h2>
       </div>
@@ -191,7 +191,7 @@ export default function Radio() {
           placeholder={t.search}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-colors ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E6B981]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4A373]'}`}
+          className={`w-full p-4 ${isAr ? 'pr-12' : 'pl-12'} rounded-2xl border focus:outline-none shadow-sm transition-colors ${!isAr && 'font-sans'} ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200 focus:border-[#E5C158]' : 'bg-white border-[#F0EBE1] text-gray-700 focus:border-[#D4AF37]'}`}
         />
         <Search className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-gray-400`} size={20} />
       </div>
@@ -213,7 +213,7 @@ export default function Radio() {
               onClick={() => setActiveLetter(null)}
               className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-colors ${
                 activeLetter === null
-                  ? 'bg-[#D4A373] text-white border-[#D4A373]'
+                  ? 'bg-[#D4AF37] text-white border-[#D4AF37]'
                   : (isDarkMode ? 'border-gray-700 text-gray-300' : 'border-[#F0EBE1] text-gray-600')
               }`}
             >
@@ -225,8 +225,8 @@ export default function Radio() {
                 onClick={() => setActiveLetter(letter)}
                 className={`w-9 h-9 rounded-full text-sm font-bold border transition-colors ${
                   activeLetter === letter
-                    ? 'bg-[#D4A373] text-white border-[#D4A373]'
-                    : (isDarkMode ? 'border-gray-700 text-gray-300 hover:border-[#E6B981]' : 'border-[#F0EBE1] text-gray-600 hover:border-[#D4A373]')
+                    ? 'bg-[#D4AF37] text-white border-[#D4AF37]'
+                    : (isDarkMode ? 'border-gray-700 text-gray-300 hover:border-[#E5C158]' : 'border-[#F0EBE1] text-gray-600 hover:border-[#D4AF37]')
                 }`}
               >
                 {letter}
@@ -237,8 +237,8 @@ export default function Radio() {
           {featured.length > 0 && !activeLetter && (
             <div className="mb-8">
               <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
-                <Star size={18} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
-                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.featured}</h3>
+                <Star size={18} className={isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'} />
+                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.featured}</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {featured.map((radio) => <RadioCard key={radio.id} radio={radio} />)}
@@ -249,7 +249,7 @@ export default function Radio() {
           <div>
             {!activeLetter && (
               <div className={`flex items-center gap-2 mb-3 px-1 ${!isAr && 'font-sans'}`}>
-                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.reciters}</h3>
+                <h3 className={`font-bold text-lg ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.reciters}</h3>
               </div>
             )}
             {(activeLetter ? [activeLetter] : letters).map((letter) => (
@@ -272,11 +272,11 @@ export default function Radio() {
         }`}>
           <div className={`px-4 py-3 flex items-center justify-between ${!isAr && 'flex-row-reverse'}`}>
             <div className={`flex items-center gap-3 w-3/4 ${!isAr && 'flex-row-reverse'}`}>
-              <div className="w-10 h-10 rounded-full bg-[#D4A373] dark:bg-[#E6B981] flex items-center justify-center text-white dark:text-gray-900 shrink-0 shadow-md">
+              <div className="w-10 h-10 rounded-full bg-[#D4AF37] dark:bg-[#E5C158] flex items-center justify-center text-white dark:text-gray-900 shrink-0 shadow-md">
                 <RadioIcon size={20} />
               </div>
               <div className={`overflow-hidden ${isAr ? 'text-right' : 'text-left'}`}>
-                <p className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'}`}>{t.nowPlaying}</p>
+                <p className={`text-[10px] font-bold uppercase ${isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]'}`}>{t.nowPlaying}</p>
                 <p className={`text-sm font-bold truncate ${isAr ? '' : 'font-sans'} ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{activeRadio.name}</p>
               </div>
             </div>
@@ -284,7 +284,7 @@ export default function Radio() {
             <button
               onClick={() => togglePlay(activeRadio)}
               className={`p-2 rounded-full border-2 transition-all ${
-                isDarkMode ? 'border-[#E6B981] text-[#E6B981] hover:bg-[#E6B981] hover:text-gray-900' : 'border-[#D4A373] text-[#D4A373] hover:bg-[#D4A373] hover:text-white'
+                isDarkMode ? 'border-[#E5C158] text-[#E5C158] hover:bg-[#E5C158] hover:text-gray-900' : 'border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-white'
               }`}
             >
               {isPlaying ? <PauseCircle size={24} /> : <PlayCircle size={24} />}
