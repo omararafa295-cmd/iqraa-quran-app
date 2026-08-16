@@ -37,11 +37,11 @@ export default function DeveloperModal({ isOpen, onClose }) {
               <Code2 size={32} />
             </div>
 
-            <h3 className={`text-2xl font-bold mb-1 ${isAr ? 'font-quran' : 'font-serif'}`}>
+            <h3 className={`text-2xl font-bold mb-1 ${isAr ? 'font-serif' : 'font-serif'}`}>
               Omar Mounir Arafa
             </h3>
             <p className="text-xs text-[#D4AF37] font-bold mb-4">
-              {isAr ? "مطور التطبيق & Software Developer" : "Lead Developer"}
+              {isAr ? " Software Developer" : "Software Developer"}
             </p>
 
             <p className="text-sm opacity-80 leading-relaxed mb-6 px-2">

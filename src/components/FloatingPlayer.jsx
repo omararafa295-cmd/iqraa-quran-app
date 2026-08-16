@@ -143,7 +143,7 @@ export default function FloatingPlayer() {
 
   return (
     <div 
-      className={`fixed bottom-20 left-3 right-3 md:bottom-6 md:left-auto md:right-8 md:w-96 z-[100] rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] border overflow-hidden transition-all duration-300 ${
+      className={`fixed bottom-24 left-3 right-3 md:bottom-16 md:left-auto md:right-8 md:w-96 z-[100] rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] border overflow-hidden transition-all duration-300 ${
         isDarkMode ? 'bg-gray-900/95 border-gray-700 text-gray-100 backdrop-blur-md' : 'bg-white/95 border-[#F0EBE1] text-gray-800 backdrop-blur-md'
       }`} 
       dir={isAr ? "rtl" : "ltr"}

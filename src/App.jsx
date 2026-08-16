@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   BookOpen, Compass, Clock, Moon, Sun, SunMoon, 
@@ -29,6 +29,7 @@ const TopBar = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBookmarkDrawerOpen, setIsBookmarkDrawerOpen] = useState(false);
+  const dialogPushed = useRef(false);
 
   useEffect(() => {
     const handlePrompt = (e) => {
@@ -65,23 +66,56 @@ const TopBar = () => {
       }
     });
   };
+
   useEffect(() => {
-  document.documentElement.dir = lang === 'ar' ? 'ltr' : 'rtl';
-  document.documentElement.lang = lang;
-}, [lang]);
+    document.documentElement.dir = lang === 'ar' ? 'ltr' : 'rtl';
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
+    if (window.location.hash === '#dialog') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
+  useEffect(() => {
+    const isAnyModalOpen = isModalOpen || isBookmarkDrawerOpen;
+    
+    if (isAnyModalOpen) {
+      if (window.location.hash !== '#dialog') {
+        window.history.pushState(null, '', window.location.pathname + window.location.search + '#dialog');
+        dialogPushed.current = true;
+      }
+    } else {
+      if (window.location.hash === '#dialog' && dialogPushed.current) {
+        window.history.back();
+        dialogPushed.current = false;
+      }
+    }
+
+    const handlePopState = () => {
+      if (window.location.hash !== '#dialog') {
+        setIsModalOpen(false);
+        setIsBookmarkDrawerOpen(false);
+        dialogPushed.current = false;
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isModalOpen, isBookmarkDrawerOpen]);
 
   return (
     <>
-<div className="w-full pt-2 md:pt-4 pb-2 px-4 md:px-6 relative z-30" dir={isAr ? "ltr" : "rtl"}>
+      <div className="w-full pt-2 md:pt-4 pb-2 px-4 md:px-6 relative z-30" dir={isAr ? "ltr" : "rtl"}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          
           
           <div className="flex items-center gap-2" dir="ltr">
             {deferredPrompt && (
               <button 
                 onClick={handleInstall}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full shadow-sm font-bold text-xs transition-colors ${
-                  isDarkMode ? "bg-[#E5C158] text-gray-900 hover:bg-[#D4AF37]" : "bg-[#D4AF37] text-white hover:bg-[#B8942E]"
+                  isDarkMode ? "bg-[#E5C158] text-gray-900 hover:bg-[#d6b047]" : "bg-[#D4AF37] text-white hover:bg-[#bf9b2e]"
                 }`}
               >
                 <Download size={15} />
@@ -91,17 +125,17 @@ const TopBar = () => {
 
             <button 
               onClick={() => setIsModalOpen(true)}
-              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-colors ${
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
                 isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
               title={isAr ? "معلومات المطور" : "Developer Info"}
             >
-              <Info size={21} />
+              <Info size={17} />
             </button>
 
             <button 
               onClick={() => setLang(isAr ? 'en' : 'ar')}
-              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm font-bold text-sm transition-colors ${
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm font-bold text-xs transition-colors ${
                 isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
             >
@@ -110,25 +144,25 @@ const TopBar = () => {
           
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-colors ${
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
                 isDarkMode ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
               }`}
               title={isAr ? "تبديل المظهر" : "Toggle Theme"}
             >
-              {isDarkMode ? <Sun size={21} /> : <Moon size={21} />}
+              {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
           </div>
 
           <button
             onClick={() => setIsBookmarkDrawerOpen(true)}
-            className={`relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-sm transition-all ${
+            className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
               isDarkMode 
                 ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" 
                 : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
             }`}
             title={isAr ? "العلامات المرجعية" : "Bookmarks"}
           >
-            <Bookmark size={21} />
+            <Bookmark size={17} />
             {bookmarks.length > 0 && (
               <span className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${
                 isDarkMode ? "bg-[#E5C158] text-gray-900" : "bg-[#D4AF37] text-white"
@@ -254,29 +288,30 @@ const BottomNav = () => {
   
   if (location.pathname.includes('/surah/') || location.pathname.includes('/juz/')) return null;
 
+  const activeColorClass = isDarkMode ? 'text-[#E5C158]' : 'text-[#D4AF37]';
+
   return (
     <div className={`fixed bottom-0 left-0 w-full border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 rounded-t-3xl pb-safe transition-colors ${
       isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-[#F0EBE1]"
     }`}>
       <div className="relative max-w-md mx-auto px-3 h-16 flex justify-between items-center" dir={isAr ? "rtl" : "ltr"}>
         
-        
         <div className="flex w-[39%] justify-between items-center">
-          <Link to="/hadith" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/hadith' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/hadith" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/hadith' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <ScrollText size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأحاديث' : 'Hadiths'}</span>
           </Link>
-          <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/azkar" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/azkar' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <SunMoon size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الأذكار' : 'Azkar'}</span>
           </Link>
-          <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/radio" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/radio' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <RadioIcon size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'الراديو' : 'Radio'}</span>
           </Link>
         </div>
 
-          <div className="absolute left-1/2 -translate-x-1/2 -top-8 z-50">
+        <div className="absolute left-1/2 -translate-x-1/2 -top-8 z-50">
           <Link 
             to="/" 
             className={`flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full border-[6px] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${
@@ -296,16 +331,17 @@ const BottomNav = () => {
             </span>
           </Link>
         </div>
+
         <div className="flex w-[39%] justify-between items-center">
-          <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/memorize" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/memorize' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <Mic size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'التسميع' : 'Memorize'}</span>
           </Link>
-          <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/prayer" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/prayer' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <Clock size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'المواقيت' : 'Prayers'}</span>
           </Link>
-          <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-gray-500'}`}>
+          <Link to="/qibla" className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname === '/qibla' ? activeColorClass : 'text-gray-400 hover:text-gray-500'}`}>
             <Compass size={20} />
             <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>{isAr ? 'القبلة' : 'Qibla'}</span>
           </Link>
