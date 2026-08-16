@@ -5,7 +5,7 @@ import {
   ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Settings, X, 
   PlayCircle, PauseCircle, BookOpen, ChevronDown, Brain, Download, 
   CheckCircle, RefreshCw, WifiOff, AlertTriangle, Bookmark, BookmarkCheck, 
-  Volume2 
+  Volume2, Sparkles, Share2, Copy, Check, Image as ImageIcon, Moon
 } from "lucide-react";
 import { AppContext } from "../App";
 
@@ -45,6 +45,10 @@ export default function SurahDetail() {
   const [selectedTafsirEdition, setSelectedTafsirEdition] = useState("ar.muyassar");
   const [dynamicTafsirText, setDynamicTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
+
+  const [selectedAyahForCard, setSelectedAyahForCard] = useState(null);
+  const [isCardCopied, setIsCardCopied] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const [touchStartX, setTouchStartX] = useState(null);
   const [touchEndX, setTouchEndX] = useState(null);
@@ -94,6 +98,11 @@ export default function SurahDetail() {
     showTafsir: isAr ? "التفسير" : "Tafsir",
     addBookmark: isAr ? "إضافة علامة مرجعية" : "Add Bookmark",
     removeBookmark: isAr ? "إزالة العلامة المرجعية" : "Remove Bookmark",
+    shareCard: isAr ? "كارت الآية" : "Ayah Card",
+    downloadCard: isAr ? "تحميل كصورة " : "Download Image",
+    copyCardText: isAr ? "نسخ النص" : "Copy Text",
+    shareAction: isAr ? "مشاركة" : "Share",
+    copied: isAr ? "تم النسخ" : "Copied!",
   };
 
   const [showSettings, setShowSettings] = useState(false);
@@ -461,8 +470,8 @@ export default function SurahDetail() {
     const clickX = e.clientX || (rect.left + rect.width / 2);
     const clickY = e.clientY || rect.bottom;
 
-    const menuWidth = 180;
-    const menuHeight = 135;
+    const menuWidth = 190;
+    const menuHeight = 175;
 
     let left = isAr ? (clickX - menuWidth + 20) : (clickX - 20);
     
@@ -481,7 +490,6 @@ export default function SurahDetail() {
     setActiveAyahMenu(ayah);
   };
 
-  // 🔖 تحديث العلامات المرجعية اللحظي (Real-time)
   const toggleBookmark = (ayah) => {
     const isBookmarked = bookmarks.some(b => b.surahNumber === surah.number && b.ayahNumberInSurah === ayah.numberInSurah);
     let updated;
@@ -504,6 +512,346 @@ export default function SurahDetail() {
     setBookmarks(updated);
     localStorage.setItem("quran_bookmarks", JSON.stringify(updated));
     setActiveAyahMenu(null);
+  };
+
+  const ensureFontsReady = async () => {
+    try {
+      await Promise.all([
+        document.fonts.load('bold 52px "Amiri"'),
+        document.fonts.load('bold 44px "Amiri"'),
+        document.fonts.load('bold 36px "Amiri"'),
+        document.fonts.load('600 32px "Amiri"'),
+        document.fonts.load('600 34px "Amiri"'),
+      ]);
+      await document.fonts.ready;
+    } catch (e) {}
+  };
+
+  const handleDownloadCardImage = async () => {
+    if (!selectedAyahForCard || !surah) return;
+    setIsGeneratingImage(true);
+
+    try {
+      await ensureFontsReady();
+
+      const W = 1080, H = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      const GOLD_LIGHT = '#F3D9A4';
+      const GOLD = '#D4A373';
+      const GOLD_SOFT = '#E6B981';
+      const CREAM = '#FBF3E7';
+
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#0d0b08');
+      bg.addColorStop(0.45, '#171310');
+      bg.addColorStop(1, '#0a0806');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      const glow = ctx.createRadialGradient(W / 2, 210, 20, W / 2, 210, 560);
+      glow.addColorStop(0, 'rgba(230, 185, 129, 0.22)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, 900);
+
+      const midGlow = ctx.createRadialGradient(W / 2, H * 0.52, 30, W / 2, H * 0.52, 620);
+      midGlow.addColorStop(0, 'rgba(212, 163, 115, 0.10)');
+      midGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = midGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.72);
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.globalAlpha = 0.045;
+      ctx.strokeStyle = GOLD_SOFT;
+      ctx.lineWidth = 1.2;
+      const drawStar8 = (cx, cy, r) => {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a1 = (Math.PI / 4) * i;
+          const a2 = a1 + Math.PI / 4;
+          const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+          const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+          if (i === 0) ctx.moveTo(x1, y1);
+          ctx.lineTo(cx + (r * 0.42) * Math.cos(a1 + Math.PI / 8), cy + (r * 0.42) * Math.sin(a1 + Math.PI / 8));
+          ctx.lineTo(x2, y2);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      };
+      const step = 150;
+      for (let gy = -step; gy < H + step; gy += step) {
+        for (let gx = -step; gx < W + step; gx += step) {
+          drawStar8(gx + (Math.round(gy / step) % 2 === 0 ? 0 : step / 2), gy, 46);
+        }
+      }
+      ctx.restore();
+      ctx.save();
+      const moonGlow = ctx.createRadialGradient(W / 2, 130, 5, W / 2, 130, 75);
+      moonGlow.addColorStop(0, 'rgba(230, 185, 129, 0.4)');
+      moonGlow.addColorStop(0.6, 'rgba(230, 185, 129, 0.1)');
+      moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(W / 2, 130, 75, 0, Math.PI * 2);
+      ctx.fill();
+      const moonPath = new Path2D("M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z");
+      ctx.translate(W / 2 - 28, 98);
+      ctx.scale(2.6, 2.6);
+
+      ctx.fillStyle = GOLD;
+      ctx.shadowColor = 'rgba(230, 185, 129, 0.8)';
+      ctx.shadowBlur = 12;
+      ctx.fill(moonPath);
+      ctx.strokeStyle = GOLD_LIGHT;
+      ctx.lineWidth = 0.6;
+      ctx.stroke(moonPath);
+      ctx.restore();
+      ctx.save();
+      const drawSparkle = (cx, cy, size) => {
+        ctx.fillStyle = GOLD_LIGHT;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - size);
+        ctx.lineTo(cx + size * 0.28, cy - size * 0.28);
+        ctx.lineTo(cx + size, cy);
+        ctx.lineTo(cx + size * 0.28, cy + size * 0.28);
+        ctx.lineTo(cx, cy + size);
+        ctx.lineTo(cx - size * 0.28, cy + size * 0.28);
+        ctx.lineTo(cx - size, cy);
+        ctx.lineTo(cx - size * 0.28, cy - size * 0.28);
+        ctx.closePath();
+        ctx.fill();
+      };
+      drawSparkle(W / 2 + 30, 106, 9);
+      ctx.restore();
+
+      const frameX = 84, frameY = 230, frameW = W - frameX * 2, frameH = 1530;
+      const archH = 90;
+
+      const drawMihrabFrame = (x, y, w, h, arch, color, lw) => {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        ctx.lineTo(x, y + arch);
+        ctx.quadraticCurveTo(x, y - arch * 0.15, x + w / 2, y - arch * 0.55);
+        ctx.quadraticCurveTo(x + w, y - arch * 0.15, x + w, y + arch);
+        ctx.lineTo(x + w, y + h);
+        ctx.lineTo(x, y + h);
+        ctx.stroke();
+        ctx.restore();
+      };
+      drawMihrabFrame(frameX, frameY, frameW, frameH, archH, GOLD, 2.5);
+      drawMihrabFrame(frameX + 20, frameY + 18, frameW - 40, frameH - 36, archH - 14, 'rgba(230, 185, 129, 0.45)', 1.2);
+
+      const drawCorner = (x, y, dx, dy) => {
+        ctx.save();
+        ctx.strokeStyle = GOLD_SOFT;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y + dy * 50);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + dx * 50, y);
+        ctx.stroke();
+        ctx.fillStyle = GOLD_SOFT;
+        ctx.beginPath();
+        ctx.arc(x + dx * 14, y + dy * 14, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      };
+      drawCorner(frameX, frameY + frameH, 1, -1);
+      drawCorner(frameX + frameW, frameY + frameH, -1, -1);
+
+      ctx.save();
+      ctx.fillStyle = GOLD_LIGHT;
+      ctx.font = 'bold 44px "Amiri", "Traditional Arabic", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 8;
+      ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', W / 2, 320);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(212, 163, 115, 0.55)';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(frameX + 90, 365);
+      ctx.lineTo(W / 2 - 18, 365);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(W / 2 + 18, 365);
+      ctx.lineTo(frameX + frameW - 90, 365);
+      ctx.stroke();
+      ctx.translate(W / 2, 365);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = GOLD_SOFT;
+      ctx.fillRect(-5, -5, 10, 10);
+      ctx.restore();
+
+      const cleanAyah = formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah.number);
+      const fullText = `﴿ ${cleanAyah} ﴾`;
+      const maxTextWidth = frameW - 160;
+      const textAreaTop = 415;
+      const textAreaBottom = 1480;
+      const maxAvailableHeight = textAreaBottom - textAreaTop;
+
+      const words = fullText.split(' ');
+      let optimalFontSize = 52;
+      let optimalLineHeight = 100;
+      let lines = [];
+
+      const computeLines = (size) => {
+        ctx.font = `bold ${size}px "Amiri", "Traditional Arabic", serif`;
+        const res = [];
+        let cur = '';
+        for (let word of words) {
+          const test = cur ? `${cur} ${word}` : word;
+          if (ctx.measureText(test).width > maxTextWidth) {
+            res.push(cur);
+            cur = word;
+          } else {
+            cur = test;
+          }
+        }
+        if (cur) res.push(cur);
+        return res;
+      };
+
+      while (optimalFontSize >= 24) {
+        optimalLineHeight = Math.round(optimalFontSize * 2.0);
+        lines = computeLines(optimalFontSize);
+        const totalH = lines.length * optimalLineHeight;
+        if (totalH <= maxAvailableHeight) {
+          break;
+        }
+        optimalFontSize -= 2;
+      }
+
+      const totalTextHeight = lines.length * optimalLineHeight;
+      let startY = textAreaTop + (maxAvailableHeight - totalTextHeight) / 2 + (optimalLineHeight * 0.4);
+
+      const textGrad = ctx.createLinearGradient(0, startY - 40, 0, startY + totalTextHeight);
+      textGrad.addColorStop(0, CREAM);
+      textGrad.addColorStop(0.5, GOLD_LIGHT);
+      textGrad.addColorStop(1, CREAM);
+
+      ctx.save();
+      ctx.font = `bold ${optimalFontSize}px "Amiri", "Traditional Arabic", serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.direction = 'rtl';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = textGrad;
+
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, W / 2, startY + idx * optimalLineHeight);
+      });
+      ctx.restore();
+
+      const cleanSurahName = surah.name.replace('سُورَةُ ', '');
+      const refText = `سورة ${cleanSurahName}  ·  آية ${selectedAyahForCard.numberInSurah}`;
+
+      ctx.save();
+      ctx.font = '600 32px "Amiri", "Traditional Arabic", sans-serif';
+      const badgeTextMetrics = ctx.measureText(refText);
+      const badgeWidth = badgeTextMetrics.width + 90;
+      const badgeHeight = 60;
+      const badgeX = (W - badgeWidth) / 2;
+      const badgeY = 1530;
+
+      const badgeGrad = ctx.createLinearGradient(badgeX, 0, badgeX + badgeWidth, 0);
+      badgeGrad.addColorStop(0, 'rgba(212, 163, 115, 0.06)');
+      badgeGrad.addColorStop(0.5, 'rgba(212, 163, 115, 0.20)');
+      badgeGrad.addColorStop(1, 'rgba(212, 163, 115, 0.06)');
+      
+      ctx.fillStyle = badgeGrad;
+      ctx.strokeStyle = 'rgba(230, 185, 129, 0.5)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 30);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = GOLD_LIGHT;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(refText, W / 2, badgeY + badgeHeight / 2);
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(230, 185, 129, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - 50, 1625);
+      ctx.lineTo(W / 2 + 50, 1625);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(243, 217, 164, 0.65)';
+      ctx.font = '600 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.direction = 'ltr';
+      ctx.fillText('اقرأ  •  Iqraa', W / 2, 1665);
+      ctx.restore();
+
+      const link = document.createElement('a');
+      link.download = `Iqraa-${cleanSurahName}-ayah-${selectedAyahForCard.numberInSurah}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+
+      showNotification(isAr ? "تم تحميل كارت الآية بنجاح!" : "Image downloaded!", "success");
+    } catch (e) {
+      console.error(e);
+      showNotification(isAr ? "حدث خطأ أثناء تحميل الصورة" : "Error generating image", "error");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleCopyCardText = () => {
+    if (!selectedAyahForCard || !surah) return;
+    const cleanAyah = formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah.number);
+    const cleanSurahName = surah.name.replace('سُورَةُ ', '');
+    const textToCopy = `﴿ ${cleanAyah} ﴾\n\n[ سورة ${cleanSurahName} : ${selectedAyahForCard.numberInSurah} ]\n- عبر تطبيق اقرأ`;
+    
+    navigator.clipboard.writeText(textToCopy);
+    setIsCardCopied(true);
+    setTimeout(() => setIsCardCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
+    if (!selectedAyahForCard || !surah) return;
+    const cleanAyah = formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah.number);
+    const cleanSurahName = surah.name.replace('سُورَةُ ', '');
+    const shareText = `﴿ ${cleanAyah} ﴾\n\n[ سورة ${cleanSurahName} : ${selectedAyahForCard.numberInSurah} ]`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `آية من سورة ${cleanSurahName}`,
+          text: shareText,
+        });
+      } catch (err) {}
+    } else {
+      handleCopyCardText();
+    }
   };
 
   const renderFormattedTafsir = (text) => {
@@ -608,7 +956,7 @@ export default function SurahDetail() {
   const themeColor = isDarkMode ? "#E6B981" : "#D4A373";
 
   return (
-    <div className="max-w-4xl mx-auto p-2 md:p-6 pt-20 pb-28" dir={isAr ? "rtl" : "ltr"}>
+    <div className="max-w-4xl mx-auto p-2 md:p-6 pt-2 md:pt-6 pb-32" dir={isAr ? "rtl" : "ltr"}>
 
       {toast.show && (
         <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[120] flex items-center gap-3 px-6 py-3.5 rounded-full shadow-2xl transition-all duration-300 ${
@@ -888,6 +1236,7 @@ export default function SurahDetail() {
         </div>
       </div>
 
+      {/* 🌟 القائمة المنبثقة للآية 🌟 */}
       {activeAyahMenu && (
         <>
           <div 
@@ -905,6 +1254,19 @@ export default function SurahDetail() {
             }`}
             dir={isAr ? "rtl" : "ltr"}
           >
+            <button
+              onClick={() => {
+                setSelectedAyahForCard(activeAyahMenu);
+                setActiveAyahMenu(null);
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 font-bold text-xs md:text-sm transition-colors ${
+                isDarkMode ? 'hover:bg-gray-800 text-gray-200 hover:text-[#E6B981]' : 'hover:bg-[#FDFBF7] text-gray-700 hover:text-[#D4A373]'
+              }`}
+            >
+              <span>{t.shareCard}</span>
+              <Sparkles size={16} className={isDarkMode ? 'text-[#E6B981]' : 'text-[#D4A373]'} />
+            </button>
+
             <button
               onClick={() => {
                 setSelectedAyahForTafsir(activeAyahMenu);
@@ -947,6 +1309,128 @@ export default function SurahDetail() {
             </button>
           </div>
         </>
+      )}
+
+      {selectedAyahForCard && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+          onClick={() => setSelectedAyahForCard(null)}
+        >
+          <div 
+            className="w-full max-w-sm flex flex-col items-center gap-3.5"
+            onClick={e => e.stopPropagation()}
+            dir={isAr ? "rtl" : "ltr"}
+          >
+         
+            <div className="w-full flex justify-end">
+              <button 
+                onClick={() => setSelectedAyahForCard(null)}
+                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="w-full relative aspect-[9/16] rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(212,163,115,0.35)] border border-[#D4A373]/50 bg-gradient-to-b from-[#171310] via-[#0d0b08] to-[#0a0806] text-[#FBF3E7] overflow-hidden">
+
+              <div
+                className="absolute inset-0 opacity-[0.05] pointer-events-none"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(45deg, #E6B981 0, #E6B981 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-45deg, #E6B981 0, #E6B981 1px, transparent 1px, transparent 26px)',
+                }}
+              />
+
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-[#E6B981]/20 blur-3xl pointer-events-none" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#D4A373]/10 blur-3xl pointer-events-none" />
+              <div className="absolute inset-0 [background:radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)] pointer-events-none" />
+
+              <div className="absolute inset-x-5 top-6 bottom-24 pointer-events-none">
+                <svg viewBox="0 0 100 170" preserveAspectRatio="none" className="w-full h-full">
+                  <path
+                    d="M 2 170 L 2 18 Q 2 4 50 -6 Q 98 4 98 18 L 98 170"
+                    fill="none" stroke="#D4A373" strokeWidth="0.6"
+                  />
+                  <path
+                    d="M 6 170 L 6 20 Q 6 9 50 0 Q 94 9 94 20 L 94 170"
+                    fill="none" stroke="#E6B981" strokeWidth="0.3" opacity="0.5"
+                  />
+                </svg>
+              </div>
+     
+              <div className="absolute bottom-24 left-5 w-8 h-8 border-b border-l border-[#E6B981]/60 rounded-bl-lg pointer-events-none" />
+              <div className="absolute bottom-24 right-5 w-8 h-8 border-b border-r border-[#E6B981]/60 rounded-br-lg pointer-events-none" />
+
+              
+              <div className="relative z-10 h-full flex flex-col items-center text-center px-7 pt-7 pb-6">
+
+                <div className="relative mb-2 flex items-center justify-center w-12 h-12">
+                  <div className="absolute inset-0 rounded-full bg-[#E6B981]/25 blur-xl" />
+                  <Moon size={24} className="relative text-[#F3D9A4] fill-[#D4A373] drop-shadow-[0_0_6px_rgba(230,185,129,0.6)]" />
+                  <Sparkles size={12} className="absolute -top-0.5 -right-0.5 text-[#F3D9A4]" />
+                </div>
+
+                <span className="text-base md:text-lg font-bold text-[#F3D9A4] tracking-wide block mb-2 drop-shadow-sm" style={{ fontFamily: '"Amiri", serif' }}>
+                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                </span>
+
+                <div className="flex items-center gap-2 w-full max-w-[70%] mb-auto">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D4A373]/70" />
+                  <div className="w-1.5 h-1.5 rotate-45 bg-[#E6B981]" />
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D4A373]/70" />
+                </div>
+
+                <div className="flex-1 flex items-center justify-center px-1 overflow-y-auto scrollbar-none">
+                  <p
+                    className="font-bold font-quran leading-[2.3] bg-clip-text text-transparent bg-gradient-to-b from-[#FBF3E7] via-[#F3D9A4] to-[#FBF3E7] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] text-lg sm:text-xl md:text-2xl"
+                  >
+                    ﴿ {formatAyahText(selectedAyahForCard.text, selectedAyahForCard.numberInSurah, surah?.number)} ﴾
+                  </p>
+                </div>
+
+                <div className="mt-auto w-full flex flex-col items-center gap-3 pt-3">
+                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#E6B981]/50 bg-gradient-to-r from-[#D4A373]/5 via-[#D4A373]/20 to-[#D4A373]/5 shadow-sm">
+                    <span className="text-xs md:text-sm font-bold text-[#F3D9A4]" style={{ fontFamily: '"Amiri", serif' }}>
+                      سورة {surah?.name.replace('سُورَةُ ', '')} · آية {selectedAyahForCard.numberInSurah}
+                    </span>
+                  </div>
+                  <div className="w-14 h-px bg-[#E6B981]/40" />
+                  <p className="text-[11px] font-semibold text-[#F3D9A4]/65 tracking-widest">
+                    اقرأ  •  Iqraa
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full flex items-center justify-between gap-2 pt-1">
+              <button
+                onClick={handleDownloadCardImage}
+                disabled={isGeneratingImage}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-xs md:text-sm bg-gradient-to-r from-[#D4A373] to-[#c28e5c] hover:from-[#c28e5c] hover:to-[#a87445] text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isGeneratingImage ? <RefreshCw size={16} className="animate-spin" /> : <ImageIcon size={16} />}
+                <span>{t.downloadCard}</span>
+              </button>
+
+              <button
+                onClick={handleNativeShare}
+                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E6B981] border border-[#E6B981]/30 transition-all active:scale-95"
+                title={t.shareAction}
+              >
+                <Share2 size={18} />
+              </button>
+
+              <button
+                onClick={handleCopyCardText}
+                className="p-3 rounded-2xl font-bold text-sm bg-white/10 hover:bg-white/20 text-[#E6B981] border border-[#E6B981]/30 transition-all active:scale-95"
+                title={t.copyCardText}
+              >
+                {isCardCopied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
       {selectedAyahForTafsir && (

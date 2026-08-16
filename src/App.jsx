@@ -65,10 +65,14 @@ const TopBar = () => {
       }
     });
   };
+  useEffect(() => {
+  document.documentElement.dir = lang === 'ar' ? 'ltr' : 'rtl';
+  document.documentElement.lang = lang;
+}, [lang]);
 
   return (
     <>
-      <div className="w-full pt-4 pb-1 px-4 md:px-6 relative z-30">
+<div className="w-full pt-2 md:pt-4 pb-2 px-4 md:px-6 relative z-30" dir={isAr ? "ltr" : "rtl"}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           
           
