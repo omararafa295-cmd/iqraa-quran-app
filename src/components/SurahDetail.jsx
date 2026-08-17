@@ -111,7 +111,7 @@ export default function SurahDetail() {
   const [showSettings, setShowSettings] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     const savedSize = localStorage.getItem("fontSize");
-    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 20 : 28);
+    return savedSize ? parseInt(savedSize) : (window.innerWidth < 768 ? 20 : 27);
   });
 
   const showNotification = (message, type = "error") => {
