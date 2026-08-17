@@ -262,7 +262,6 @@ const TopBar = () => {
             </button>
           </div>
 
-          {/* Bookmarks */}
           <button
             onClick={() => setIsBookmarkDrawerOpen(true)}
             className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
