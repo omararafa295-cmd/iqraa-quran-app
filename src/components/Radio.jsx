@@ -60,6 +60,7 @@ export default function Radio() {
     reconnecting: isAr ? "جاري إعادة الاتصال..." : "Reconnecting...",
     paused: isAr ? "متوقف " : "Paused",
     streamError: isAr ? "تعذر تشغيل الإذاعة" : "Unable to play radio",
+    offlineError: isAr ? "أنت غير متصل بالإنترنت" : "You are offline",
     retry: isAr ? "إعادة المحاولة" : "Retry",
   };
 
@@ -95,10 +96,22 @@ export default function Radio() {
 
     try {
       audio.pause();
-    } catch (error) {
-      console.warn("Audio pause error:", error);
-    }
+    } catch (error) {}
   };
+
+  useEffect(() => {
+    const handleOffline = () => {
+      if (isPlaying || isRadioPlaying) {
+        stopCurrentAudio();
+        setStreamStatus("error");
+        setErrorMessage(t.offlineError);
+        setStoppedState();
+      }
+    };
+
+    window.addEventListener("offline", handleOffline);
+    return () => window.removeEventListener("offline", handleOffline);
+  }, [isPlaying, isRadioPlaying, isAr]);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +139,6 @@ export default function Radio() {
         if (cancelled) return;
         if (err?.code === "ERR_CANCELED") return;
 
-        console.error("Error fetching radios:", err);
         setRadios([]);
       })
       .finally(() => {
@@ -155,9 +167,7 @@ export default function Radio() {
           audio.pause();
           audio.removeAttribute("src");
           audio.load();
-        } catch (error) {
-          console.warn("Audio cleanup error:", error);
-        }
+        } catch (error) {}
       }
 
       setIsPlaying(false);
@@ -184,6 +194,7 @@ export default function Radio() {
     streamStatus,
     setIsRadioPlaying,
   ]);
+
   const cleanName = (name) =>
     name
       .replace(/^إذاعة\s+/, "")
@@ -230,11 +241,17 @@ export default function Radio() {
     };
   }, [radios, isAr]);
 
-
   const playRadio = async (radio, requestId) => {
     const audio = audioRef.current;
 
     if (!audio || requestId !== playRequestIdRef.current) {
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      setStoppedState();
       return;
     }
 
@@ -281,19 +298,23 @@ export default function Radio() {
         return;
       }
 
-      console.error("Radio play error:", error);
-
       setIsPlaying(false);
       setIsRadioPlaying(false);
       scheduleReconnect(radio, requestId);
     }
   };
 
-
   const scheduleReconnect = (radio, requestId) => {
     clearRetryTimer();
 
     if (requestId !== playRequestIdRef.current) {
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      setStoppedState();
       return;
     }
 
@@ -326,6 +347,13 @@ export default function Radio() {
 
     clearRetryTimer();
 
+    if (!navigator.onLine) {
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      setStoppedState();
+      return;
+    }
+
     const requestId = ++playRequestIdRef.current;
 
     retryCountRef.current = 0;
@@ -342,9 +370,16 @@ export default function Radio() {
       setIsQuranPlaying(false);
     }
 
+    if (!navigator.onLine) {
+      setActiveRadio(radio);
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      setStoppedState();
+      return;
+    }
+
     if (activeRadio?.id === radio.id) {
       if (isPlaying || streamStatus === "playing") {
-        // Intentional user pause.
         playRequestIdRef.current += 1;
         clearRetryTimer();
 
@@ -353,9 +388,7 @@ export default function Radio() {
         if (audioRef.current) {
           try {
             audioRef.current.pause();
-          } catch (error) {
-            console.warn("Audio pause error:", error);
-          }
+          } catch (error) {}
         }
 
         setIsPlaying(false);
@@ -384,9 +417,7 @@ export default function Radio() {
         audioRef.current.pause();
         audioRef.current.removeAttribute("src");
         audioRef.current.load();
-      } catch (error) {
-        console.warn("Previous stream cleanup error:", error);
-      }
+      } catch (error) {}
     }
 
     setActiveRadio(radio);
@@ -403,7 +434,6 @@ export default function Radio() {
   const handleAudioPlay = () => {
     if (!audioRef.current) return;
 
-    // Only update state after the browser actually starts playback.
     setStreamStatus("playing");
     setIsPlaying(true);
     setIsRadioPlaying(true);
@@ -411,7 +441,6 @@ export default function Radio() {
   };
 
   const handleAudioPause = () => {
-    // Don't let an old pause event overwrite a newer play request.
     if (!intentionalPauseRef.current) {
       setIsPlaying(false);
       setIsRadioPlaying(false);
@@ -433,10 +462,12 @@ export default function Radio() {
       return;
     }
 
-    console.error("Audio stream error:", {
-      station: currentRadio.name,
-      url: currentRadio.url,
-    });
+    if (!navigator.onLine) {
+      setStoppedState();
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      return;
+    }
 
     setIsPlaying(false);
     setIsRadioPlaying(false);
@@ -447,7 +478,6 @@ export default function Radio() {
   };
 
   const handleAudioWaiting = () => {
-    // waiting/stalled is normal for live streams.
     if (isPlaying) {
       setStreamStatus("loading");
     }
@@ -456,9 +486,15 @@ export default function Radio() {
   const handleAudioStalled = () => {
     if (!activeRadio || !isPlaying) return;
 
+    if (!navigator.onLine) {
+      setStoppedState();
+      setStreamStatus("error");
+      setErrorMessage(t.offlineError);
+      return;
+    }
+
     const requestId = playRequestIdRef.current;
 
-    // Give the browser a short chance to recover by itself.
     clearRetryTimer();
 
     retryTimerRef.current = setTimeout(() => {
@@ -789,7 +825,7 @@ export default function Radio() {
                       ? t.reconnecting
                       : t.connecting
                     : streamStatus === "error"
-                    ? t.streamError
+                    ? errorMessage || t.streamError
                     : streamStatus === "paused"
                     ? t.paused
                     : t.nowPlaying}

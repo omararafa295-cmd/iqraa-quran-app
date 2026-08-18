@@ -48,7 +48,6 @@ export default function SurahDetail() {
   const [dynamicTafsirText, setDynamicTafsirText] = useState("");
   const [isTafsirLoading, setIsTafsirLoading] = useState(false);
 
-  // كارت الآية للمشاركة
   const [selectedAyahForCard, setSelectedAyahForCard] = useState(null);
   const [isCardCopied, setIsCardCopied] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -121,7 +120,7 @@ export default function SurahDetail() {
     }, 3500); 
   };
 
-useEffect(() => {
+  useEffect(() => {
     if (window.location.hash === '#dialog') {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
@@ -156,8 +155,6 @@ useEffect(() => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedAyahForCard, selectedAyahForTafsir, activeAyahMenu, showSettings, isDropdownOpen]);
-
-
 
   const getAudioUrl = (reciterId, surahNumber, ayahNumberInSurah, globalAyahNumber) => {
     const everyAyahMap = {
@@ -312,8 +309,7 @@ useEffect(() => {
         }
         setDynamicTafsirText(raw || "لا يتوفر نص تفسير إضافي لهذه الآية في هذه الطبعة.");
       })
-      .catch(err => {
-        console.error("Tafsir fetch error:", err);
+      .catch(() => {
         setDynamicTafsirText("تعذر جلب التفسير حالياً. يرجى التأكد من اتصال الإنترنت.");
       })
       .finally(() => {
@@ -386,7 +382,6 @@ useEffect(() => {
         }
 
       } catch (error) {
-        console.error(error);
         showNotification(isAr ? "حدث خطأ غير متوقع أثناء التحميل." : "Unexpected error occurred.", "error");
       } finally {
         setIsDownloading(false);
@@ -407,7 +402,6 @@ useEffect(() => {
     }, 300);
   };
 
-  // تتبّع الآية اللي بتتشغل وتقليب الصفحة تلقائيًا لما القارئ يوصل لصفحة جديدة
   useEffect(() => {
     if (!currentAudio || currentAudio.playSingle) return;
     if (currentAudio.surahId !== surah?.number) return;
@@ -453,6 +447,14 @@ useEffect(() => {
     if (e && e.stopPropagation) e.stopPropagation();
     if (!surah || !surah.ayahs) return;
 
+    const isOffline = !navigator.onLine;
+    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true';
+
+    if (isOffline && !isSurahSaved) {
+      showNotification(isAr ? "أنت غير متصل بالإنترنت وهذه السورة غير محملة مسبقاً." : "You are offline and this surah is not downloaded.", "error");
+      return;
+    }
+
     setIsRadioPlaying(false);
 
     const currentReciterObj = recitersList?.find(r => r.id === reciter);
@@ -481,11 +483,20 @@ useEffect(() => {
   const handlePlaySingleAyah = (ayah) => {
     if (!surah || !ayah) return;
 
+    const isOffline = !navigator.onLine;
+    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true';
+
+    if (isOffline && !isSurahSaved) {
+      showNotification(isAr ? "أنت غير متصل بالإنترنت وهذه السورة غير محملة مسبقاً." : "You are offline and this surah is not downloaded.", "error");
+      return;
+    }
+
     setIsRadioPlaying(false);
 
     const currentReciterObj = recitersList?.find(r => r.id === reciter);
     const reciterName = currentReciterObj?.name || reciter;
-    const audioUrl = getAudioUrl(reciter, surah.number, ayah.numberInSurah, ayah.number);
+    const targetIndex = surah.ayahs.findIndex(a => a.number === ayah.number);
+    const startIndex = targetIndex !== -1 ? targetIndex : 0;
 
     setCurrentAudio({
       surahId: surah.number,
@@ -493,12 +504,12 @@ useEffect(() => {
       nameEn: surah.englishName,
       reciterName: reciterName, 
       reciterId: reciter, 
-      ayahs: [{
-        ...ayah,
-        audio: audioUrl
-      }], 
-      currentAyahIndex: 0,
-      playSingle: true
+      ayahs: surah.ayahs.map(a => ({
+        ...a,
+        audio: getAudioUrl(reciter, surah.number, a.numberInSurah, a.number)
+      })), 
+      currentAyahIndex: startIndex,
+      playSingle: false
     });
     setIsPlaying(true);
     setActiveAyahMenu(null);
@@ -747,7 +758,6 @@ useEffect(() => {
       ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', W / 2, 315);
       ctx.restore();
 
-
       ctx.save();
       ctx.strokeStyle = 'rgba(212, 163, 115, 0.55)';
       ctx.lineWidth = 1.3;
@@ -830,7 +840,6 @@ useEffect(() => {
       const cleanSurahName = surah.name.replace('سُورَةُ ', '');
       const refText = `سورة ${cleanSurahName}  ·  آية ${selectedAyahForCard.numberInSurah}`;
 
-
       ctx.save();
       ctx.font = '600 32px "Amiri", "Traditional Arabic", sans-serif';
       const badgeTextMetrics = ctx.measureText(refText);
@@ -858,7 +867,6 @@ useEffect(() => {
       ctx.fillText(refText, W / 2, badgeY + badgeHeight / 2);
       ctx.restore();
 
-      // خط فاصل صغير تحت الشارة
       ctx.save();
       ctx.strokeStyle = 'rgba(230, 185, 129, 0.35)';
       ctx.lineWidth = 1;
@@ -884,7 +892,6 @@ useEffect(() => {
 
       showNotification(isAr ? "تم تحميل كارت الآية بنجاح!" : "Image downloaded!", "success");
     } catch (e) {
-      console.error(e);
       showNotification(isAr ? "حدث خطأ أثناء تحميل الصورة" : "Error generating image", "error");
     } finally {
       setIsGeneratingImage(false);
@@ -1037,7 +1044,6 @@ useEffect(() => {
         </div>
       )}
 
-      {/* الهيدر العلوي */}
       <div className="relative z-30 flex flex-col md:flex-row gap-3 md:gap-4 items-center justify-between mb-6 px-2 w-full">
         <h2 className={`text-xl md:text-3xl font-bold w-full ${isAr ? 'text-right font-quran' : 'text-left font-serif tracking-wide'} md:w-auto ${isDarkMode ? "text-[#E5C158]" : "text-[#D4AF37]"}`}>
           {isAr ? surah?.name : surah?.englishName}
@@ -1064,7 +1070,7 @@ useEffect(() => {
                 e.stopPropagation();
                 if (!isDropdownOpen && reciterBtnRef.current) {
                   const rect = reciterBtnRef.current.getBoundingClientRect();
-                  const dropdownWidth = 192; // w-48
+                  const dropdownWidth = 192;
                   const margin = 10;
                   let left = rect.left + rect.width / 2 - dropdownWidth / 2;
                   left = Math.max(margin, Math.min(left, window.innerWidth - dropdownWidth - margin));
@@ -1317,7 +1323,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* 🌟 القائمة المنبثقة للآية 🌟 */}
       {activeAyahMenu && (
         <>
           <div 
@@ -1392,7 +1397,6 @@ useEffect(() => {
         </>
       )}
 
-      {/* 🌟 نافذة كارت الآية للمشاركة (Ayah Story Card Modal) 🌟 */}
       {selectedAyahForCard && (
         <div 
           className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
@@ -1403,7 +1407,6 @@ useEffect(() => {
             onClick={e => e.stopPropagation()}
             dir={isAr ? "rtl" : "ltr"}
           >
-            {/* زر الإغلاق العلوي */}
             <div className="w-full flex justify-end">
               <button 
                 onClick={() => setSelectedAyahForCard(null)}
@@ -1413,10 +1416,8 @@ useEffect(() => {
               </button>
             </div>
 
-            {/* 🌟 كارت "أونيكس وذهب" الفاخر 🌟 */}
             <div className="w-full relative aspect-[9/16] rounded-[2rem] shadow-[0_25px_60px_-15px_rgba(212,163,115,0.35)] border border-[#D4A373]/50 bg-gradient-to-b from-[#171310] via-[#0d0b08] to-[#0a0806] text-[#FBF3E7] overflow-hidden">
 
-              {/* نسيج هندسي إسلامي خفيف في الخلفية */}
               <div
                 className="absolute inset-0 opacity-[0.05] pointer-events-none"
                 style={{
@@ -1425,12 +1426,10 @@ useEffect(() => {
                 }}
               />
 
-              {/* توهجات ذهبية */}
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-[#E6B981]/20 blur-3xl pointer-events-none" />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#D4A373]/10 blur-3xl pointer-events-none" />
               <div className="absolute inset-0 [background:radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)] pointer-events-none" />
 
-              {/* قوس محراب علوي بروح شعار التطبيق + إطار داخلي رفيع */}
               <div className="absolute inset-x-5 top-6 bottom-24 pointer-events-none">
                 <svg viewBox="0 0 100 170" preserveAspectRatio="none" className="w-full h-full">
                   <path
@@ -1443,14 +1442,11 @@ useEffect(() => {
                   />
                 </svg>
               </div>
-              {/* زوايا سفلية مزخرفة */}
               <div className="absolute bottom-24 left-5 w-8 h-8 border-b border-l border-[#E6B981]/60 rounded-bl-lg pointer-events-none" />
               <div className="absolute bottom-24 right-5 w-8 h-8 border-b border-r border-[#E6B981]/60 rounded-br-lg pointer-events-none" />
 
-              {/* المحتوى */}
               <div className="relative z-10 h-full flex flex-col items-center text-center px-7 pt-7 pb-6">
 
-                {/* هلال ونجمة أعلى الكارت (مرفوع للأعلى بانسجام) */}
                 <div className="relative mb-2 flex items-center justify-center w-12 h-12">
                   <div className="absolute inset-0 rounded-full bg-[#E6B981]/25 blur-xl" />
                   <Moon size={24} className="relative text-[#F3D9A4] fill-[#D4A373] drop-shadow-[0_0_6px_rgba(230,185,129,0.6)]" />
@@ -1461,14 +1457,12 @@ useEffect(() => {
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </span>
 
-                {/* فاصل بمعينة مركزية */}
                 <div className="flex items-center gap-2 w-full max-w-[70%] mb-auto">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#D4A373]/70" />
                   <div className="w-1.5 h-1.5 rotate-45 bg-[#E6B981]" />
                   <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#D4A373]/70" />
                 </div>
 
-                {/* متن الآية الكريمة بتدرج ذهبي */}
                 <div className="flex-1 flex items-center justify-center px-1 overflow-y-auto scrollbar-none">
                   <p
                     className="font-bold font-quran leading-[2.3] bg-clip-text text-transparent bg-gradient-to-b from-[#FBF3E7] via-[#F3D9A4] to-[#FBF3E7] drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] text-lg sm:text-xl md:text-2xl"
@@ -1477,7 +1471,6 @@ useEffect(() => {
                   </p>
                 </div>
 
-                {/* أسفل الكارت: شارة اسم السورة ورقم الآية + اسم التطبيق */}
                 <div className="mt-auto w-full flex flex-col items-center gap-3 pt-3">
                   <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#E6B981]/50 bg-gradient-to-r from-[#D4A373]/5 via-[#D4A373]/20 to-[#D4A373]/5 shadow-sm">
                     <span className="text-xs md:text-sm font-bold text-[#F3D9A4]" style={{ fontFamily: '"Amiri", serif' }}>
@@ -1492,7 +1485,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* 🌟 أزرار التفاعل والإجراءات 🌟 */}
             <div className="w-full flex items-center justify-between gap-2 pt-1">
               <button
                 onClick={handleDownloadCardImage}
@@ -1524,7 +1516,6 @@ useEffect(() => {
         </div>
       )}
       
-      {/* نافذة التفسير */}
       {selectedAyahForTafsir && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAyahForTafsir(null)}>
           <div className={`w-full max-w-xl p-5 md:p-6 rounded-[2.5rem] shadow-2xl border transform transition-all ${
@@ -1582,7 +1573,6 @@ useEffect(() => {
         </div>
       )}
 
-      {/* نافذة الإعدادات */}
       {showSettings && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
           <div className={`w-full max-w-sm p-5 md:p-6 rounded-3xl shadow-xl ${isDarkMode ? "bg-gray-800 text-gray-200" : "bg-white text-gray-800"}`} onClick={e => e.stopPropagation()} dir={isAr ? "rtl" : "ltr"}>

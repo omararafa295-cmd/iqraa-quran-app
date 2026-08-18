@@ -31,6 +31,8 @@ export default function FloatingPlayer() {
       if (currentAudio && currentAyah?.audio) {
         setIsLoading(true);
         let finalAudioSrc = currentAyah.audio;
+        let isCached = false;
+
         if ('caches' in window) {
           try {
             const cache = await caches.open('quran-audio-cache');
@@ -39,16 +41,14 @@ export default function FloatingPlayer() {
               const blob = await cachedRes.blob();
               currentBlobUrl = URL.createObjectURL(blob);
               finalAudioSrc = currentBlobUrl;
+              isCached = true;
             }
-          } catch (err) {
-            console.log("Audio cache match error:", err);
-          }
+          } catch (err) {}
         }
 
         if (!isMounted) return;
 
-        if (!navigator.onLine && finalAudioSrc === currentAyah.audio) {
-          console.warn("User is offline and this audio is not downloaded.");
+        if (!navigator.onLine && !isCached) {
           setIsLoading(false);
           setIsPlaying(false);
           return;
@@ -61,9 +61,11 @@ export default function FloatingPlayer() {
               .then(() => {
                 if (isMounted) setIsLoading(false);
               })
-              .catch(err => {
-                console.error("Audio play error:", err);
-                if (isMounted) setIsLoading(false);
+              .catch(() => {
+                if (isMounted) {
+                  setIsLoading(false);
+                  setIsPlaying(false);
+                }
               });
           } else {
             setIsLoading(false);
@@ -91,11 +93,39 @@ export default function FloatingPlayer() {
   useEffect(() => {
     if (!audioRef.current || !audioRef.current.src) return;
     if (isPlaying) {
-      audioRef.current.play().catch(e => console.log(e));
+      audioRef.current.play().catch(() => {
+        setIsPlaying(false);
+        setIsLoading(false);
+      });
     } else {
       audioRef.current.pause();
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    const handleOffline = () => {
+      if (isPlaying && currentAyah?.audio) {
+        if ('caches' in window) {
+          caches.open('quran-audio-cache').then(cache => {
+            cache.match(currentAyah.audio).then(res => {
+              if (!res) {
+                setIsPlaying(false);
+                setIsLoading(false);
+                if (audioRef.current) audioRef.current.pause();
+              }
+            });
+          });
+        } else {
+          setIsPlaying(false);
+          setIsLoading(false);
+          if (audioRef.current) audioRef.current.pause();
+        }
+      }
+    };
+
+    window.addEventListener('offline', handleOffline);
+    return () => window.removeEventListener('offline', handleOffline);
+  }, [isPlaying, currentAyah]);
 
   const handleTimeUpdate = () => {
     const { currentTime, duration } = audioRef.current;
@@ -225,6 +255,10 @@ export default function FloatingPlayer() {
         onEnded={handleEnded}
         onCanPlay={() => setIsLoading(false)}
         onWaiting={() => setIsLoading(true)}
+        onError={() => {
+          setIsLoading(false);
+          setIsPlaying(false);
+        }}
       />
     </div>
   );
