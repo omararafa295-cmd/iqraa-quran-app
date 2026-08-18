@@ -182,61 +182,7 @@ export default function PrayerTimes() {
     }
   };
 
-  /*
-   * Reverse geocoding:
-   * Nominatim first because it gives us the detailed address hierarchy.
-   * BigDataCloud is kept as a fallback.
-   */
   const reverseGeocode = async (lat, lon) => {
-    try {
-      const response = await axios.get(
-        "https://nominatim.openstreetmap.org/reverse",
-        {
-          params: {
-            lat,
-            lon,
-            format: "jsonv2",
-            addressdetails: 1,
-            zoom: 18,
-            "accept-language": isAr ? "ar" : "en",
-          },
-          timeout: 7000,
-        }
-      );
-
-      const address = response.data?.address || {};
-
-      const detectedCity =
-        address.city ||
-        address.town ||
-        address.village ||
-        address.municipality ||
-        address.suburb ||
-        address.county ||
-        address.state ||
-        response.data?.name ||
-        "";
-
-      const detectedCountry = address.country || "";
-
-      if (detectedCity) {
-        setCity(detectedCity);
-        localStorage.setItem("userCity", detectedCity);
-      }
-
-      if (detectedCountry) {
-        setCountry(detectedCountry);
-        localStorage.setItem("userCountry", detectedCountry);
-      }
-
-      if (detectedCity) {
-        return {
-          city: detectedCity,
-          country: detectedCountry,
-        };
-      }
-    } catch {}
-
     try {
       const bdcRes = await axios.get(
         "https://api.bigdatacloud.net/data/reverse-geocode-client",
@@ -264,133 +210,69 @@ export default function PrayerTimes() {
       if (detectedCity) {
         setCity(detectedCity);
         localStorage.setItem("userCity", detectedCity);
+
+        if (detectedCountry) {
+          setCountry(detectedCountry);
+          localStorage.setItem("userCountry", detectedCountry);
+        }
+
+        return;
+      }
+    } catch {}
+
+    try {
+      const response = await axios.get(
+        "https://nominatim.openstreetmap.org/reverse",
+        {
+          params: {
+            lat,
+            lon,
+            format: "jsonv2",
+            addressdetails: 1,
+            zoom: 18,
+            "accept-language": isAr ? "ar" : "en",
+          },
+          timeout: 6000,
+        }
+      );
+
+      const address = response.data?.address || {};
+
+      const detectedCity =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        address.state ||
+        response.data?.name ||
+        "";
+
+      const detectedCountry = address.country || "";
+
+      if (detectedCity) {
+        setCity(detectedCity);
+        localStorage.setItem("userCity", detectedCity);
       }
 
       if (detectedCountry) {
         setCountry(detectedCountry);
         localStorage.setItem("userCountry", detectedCountry);
       }
+    } catch {
+      const savedCity = localStorage.getItem("userCity");
+      const savedCountry = localStorage.getItem("userCountry");
 
-      return {
-        city: detectedCity,
-        country: detectedCountry,
-      };
-    } catch {}
-
-    const savedCity = localStorage.getItem("userCity");
-    const savedCountry = localStorage.getItem("userCountry");
-
-    if (savedCity) {
-      setCity(savedCity);
-    } else {
-      setCity(isAr ? "موقعي الحالي" : "Current Location");
-    }
-
-    if (savedCountry) {
-      setCountry(savedCountry);
-    }
-
-    return null;
-  };
-
-  const getBestBrowserPosition = (forceRefresh = false) => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported"));
-        return;
+      if (savedCity) {
+        setCity(savedCity);
+      } else {
+        setCity(isAr ? "موقعي الحالي" : "Current Location");
       }
 
-      let bestPosition = null;
-      let watchId = null;
-      let finished = false;
-
-      const startTime = Date.now();
-
-      const finish = () => {
-        if (finished) return;
-
-        finished = true;
-
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-        }
-
-        if (bestPosition) {
-          resolve(bestPosition);
-        } else {
-          reject(new Error("Unable to determine location"));
-        }
-      };
-
-      const onSuccess = (position) => {
-        const accuracy = Number(position?.coords?.accuracy);
-
-        if (
-          !position?.coords ||
-          !Number.isFinite(position.coords.latitude) ||
-          !Number.isFinite(position.coords.longitude)
-        ) {
-          return;
-        }
-
-        if (!bestPosition) {
-          bestPosition = position;
-        } else {
-          const currentAccuracy = Number(
-            bestPosition.coords.accuracy
-          );
-
-          if (
-            Number.isFinite(accuracy) &&
-            (!Number.isFinite(currentAccuracy) ||
-              accuracy < currentAccuracy)
-          ) {
-            bestPosition = position;
-          }
-        }
-        if (
-          Number.isFinite(accuracy) &&
-          accuracy <= 50
-        ) {
-          finish();
-          return;
-        }
-
-        if (Date.now() - startTime >= 12000) {
-          finish();
-        }
-      };
-
-      const onError = () => {
-        if (bestPosition) {
-          finish();
-        } else {
-          if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId);
-          }
-
-          reject(new Error("Geolocation failed"));
-        }
-      };
-
-      try {
-        watchId = navigator.geolocation.watchPosition(
-          onSuccess,
-          onError,
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: forceRefresh ? 0 : 0,
-          }
-        );
-
-        setTimeout(() => {
-          finish();
-        }, 13000);
-      } catch {
-        reject(new Error("Unable to start geolocation"));
+      if (savedCountry) {
+        setCountry(savedCountry);
       }
-    });
+    }
   };
 
   const fetchLocationByIP = async () => {
@@ -409,24 +291,19 @@ export default function PrayerTimes() {
 
       if (
         data &&
-        Number.isFinite(Number(data.latitude)) &&
-        Number.isFinite(Number(data.longitude))
+        data.latitude != null &&
+        data.longitude != null
       ) {
-        const detectedCity =
-          data.city ||
-          data.locality ||
-          data.principalSubdivision ||
-          data.countryName ||
-          "";
-
-        const detectedCountry =
-          data.countryName || "";
-
         return {
           lat: Number(data.latitude),
           lon: Number(data.longitude),
-          city: detectedCity,
-          country: detectedCountry,
+          city:
+            data.city ||
+            data.locality ||
+            data.principalSubdivision ||
+            data.countryName ||
+            "",
+          country: data.countryName || "",
         };
       }
     } catch {}
@@ -441,8 +318,8 @@ export default function PrayerTimes() {
 
       if (
         res2.data &&
-        Number.isFinite(Number(res2.data.latitude)) &&
-        Number.isFinite(Number(res2.data.longitude))
+        res2.data.latitude != null &&
+        res2.data.longitude != null
       ) {
         return {
           lat: Number(res2.data.latitude),
@@ -457,12 +334,9 @@ export default function PrayerTimes() {
   };
 
   const handleOfflineFallback = () => {
-    const savedLocation =
-      localStorage.getItem("userLocation");
-    const savedCity =
-      localStorage.getItem("userCity");
-    const savedCountry =
-      localStorage.getItem("userCountry");
+    const savedLocation = localStorage.getItem("userLocation");
+    const savedCity = localStorage.getItem("userCity");
+    const savedCountry = localStorage.getItem("userCountry");
 
     if (savedCity) {
       setCity(savedCity);
@@ -506,30 +380,44 @@ export default function PrayerTimes() {
 
     let coords = null;
 
-    if (navigator.geolocation) {
-      try {
-        const position =
-          await getBestBrowserPosition(
-            forceRefresh
-          );
+    if (forceRefresh) {
+      localStorage.removeItem("userLocation");
+      localStorage.removeItem("userCity");
+      localStorage.removeItem("userCountry");
+    }
 
-        if (position?.coords) {
+    if ("geolocation" in navigator) {
+      const getPosition = (options) =>
+        new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            options
+          );
+        });
+
+      try {
+        const position = await getPosition({
+          enableHighAccuracy: true,
+          timeout: forceRefresh ? 15000 : 12000,
+          maximumAge: 0,
+        });
+
+        if (
+          position?.coords &&
+          Number.isFinite(position.coords.latitude) &&
+          Number.isFinite(position.coords.longitude)
+        ) {
           coords = {
-            lat: Number(position.coords.latitude),
-            lon: Number(position.coords.longitude),
-            accuracy: Number(
-              position.coords.accuracy
-            ),
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            accuracy: position.coords.accuracy,
           };
         }
       } catch {}
     }
 
-    if (
-      coords &&
-      Number.isFinite(coords.lat) &&
-      Number.isFinite(coords.lon)
-    ) {
+    if (coords) {
       localStorage.setItem(
         "userLocation",
         JSON.stringify({
@@ -561,8 +449,7 @@ export default function PrayerTimes() {
       return;
     }
 
-    const ipLocation =
-      await fetchLocationByIP();
+    const ipLocation = await fetchLocationByIP();
 
     if (ipLocation) {
       localStorage.setItem(
@@ -608,9 +495,7 @@ export default function PrayerTimes() {
     setLocationLoading(false);
 
     const hasCachedTimings =
-      localStorage.getItem(
-        "userPrayerTimings"
-      );
+      localStorage.getItem("userPrayerTimings");
 
     if (hasCachedTimings) {
       loadCachedTimings();
@@ -620,17 +505,37 @@ export default function PrayerTimes() {
     }
   };
 
-  /*
-   * IMPORTANT CHANGE:
-   * On initial load we ALWAYS request the current
-   * browser location.
-   *
-   * We do NOT use savedLocation as the current location.
-   */
   useEffect(() => {
+    const savedLocation =
+      localStorage.getItem("userLocation");
+
     if (!navigator.onLine) {
       handleOfflineFallback();
       return;
+    }
+
+    if (savedLocation) {
+      try {
+        const { lat, lon } = JSON.parse(savedLocation);
+
+        if (
+          typeof lat === "number" &&
+          typeof lon === "number" &&
+          Number.isFinite(lat) &&
+          Number.isFinite(lon)
+        ) {
+          fetchTimingsByCoordinates(lat, lon);
+
+          const savedCity =
+            localStorage.getItem("userCity");
+
+          if (!savedCity) {
+            reverseGeocode(lat, lon);
+          }
+
+          return;
+        }
+      } catch {}
     }
 
     getUserLocation(true);
@@ -669,8 +574,7 @@ export default function PrayerTimes() {
 
       if (savedLocation) {
         try {
-          const { lat, lon } =
-            JSON.parse(savedLocation);
+          const { lat, lon } = JSON.parse(savedLocation);
 
           if (
             typeof lat === "number" &&
@@ -713,8 +617,7 @@ export default function PrayerTimes() {
       response.data.forEach((item) => {
         const address = item.address || {};
         const placeName = getPlaceName(item);
-        const countryName =
-          address.country || "";
+        const countryName = address.country || "";
 
         if (!placeName) return;
 
@@ -756,8 +659,7 @@ export default function PrayerTimes() {
           lat: Number(item.lat),
           lon: Number(item.lon),
           type: item.type || "",
-          importance:
-            item.importance || 0,
+          importance: item.importance || 0,
         });
       });
 
@@ -858,7 +760,6 @@ export default function PrayerTimes() {
       "userCity",
       selectedCity
     );
-
     localStorage.setItem(
       "userCountry",
       selectedCountry
@@ -904,7 +805,9 @@ export default function PrayerTimes() {
       );
 
     if (results.length > 0) {
-      selectSearchResult(results[0]);
+      selectSearchResult(
+        results[0]
+      );
     }
   };
 
@@ -915,9 +818,7 @@ export default function PrayerTimes() {
     setSearchError(false);
 
     if (searchTimerRef.current) {
-      clearTimeout(
-        searchTimerRef.current
-      );
+      clearTimeout(searchTimerRef.current);
     }
 
     if (abortControllerRef.current) {
@@ -929,9 +830,7 @@ export default function PrayerTimes() {
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) {
-        clearTimeout(
-          searchTimerRef.current
-        );
+        clearTimeout(searchTimerRef.current);
       }
 
       if (abortControllerRef.current) {
@@ -971,7 +870,6 @@ export default function PrayerTimes() {
           <span className="font-sans font-bold">
             {hour12}:{minutes}
           </span>
-
           <span className="text-sm font-semibold">
             {period}
           </span>
@@ -987,7 +885,6 @@ export default function PrayerTimes() {
         <span className="font-sans font-bold">
           {hour12}:{minutes}
         </span>
-
         <span className="text-sm font-semibold">
           {isPM ? "PM" : "AM"}
         </span>
@@ -1003,13 +900,11 @@ export default function PrayerTimes() {
 
     let [mH, mM] =
       maghrib.split(":").map(Number);
-
     let [fH, fM] =
       fajr.split(":").map(Number);
 
     let maghribMins =
       mH * 60 + mM;
-
     let fajrMins =
       fH * 60 + fM;
 
@@ -1019,11 +914,8 @@ export default function PrayerTimes() {
 
     const duration =
       fajrMins - maghribMins;
-
     const midnight =
-      maghribMins +
-      duration / 2;
-
+      maghribMins + duration / 2;
     const lastThird =
       maghribMins +
       (duration * 2) / 3;
@@ -1032,16 +924,12 @@ export default function PrayerTimes() {
       let hours =
         Math.floor(minutes / 60) %
         24;
-
       const mins = Math.round(
         minutes % 60
       );
-
       const isPM = hours >= 12;
-
       const hour12 =
         hours % 12 || 12;
-
       const formattedMins =
         mins < 10
           ? `0${mins}`
@@ -1058,10 +946,8 @@ export default function PrayerTimes() {
             dir="rtl"
           >
             <span className="font-sans font-bold">
-              {hour12}:
-              {formattedMins}
+              {hour12}:{formattedMins}
             </span>
-
             <span className="text-sm font-normal">
               {period}
             </span>
@@ -1075,10 +961,8 @@ export default function PrayerTimes() {
           dir="ltr"
         >
           <span className="font-sans font-bold">
-            {hour12}:
-            {formattedMins}
+            {hour12}:{formattedMins}
           </span>
-
           <span className="text-sm font-normal">
             {isPM ? "PM" : "AM"}
           </span>
@@ -1143,11 +1027,12 @@ export default function PrayerTimes() {
   const arcData = useMemo(() => {
     if (!timings) return null;
 
-    const fajrMin =
-      toMinutes(timings.Fajr);
-
-    let ishaMin =
-      toMinutes(timings.Isha);
+    const fajrMin = toMinutes(
+      timings.Fajr
+    );
+    let ishaMin = toMinutes(
+      timings.Isha
+    );
 
     if (
       fajrMin === null ||
@@ -1169,28 +1054,27 @@ export default function PrayerTimes() {
           timings[prayer.id]
         );
 
-        if (mins === null)
-          return null;
+        if (mins === null) return null;
 
         if (mins < fajrMin) {
           mins += 24 * 60;
         }
 
-        const progress =
-          Math.min(
-            1,
-            Math.max(
-              0,
-              (mins - fajrMin) /
-                span
-            )
-          );
+        const progress = Math.min(
+          1,
+          Math.max(
+            0,
+            (mins - fajrMin) /
+              span
+          )
+        );
 
         return {
           ...prayer,
-          name: t.prayers[
-            prayer.id
-          ],
+          name:
+            t.prayers[
+              prayer.id
+            ],
           mins,
           progress,
         };
@@ -1248,8 +1132,7 @@ export default function PrayerTimes() {
       nowMins;
 
     if (minsToNext < 0) {
-      minsToNext +=
-        24 * 60;
+      minsToNext += 24 * 60;
     }
 
     const hoursLeft =
@@ -1297,16 +1180,16 @@ export default function PrayerTimes() {
     ) {
       const progress =
         i / steps;
-
       const x =
         progress * 100;
-
       const y =
         60 +
         arcY(progress);
 
       path += `${
-        i === 0 ? "M" : "L"
+        i === 0
+          ? "M"
+          : "L"
       } ${x} ${y} `;
     }
 
@@ -1405,16 +1288,12 @@ export default function PrayerTimes() {
                   searchInput.trim()
                     .length >= 2
                 ) {
-                  setIsSearchOpen(
-                    true
-                  );
+                  setIsSearchOpen(true);
                 }
               }}
               onBlur={() => {
                 setTimeout(() => {
-                  setIsSearchOpen(
-                    false
-                  );
+                  setIsSearchOpen(false);
                 }, 200);
               }}
               className={`w-full p-4 ${
@@ -1536,9 +1415,7 @@ export default function PrayerTimes() {
                                   : "bg-[#D4AF37]/10 text-[#D4AF37]"
                               }`}
                             >
-                              <MapPin
-                                size={17}
-                              />
+                              <MapPin size={17} />
                             </div>
 
                             <div className="min-w-0">
@@ -1549,9 +1426,7 @@ export default function PrayerTimes() {
                                     : "text-gray-800"
                                 }`}
                               >
-                                {
-                                  result.cityName
-                                }
+                                {result.cityName}
                               </p>
 
                               <p className="text-xs text-gray-400 truncate mt-0.5">
@@ -1559,9 +1434,7 @@ export default function PrayerTimes() {
                                   result.stateName,
                                   result.countryName,
                                 ]
-                                  .filter(
-                                    Boolean
-                                  )
+                                  .filter(Boolean)
                                   .filter(
                                     (
                                       value,
@@ -1570,12 +1443,9 @@ export default function PrayerTimes() {
                                     ) =>
                                       array.indexOf(
                                         value
-                                      ) ===
-                                      index
+                                      ) === index
                                   )
-                                  .join(
-                                    ", "
-                                  )}
+                                  .join(", ")}
                               </p>
                             </div>
                           </button>
@@ -1624,9 +1494,7 @@ export default function PrayerTimes() {
                 onClick={() =>
                   getUserLocation(true)
                 }
-                disabled={
-                  locationLoading
-                }
+                disabled={locationLoading}
                 className={`p-1.5 rounded-full transition-colors ${
                   isDarkMode
                     ? "hover:bg-gray-800 text-gray-400"
@@ -1671,20 +1539,16 @@ export default function PrayerTimes() {
                     ?.weekday) && (
                   <span>
                     {isAr
-                      ? dateInfo
-                          .hijri
+                      ? dateInfo.hijri
                           ?.weekday
                           ?.ar ||
-                        dateInfo
-                          .gregorian
+                        dateInfo.gregorian
                           ?.weekday
                           ?.en
-                      : dateInfo
-                          .gregorian
+                      : dateInfo.gregorian
                           ?.weekday
                           ?.en ||
-                        dateInfo
-                          .hijri
+                        dateInfo.hijri
                           ?.weekday
                           ?.en}
                   </span>
@@ -1693,11 +1557,7 @@ export default function PrayerTimes() {
                 <span>•</span>
 
                 <span>
-                  {
-                    dateInfo
-                      .gregorian
-                      ?.date
-                  }
+                  {dateInfo.gregorian?.date}
                 </span>
 
                 {dateInfo.hijri && (
@@ -1772,9 +1632,7 @@ export default function PrayerTimes() {
             }`}
             type="button"
           >
-            <RefreshCw
-              size={18}
-            />
+            <RefreshCw size={18} />
             {t.retry}
           </button>
         </div>
@@ -1864,12 +1722,10 @@ export default function PrayerTimes() {
                   }`}
                 >
                   {t.prayers[
-                    arcData
-                      .nextPrayer
+                    arcData.nextPrayer
                       .id
                   ] ||
-                    arcData
-                      .nextPrayer
+                    arcData.nextPrayer
                       .name}
                 </h3>
 
@@ -1888,9 +1744,7 @@ export default function PrayerTimes() {
                       dir="rtl"
                     >
                       <span className="opacity-70 font-medium">
-                        {
-                          t.remaining
-                        }
+                        {t.remaining}
                       </span>
 
                       {arcData.hoursLeft >
@@ -1899,9 +1753,7 @@ export default function PrayerTimes() {
                           {
                             arcData.hoursLeft
                           }
-                          {
-                            t.hourShort
-                          }
+                          {t.hourShort}
                         </span>
                       )}
 
@@ -1909,9 +1761,7 @@ export default function PrayerTimes() {
                         {
                           arcData.minsLeft
                         }
-                        {
-                          t.minShort
-                        }
+                        {t.minShort}
                       </span>
                     </div>
                   ) : (
@@ -1925,9 +1775,7 @@ export default function PrayerTimes() {
                           {
                             arcData.hoursLeft
                           }
-                          {
-                            t.hourShort
-                          }
+                          {t.hourShort}
                         </span>
                       )}
 
@@ -1935,15 +1783,11 @@ export default function PrayerTimes() {
                         {
                           arcData.minsLeft
                         }
-                        {
-                          t.minShort
-                        }
+                        {t.minShort}
                       </span>
 
                       <span className="opacity-70 font-medium">
-                        {
-                          t.remaining
-                        }
+                        {t.remaining}
                       </span>
                     </div>
                   )}
@@ -2007,26 +1851,19 @@ export default function PrayerTimes() {
                 </div>
 
                 {arcData.points.map(
-                  (
-                    point,
-                    index
-                  ) => {
+                  (point, index) => {
                     const Icon =
                       point.icon;
-
                     const isCurrent =
                       index ===
                       arcData.currentIndex;
-
                     const isNext =
                       index ===
                       arcData.nextIndex;
 
                     return (
                       <div
-                        key={
-                          point.id
-                        }
+                        key={point.id}
                         className="absolute -translate-x-1/2 flex flex-col items-center gap-1"
                         style={{
                           left: `${
@@ -2107,9 +1944,7 @@ export default function PrayerTimes() {
 
                 return (
                   <div
-                    key={
-                      prayer.id
-                    }
+                    key={prayer.id}
                     className={`relative p-5 rounded-2xl shadow-sm border flex flex-col items-center justify-center gap-2 transition-all duration-300 rise-in ${
                       isNext
                         ? `${
@@ -2124,8 +1959,7 @@ export default function PrayerTimes() {
                     style={{
                       animationDelay: `${
                         120 +
-                        index *
-                          60
+                        index * 60
                       }ms`,
                     }}
                   >
@@ -2153,9 +1987,7 @@ export default function PrayerTimes() {
                             : "text-gray-400"
                       }
                     >
-                      <Icon
-                        size={26}
-                      />
+                      <Icon size={26} />
                     </div>
 
                     <h3
@@ -2165,9 +1997,7 @@ export default function PrayerTimes() {
                           : "text-gray-500"
                       }`}
                     >
-                      {
-                        prayer.name
-                      }
+                      {prayer.name}
                     </h3>
 
                     <div
@@ -2198,10 +2028,7 @@ export default function PrayerTimes() {
               }`}
             >
               {[...Array(10)].map(
-                (
-                  _,
-                  index
-                ) => (
+                (_, index) => (
                   <span
                     key={index}
                     className="absolute rounded-full bg-white"
@@ -2220,8 +2047,7 @@ export default function PrayerTimes() {
                       }%`,
                       animation: `twinkle ${
                         2.5 +
-                        (index %
-                          3)
+                        (index % 3)
                       }s ease-in-out infinite`,
                       animationDelay: `${
                         index * 0.3
@@ -2266,9 +2092,7 @@ export default function PrayerTimes() {
                         className="text-[#E5C158]"
                       />
 
-                      {
-                        nightTimes.midnight
-                      }
+                      {nightTimes.midnight}
                     </div>
                   </div>
 
@@ -2282,9 +2106,7 @@ export default function PrayerTimes() {
                     <div className="flex items-center gap-2 text-[#E5C158] font-bold text-lg">
                       <Star size={16} />
 
-                      {
-                        nightTimes.lastThird
-                      }
+                      {nightTimes.lastThird}
                     </div>
                   </div>
                 </div>
