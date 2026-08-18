@@ -1352,13 +1352,11 @@ export default function PrayerTimes() {
                   }
                 />
 
-                {dateInfo.gregorian?.weekday && (
+                {(dateInfo.hijri?.weekday || dateInfo.gregorian?.weekday) && (
                   <span>
-                    {
-                      dateInfo.gregorian.weekday[
-                        isAr ? "ar" : "en"
-                      ]
-                    }
+                    {isAr
+                      ? (dateInfo.hijri?.weekday?.ar || dateInfo.gregorian?.weekday?.en)
+                      : (dateInfo.gregorian?.weekday?.en || dateInfo.hijri?.weekday?.en)}
                   </span>
                 )}
 
