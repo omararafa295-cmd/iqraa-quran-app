@@ -171,26 +171,32 @@ export default function Qibla() {
   const handleOrientation = useCallback(
     (event) => {
       let heading = null;
+
       if (
         typeof event.webkitCompassHeading === "number" &&
-        Number.isFinite(event.webkitCompassHeading)
+        Number.isFinite(event.webkitCompassHeading) &&
+        event.webkitCompassHeading >= 0
       ) {
         heading = event.webkitCompassHeading;
-      }
-
-      else if (
-        event.absolute === true &&
+      } else if (
         typeof event.alpha === "number" &&
         Number.isFinite(event.alpha)
       ) {
-        heading = 360 - event.alpha;
+        if (event.absolute === true || typeof event.webkitCompassHeading === "undefined") {
+          heading = (360 - event.alpha) % 360;
+        }
       }
 
-      if (heading === null) {
+      if (heading === null || isNaN(heading)) {
         return;
       }
 
       hasValidSensorDataRef.current = true;
+
+      if (sensorTimeoutRef.current) {
+        clearTimeout(sensorTimeoutRef.current);
+        sensorTimeoutRef.current = null;
+      }
 
       updateCompassUI(heading);
     },
@@ -199,25 +205,15 @@ export default function Qibla() {
 
   const stopCompassListeners = useCallback(() => {
     if (orientationListenerRef.current) {
-      const {
-        type,
-        handler,
-      } = orientationListenerRef.current;
-
+      const { type, handler } = orientationListenerRef.current;
       window.removeEventListener(type, handler);
-
       orientationListenerRef.current = null;
     }
 
-    window.removeEventListener(
-      "deviceorientation",
-      handleOrientation
-    );
-
-    window.removeEventListener(
-      "deviceorientationabsolute",
-      handleOrientation
-    );
+    window.removeEventListener("deviceorientation", handleOrientation, true);
+    window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
+    window.removeEventListener("deviceorientation", handleOrientation, false);
+    window.removeEventListener("deviceorientationabsolute", handleOrientation, false);
 
     if (sensorTimeoutRef.current) {
       clearTimeout(sensorTimeoutRef.current);
@@ -228,45 +224,36 @@ export default function Qibla() {
   const startOrientationListener = useCallback(() => {
     hasValidSensorDataRef.current = false;
 
-    window.addEventListener(
-      "deviceorientation",
-      handleOrientation,
-      true
-    );
+    window.addEventListener("deviceorientation", handleOrientation, true);
+    window.addEventListener("deviceorientationabsolute", handleOrientation, true);
 
     orientationListenerRef.current = {
       type: "deviceorientation",
       handler: handleOrientation,
     };
-    window.addEventListener(
-      "deviceorientationabsolute",
-      handleOrientation,
-      true
-    );
 
-  
+    if (sensorTimeoutRef.current) {
+      clearTimeout(sensorTimeoutRef.current);
+    }
+
     sensorTimeoutRef.current = setTimeout(() => {
       if (!hasValidSensorDataRef.current) {
         setIsCompassActive(false);
         setError(t.errNoSensor);
-
         stopCompassListeners();
       }
-    }, 5000);
+    }, 6000);
 
     setIsCompassActive(true);
   }, [handleOrientation, stopCompassListeners, t.errNoSensor]);
 
-  
   const requestCompassPermission = async () => {
     try {
-     
       if (
         typeof DeviceOrientationEvent !== "undefined" &&
         typeof DeviceOrientationEvent.requestPermission === "function"
       ) {
-        const permission =
-          await DeviceOrientationEvent.requestPermission();
+        const permission = await DeviceOrientationEvent.requestPermission();
 
         if (permission !== "granted") {
           setError(t.errDenied);
@@ -277,47 +264,58 @@ export default function Qibla() {
 
       return true;
     } catch (err) {
-      console.error(
-        "Device orientation permission error:",
-        err
-      );
-
+      console.error("Device orientation permission error:", err);
       setError(t.errDenied);
       setLoading(false);
-
       return false;
     }
   };
 
-  /*
-   * Get current location.
-   */
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject({
-          type: "unsupported",
-        });
-
-        return;
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      const saved = localStorage.getItem("userLocation");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.lat && parsed.lon) {
+            return { coords: { latitude: parsed.lat, longitude: parsed.lon } };
+          }
+        } catch {}
       }
+      throw { code: 1 };
+    }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve(position);
-        },
+    const getPos = (opts) =>
+      new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, opts);
+      });
 
-        (locationError) => {
-          reject(locationError);
-        },
-
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
+    try {
+      return await getPos({
+        enableHighAccuracy: true,
+        timeout: 7000,
+        maximumAge: 60000,
+      });
+    } catch (err1) {
+      try {
+        return await getPos({
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000,
+        });
+      } catch (err2) {
+        const saved = localStorage.getItem("userLocation");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.lat && parsed.lon) {
+              return { coords: { latitude: parsed.lat, longitude: parsed.lon } };
+            }
+          } catch {}
         }
-      );
-    });
+        throw err2;
+      }
+    }
   };
 
   const startCompass = async () => {
@@ -326,35 +324,27 @@ export default function Qibla() {
     setLoading(true);
     setError(null);
     setIsAligned(false);
-
     hasValidSensorDataRef.current = false;
 
-   
-    const permissionGranted =
-      await requestCompassPermission();
+    const permissionGranted = await requestCompassPermission();
 
     if (!permissionGranted) {
       return;
     }
 
     try {
-      
       const position = await getCurrentLocation();
 
-      const {
-        latitude,
-        longitude,
-      } = position.coords;
+      const { latitude, longitude } = position.coords;
 
       const response = await axios.get(
         `https://api.aladhan.com/v1/qibla/${latitude}/${longitude}`,
         {
-          timeout: 15000,
+          timeout: 12000,
         }
       );
 
-      const qiblaAngle =
-        response?.data?.data?.direction;
+      const qiblaAngle = response?.data?.data?.direction;
 
       if (
         typeof qiblaAngle !== "number" ||
@@ -363,42 +353,32 @@ export default function Qibla() {
         throw new Error("Invalid Qibla response");
       }
 
-      const normalizedQibla =
-        normalizeAngle(qiblaAngle);
+      const normalizedQibla = normalizeAngle(qiblaAngle);
 
       setQiblaDirection(normalizedQibla);
-
       qiblaDirRef.current = normalizedQibla;
-    
+
       startOrientationListener();
 
       setLoading(false);
     } catch (err) {
       console.error("Qibla error:", err);
-
       setLoading(false);
 
-      if (
-        err &&
-        typeof err.code === "number"
-      ) {
+      if (err && typeof err.code === "number") {
         switch (err.code) {
           case 1:
             setError(t.errLocation);
             break;
-
           case 2:
             setError(t.errLocationUnavailable);
             break;
-
           case 3:
             setError(t.errLocationTimeout);
             break;
-
           default:
             setError(t.errLocation);
         }
-
         return;
       }
 

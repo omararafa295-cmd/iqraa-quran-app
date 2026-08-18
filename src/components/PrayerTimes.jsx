@@ -184,6 +184,31 @@ export default function PrayerTimes() {
 
   const reverseGeocode = async (lat, lon) => {
     try {
+      const bdcRes = await axios.get(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${isAr ? "ar" : "en"}`,
+        { timeout: 6000 }
+      );
+      const bdcData = bdcRes.data || {};
+      const detectedCity =
+        bdcData.city ||
+        bdcData.locality ||
+        bdcData.principalSubdivision ||
+        bdcData.countryName ||
+        "";
+      const detectedCountry = bdcData.countryName || "";
+
+      if (detectedCity) {
+        setCity(detectedCity);
+        localStorage.setItem("userCity", detectedCity);
+        if (detectedCountry) {
+          setCountry(detectedCountry);
+          localStorage.setItem("userCountry", detectedCountry);
+        }
+        return;
+      }
+    } catch {}
+
+    try {
       const response = await axios.get(
         "https://nominatim.openstreetmap.org/reverse",
         {
@@ -194,7 +219,7 @@ export default function PrayerTimes() {
             addressdetails: 1,
             "accept-language": isAr ? "ar" : "en",
           },
-          timeout: 7000,
+          timeout: 6000,
         }
       );
 
@@ -227,6 +252,8 @@ export default function PrayerTimes() {
 
       if (savedCity) {
         setCity(savedCity);
+      } else {
+        setCity(isAr ? "موقعي الحالي" : "Current Location");
       }
 
       if (savedCountry) {
@@ -286,8 +313,33 @@ export default function PrayerTimes() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    const getPositionPromise = (options) =>
+      new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+
+    (async () => {
+      let position = null;
+
+      try {
+        position = await getPositionPromise({
+          enableHighAccuracy: true,
+          timeout: 7000,
+          maximumAge: 60000,
+        });
+      } catch (errHigh) {
+        try {
+          position = await getPositionPromise({
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 300000,
+          });
+        } catch (errLow) {
+          position = null;
+        }
+      }
+
+      if (position && position.coords) {
         const { latitude, longitude } = position.coords;
 
         localStorage.setItem(
@@ -300,16 +352,17 @@ export default function PrayerTimes() {
 
         try {
           await reverseGeocode(latitude, longitude);
-        } finally {
+        } catch {}
+
+        try {
           await fetchTimingsByCoordinates(latitude, longitude);
+        } finally {
           setLocationLoading(false);
         }
-      },
-      () => {
+      } else {
         setLocationLoading(false);
 
-        const hasCachedTimings =
-          localStorage.getItem("userPrayerTimings");
+        const hasCachedTimings = localStorage.getItem("userPrayerTimings");
 
         if (hasCachedTimings) {
           loadCachedTimings();
@@ -317,13 +370,8 @@ export default function PrayerTimes() {
           setFetchError(true);
           setLoading(false);
         }
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 300000,
       }
-    );
+    })();
   };
 
   useEffect(() => {
@@ -343,6 +391,10 @@ export default function PrayerTimes() {
           typeof lon === "number"
         ) {
           fetchTimingsByCoordinates(lat, lon);
+          const savedCity = localStorage.getItem("userCity");
+          if (!savedCity) {
+            reverseGeocode(lat, lon);
+          }
           return;
         }
       } catch {}
