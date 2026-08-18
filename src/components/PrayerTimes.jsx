@@ -185,8 +185,15 @@ export default function PrayerTimes() {
   const reverseGeocode = async (lat, lon) => {
     try {
       const bdcRes = await axios.get(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${isAr ? "ar" : "en"}`,
-        { timeout: 6000 }
+        "https://api.bigdatacloud.net/data/reverse-geocode-client",
+        {
+          params: {
+            latitude: lat,
+            longitude: lon,
+            localityLanguage: isAr ? "ar" : "en",
+          },
+          timeout: 6000,
+        }
       );
       const bdcData = bdcRes.data || {};
       const detectedCity =
@@ -262,6 +269,52 @@ export default function PrayerTimes() {
     }
   };
 
+  const fetchLocationByIP = async () => {
+    try {
+      const res = await axios.get(
+        "https://api.bigdatacloud.net/data/reverse-geocode-client",
+        {
+          params: {
+            localityLanguage: isAr ? "ar" : "en",
+          },
+          timeout: 6000,
+        }
+      );
+      const data = res.data;
+      if (data && data.latitude && data.longitude) {
+        const detectedCity =
+          data.city ||
+          data.locality ||
+          data.principalSubdivision ||
+          data.countryName ||
+          "";
+        const detectedCountry = data.countryName || "";
+        return {
+          lat: Number(data.latitude),
+          lon: Number(data.longitude),
+          city: detectedCity,
+          country: detectedCountry,
+        };
+      }
+    } catch {}
+
+    try {
+      const res2 = await axios.get("https://ipapi.co/json/", {
+        timeout: 6000,
+      });
+      if (res2.data && res2.data.latitude && res2.data.longitude) {
+        return {
+          lat: Number(res2.data.latitude),
+          lon: Number(res2.data.longitude),
+          city: res2.data.city || "",
+          country: res2.data.country_name || "",
+        };
+      }
+    } catch {}
+
+    return null;
+  };
+
   const handleOfflineFallback = () => {
     const savedLocation = localStorage.getItem("userLocation");
     const savedCity = localStorage.getItem("userCity");
@@ -297,7 +350,7 @@ export default function PrayerTimes() {
     loadCachedTimings();
   };
 
-  const getUserLocation = () => {
+  const getUserLocation = async (forceRefresh = false) => {
     setLocationLoading(true);
     setFetchError(false);
 
@@ -307,71 +360,116 @@ export default function PrayerTimes() {
       return;
     }
 
-    if (!navigator.geolocation) {
-      handleOfflineFallback();
-      setLocationLoading(false);
+    let coords = null;
+
+    if (navigator.geolocation) {
+      const getPos = (opts) =>
+        new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            opts
+          );
+        });
+
+      try {
+        const pos = await getPos({
+          enableHighAccuracy: true,
+          timeout: 6000,
+          maximumAge: forceRefresh ? 0 : 60000,
+        });
+        if (pos?.coords) {
+          coords = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          };
+        }
+      } catch (errHigh) {
+        try {
+          const pos = await getPos({
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: forceRefresh ? 0 : 300000,
+          });
+          if (pos?.coords) {
+            coords = {
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+            };
+          }
+        } catch (errLow) {
+          coords = null;
+        }
+      }
+    }
+
+    if (coords) {
+      localStorage.setItem(
+        "userLocation",
+        JSON.stringify({
+          lat: coords.lat,
+          lon: coords.lon,
+        })
+      );
+
+      try {
+        await reverseGeocode(coords.lat, coords.lon);
+      } catch {}
+
+      try {
+        await fetchTimingsByCoordinates(coords.lat, coords.lon);
+        setFetchError(false);
+      } catch {
+        loadCachedTimings();
+      } finally {
+        setLocationLoading(false);
+      }
       return;
     }
 
-    const getPositionPromise = (options) =>
-      new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, options);
-      });
+    const ipLocation = await fetchLocationByIP();
+    if (ipLocation) {
+      localStorage.setItem(
+        "userLocation",
+        JSON.stringify({
+          lat: ipLocation.lat,
+          lon: ipLocation.lon,
+        })
+      );
 
-    (async () => {
-      let position = null;
+      if (ipLocation.city) {
+        setCity(ipLocation.city);
+        localStorage.setItem("userCity", ipLocation.city);
+      }
+      if (ipLocation.country) {
+        setCountry(ipLocation.country);
+        localStorage.setItem("userCountry", ipLocation.country);
+      }
 
       try {
-        position = await getPositionPromise({
-          enableHighAccuracy: true,
-          timeout: 7000,
-          maximumAge: 60000,
-        });
-      } catch (errHigh) {
-        try {
-          position = await getPositionPromise({
-            enableHighAccuracy: false,
-            timeout: 10000,
-            maximumAge: 300000,
-          });
-        } catch (errLow) {
-          position = null;
-        }
-      }
-
-      if (position && position.coords) {
-        const { latitude, longitude } = position.coords;
-
-        localStorage.setItem(
-          "userLocation",
-          JSON.stringify({
-            lat: latitude,
-            lon: longitude,
-          })
+        await fetchTimingsByCoordinates(
+          ipLocation.lat,
+          ipLocation.lon
         );
-
-        try {
-          await reverseGeocode(latitude, longitude);
-        } catch {}
-
-        try {
-          await fetchTimingsByCoordinates(latitude, longitude);
-        } finally {
-          setLocationLoading(false);
-        }
-      } else {
+        setFetchError(false);
+      } catch {
+        loadCachedTimings();
+      } finally {
         setLocationLoading(false);
-
-        const hasCachedTimings = localStorage.getItem("userPrayerTimings");
-
-        if (hasCachedTimings) {
-          loadCachedTimings();
-        } else {
-          setFetchError(true);
-          setLoading(false);
-        }
       }
-    })();
+      return;
+    }
+
+    setLocationLoading(false);
+    const hasCachedTimings = localStorage.getItem(
+      "userPrayerTimings"
+    );
+    if (hasCachedTimings) {
+      loadCachedTimings();
+    } else {
+      setFetchError(true);
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -688,7 +786,9 @@ export default function PrayerTimes() {
       const period = isPM ? "مساءً" : "صباحاً";
       return (
         <span className="inline-flex items-center gap-1.5" dir="rtl">
-          <span className="font-sans font-bold">{hour12}:{minutes}</span>
+          <span className="font-sans font-bold">
+            {hour12}:{minutes}
+          </span>
           <span className="text-sm font-semibold">{period}</span>
         </span>
       );
@@ -696,8 +796,12 @@ export default function PrayerTimes() {
 
     return (
       <span className="inline-flex items-center gap-1" dir="ltr">
-        <span className="font-sans font-bold">{hour12}:{minutes}</span>
-        <span className="text-sm font-semibold">{isPM ? "PM" : "AM"}</span>
+        <span className="font-sans font-bold">
+          {hour12}:{minutes}
+        </span>
+        <span className="text-sm font-semibold">
+          {isPM ? "PM" : "AM"}
+        </span>
       </span>
     );
   };
@@ -730,7 +834,9 @@ export default function PrayerTimes() {
         const period = isPM ? "مساءً" : "صباحاً";
         return (
           <span className="inline-flex items-center gap-1.5" dir="rtl">
-            <span className="font-sans font-bold">{hour12}:{formattedMins}</span>
+            <span className="font-sans font-bold">
+              {hour12}:{formattedMins}
+            </span>
             <span className="text-sm font-normal">{period}</span>
           </span>
         );
@@ -738,8 +844,12 @@ export default function PrayerTimes() {
 
       return (
         <span className="inline-flex items-center gap-1" dir="ltr">
-          <span className="font-sans font-bold">{hour12}:{formattedMins}</span>
-          <span className="text-sm font-normal">{isPM ? "PM" : "AM"}</span>
+          <span className="font-sans font-bold">
+            {hour12}:{formattedMins}
+          </span>
+          <span className="text-sm font-normal">
+            {isPM ? "PM" : "AM"}
+          </span>
         </span>
       );
     };
@@ -1204,7 +1314,7 @@ export default function PrayerTimes() {
               </span>
 
               <button
-                onClick={getUserLocation}
+                onClick={() => getUserLocation(true)}
                 disabled={locationLoading}
                 className={`p-1.5 rounded-full transition-colors ${
                   isDarkMode
@@ -1310,7 +1420,7 @@ export default function PrayerTimes() {
           </p>
 
           <button
-            onClick={getUserLocation}
+            onClick={() => getUserLocation(true)}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-md ${
               isDarkMode
                 ? "bg-[#E5C158] text-gray-900"
