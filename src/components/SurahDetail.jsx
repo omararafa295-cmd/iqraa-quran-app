@@ -59,17 +59,20 @@ export default function SurahDetail() {
   const minSwipeDistance = 50;
 
   const recitersList = [
-    { id: "ar.alafasy", name: isAr ? "مشاري العفاسي" : "Mishary Alafasy" },
-    { id: "ar.abdulsamad", name: isAr ? "عبد الباسط عبد الصمد" : "AbdulBaset AbdulSamad" },
-    { id: "ar.husary", name: isAr ? "خليل الحصري" : "Al-Husary" },
-    { id: "ar.husarymujawwad", name: isAr ? "الحصري (مجود)" : "Al-Husary (Mujawwad)" },
-    { id: "ar.abdurrahmaansudais", name: isAr ? "عبد الرحمن السديس" : "As-Sudais" },
-    { id: "ar.saoodshuraym", name: isAr ? "سعود الشريم" : "Saud Al-Shuraim" },
-    { id: "ar.ahmedajamy", name: isAr ? "أحمد العجمي" : "Ahmed Al-Ajmi" },
-    { id: "ar.hudhaify", name: isAr ? "علي الحذيفي" : "Ali Al-Hudhaify" },
-    { id: "ar.mahermuaiqly", name: isAr ? "ماهر المعيقلي" : "Maher Al Muaiqly" },
-    { id: "ar.abdullahbasfar", name: isAr ? "عبدالله بصفر" : "Abdullah Basfar" },
-    { id: "ar.shaatree", name: isAr ? "أبو بكر الشاطري" : "Abu Bakr Ash-Shaatree" },
+  { id: "ar.alafasy", name: isAr ? "مشاري العفاسي" : "Mishary Alafasy" },
+  { id: "ar.abdulsamad", name: isAr ? "عبد الباسط عبد الصمد" : "AbdulBaset AbdulSamad" },
+  { id: "ar.husary", name: isAr ? "خليل الحصري" : "Al-Husary" },
+  { id: "ar.husarymujawwad", name: isAr ? "الحصري (مجود)" : "Al-Husary (Mujawwad)" },
+  { id: "ar.saadalghamdi", name: isAr ? "سعد الغامدي" : "Saad Al-Ghamdi" },
+  { id: "ar.mahermuaiqly", name: isAr ? "ماهر المعيقلي" : "Maher Al Muaiqly" },
+  { id: "ar.yasseraldossari", name: isAr ? "ياسر الدوسري" : "Yasser Al-Dossari" },
+  { id: "ar.minshawimujawwad", name: isAr ? "محمد صديق المنشاوي (مجود)" : "Mohamed Siddiq Al-Minshawi (Mujawwad)"},
+  { id: "ar.abdurrahmaansudais", name: isAr ? "عبد الرحمن السديس" : "As-Sudais" },
+  { id: "ar.saoodshuraym", name: isAr ? "سعود الشريم" : "Saud Al-Shuraim" },
+  { id: "ar.ahmedajamy", name: isAr ? "أحمد العجمي" : "Ahmed Al-Ajmi" },
+  { id: "ar.hudhaify", name: isAr ? "علي الحذيفي" : "Ali Al-Hudhaify" },
+  { id: "ar.abdullahbasfar", name: isAr ? "عبدالله بصفر" : "Abdullah Basfar" },
+  { id: "ar.shaatree", name: isAr ? "أبو بكر الشاطري" : "Abu Bakr Ash-Shaatree" },
   ];
 
   const tafsirEditionsList = [
@@ -156,29 +159,43 @@ export default function SurahDetail() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedAyahForCard, selectedAyahForTafsir, activeAyahMenu, showSettings, isDropdownOpen]);
 
-  const getAudioUrl = (reciterId, surahNumber, ayahNumberInSurah, globalAyahNumber) => {
-    const everyAyahMap = {
-      "ar.alafasy": "Alafasy_128kbps",
-      "ar.abdulsamad": "Abdul_Basit_Murattal_192kbps",
-      "ar.husary": "Husary_128kbps",
-      "ar.husarymujawwad": "Husary_Mujawwad_64kbps",
-      "ar.abdurrahmaansudais": "Abdurrahmaan_As-Sudais_192kbps",
-      "ar.saoodshuraym": "Saood_ash-Shuraym_128kbps",
-      "ar.ahmedajamy": "Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net",
-      "ar.hudhaify": "Hudhaify_128kbps",
-      "ar.mahermuaiqly": "MaherAlMuaiqly128kbps",
-      "ar.abdullahbasfar": "Abdullah_Basfar_192kbps",
-      "ar.shaatree": "Abu_Bakr_Ash-Shaatree_128kbps"
-    };
-
-    if (everyAyahMap[reciterId]) {
-      const sNum = String(surahNumber).padStart(3, '0');
-      const aNum = String(ayahNumberInSurah).padStart(3, '0');
-      return `https://everyayah.com/data/${everyAyahMap[reciterId]}/${sNum}${aNum}.mp3`;
-    }
-    
-    return `https://cdn.islamic.network/quran/audio/64/${reciterId}/${globalAyahNumber}.mp3`;
+  const getAudioUrl = (
+  reciterId,
+  surahNumber,
+  ayahNumberInSurah,
+  globalAyahNumber
+) => {
+  const everyAyahMap = {
+    "ar.alafasy": "Alafasy_128kbps",
+    "ar.abdulsamad": "Abdul_Basit_Murattal_192kbps",
+    "ar.husary": "Husary_128kbps",
+    "ar.husarymujawwad": "Husary_Mujawwad_64kbps",
+    "ar.abdurrahmaansudais": "Abdurrahmaan_As-Sudais_192kbps",
+    "ar.saoodshuraym": "Saood_ash-Shuraym_128kbps",
+    "ar.ahmedajamy": "Ahmed_ibn_Ali_al-Ajamy_128kbps_ketaballah.net",
+    "ar.hudhaify": "Hudhaify_128kbps",
+    "ar.mahermuaiqly": "MaherAlMuaiqly128kbps",
+    "ar.abdullahbasfar": "Abdullah_Basfar_192kbps",
+    "ar.shaatree": "Abu_Bakr_Ash-Shaatree_128kbps",
   };
+
+  if (reciterId === "ar.saadalghamdi") {
+  return `https://alfurqan.online/api/v1/audio/ghamadi/surah/${surahNumber}/ayah/${ayahNumberInSurah}`;
+}
+
+  if (reciterId === "ar.yasseraldossari") {
+    return `https://the-quran-project.github.io/Quran-Audio/Data/4/${surahNumber}_${ayahNumberInSurah}.mp3`;
+  }
+
+  if (everyAyahMap[reciterId]) {
+    const sNum = String(surahNumber).padStart(3, "0");
+    const aNum = String(ayahNumberInSurah).padStart(3, "0");
+
+    return `https://everyayah.com/data/${everyAyahMap[reciterId]}/${sNum}${aNum}.mp3`;
+  }
+
+  return `https://cdn.islamic.network/quran/audio/64/${reciterId}/${globalAyahNumber}.mp3`;
+};
 
   useEffect(() => {
     setLoading(true);
