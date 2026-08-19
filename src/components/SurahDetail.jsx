@@ -88,6 +88,8 @@ export default function SurahDetail() {
     { id: "ar.muyassar", name: isAr ? "التفسير الميسر" : "Al-Muyassar" },
     { id: "ar.jalalayn", name: isAr ? "تفسير الجلالين" : "Tafsir Al-Jalalayn" },
     { id: "ar.qurtubi", name: isAr ? "تفسير القرطبي" : "Tafsir Al-Qurtubi" },
+    { id: "ar.waseet", name: isAr ? "التفسير الوسيط" : "Tafsir Al-Waseet" },
+    { id: "ar.baghawi", name: isAr ? "تفسير البغوي" : "Tafsir Al-Baghawi" },
   ];
 
   const t = {
@@ -848,6 +850,7 @@ export default function SurahDetail() {
       }
     }
     ctx.restore();
+
     const emblemBuf = 110;
     const emblemCenter = 55;
     const emblemCanvas = document.createElement('canvas');
