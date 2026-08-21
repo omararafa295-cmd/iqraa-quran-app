@@ -8,6 +8,7 @@ import {
   Volume2, Sparkles, Share2, Copy, Check, Image as ImageIcon
 } from "lucide-react";
 import { AppContext } from "../App";
+import audioDownloadManager from "../services/audioDownloadManager";
 
 export default function SurahDetail() {
   const { id } = useParams();
@@ -314,13 +315,34 @@ export default function SurahDetail() {
   }, [surah, currentPage]);
 
   useEffect(() => {
-    const checkCache = async () => {
-      if (!surah) return;
-      const isSavedPermanently = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true' || localStorage.getItem(`offline_audio_full_${reciter}`) === 'true';
-      setIsDownloaded(isSavedPermanently);
-    };
-    checkCache();
-  }, [surah, reciter]);
+  if (
+    !surah ||
+    !surah.ayahs?.length
+  ) {
+    setIsDownloaded(false);
+    return;
+  }
+
+  const checkDownloaded = () => {
+    const downloaded =
+      audioDownloadManager.isSurahDownloaded(
+        reciter,
+        surah.number,
+        surah.ayahs
+      );
+
+    setIsDownloaded(downloaded);
+  };
+
+  checkDownloaded();
+
+  const unsubscribe =
+    audioDownloadManager.subscribe(
+      checkDownloaded
+    );
+
+  return unsubscribe;
+}, [surah, reciter]);
 
   useEffect(() => {
     if (!selectedAyahForTafsir) return;
