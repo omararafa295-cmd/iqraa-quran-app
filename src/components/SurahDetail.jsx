@@ -52,7 +52,6 @@ export default function SurahDetail() {
   const [isCardCopied, setIsCardCopied] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
-  // Card sharing controls only. Other Surah features remain unchanged.
   const [cardShareMode, setCardShareMode] = useState("ayah");
   const [cardRangeStart, setCardRangeStart] = useState(1);
   const [cardRangeEnd, setCardRangeEnd] = useState(1);
@@ -317,7 +316,7 @@ export default function SurahDetail() {
   useEffect(() => {
     const checkCache = async () => {
       if (!surah) return;
-      const isSavedPermanently = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true';
+      const isSavedPermanently = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true' || localStorage.getItem(`offline_audio_full_${reciter}`) === 'true';
       setIsDownloaded(isSavedPermanently);
     };
     checkCache();
@@ -485,7 +484,7 @@ export default function SurahDetail() {
     if (!surah || !surah.ayahs) return;
 
     const isOffline = !navigator.onLine;
-    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true';
+    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true' || localStorage.getItem(`offline_audio_full_${reciter}`) === 'true';
 
     if (isOffline && !isSurahSaved) {
       showNotification(isAr ? "أنت غير متصل بالإنترنت وهذه السورة غير محملة مسبقاً." : "You are offline and this surah is not downloaded.", "error");
@@ -521,7 +520,7 @@ export default function SurahDetail() {
     if (!surah || !ayah) return;
 
     const isOffline = !navigator.onLine;
-    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true';
+    const isSurahSaved = localStorage.getItem(`offline_audio_saved_${surah.number}_${reciter}`) === 'true' || localStorage.getItem(`offline_audio_full_${reciter}`) === 'true';
 
     if (isOffline && !isSurahSaved) {
       showNotification(isAr ? "أنت غير متصل بالإنترنت وهذه السورة غير محملة مسبقاً." : "You are offline and this surah is not downloaded.", "error");
@@ -776,8 +775,6 @@ export default function SurahDetail() {
       return lines;
     };
 
-    // Keep the Quran as one continuous paragraph. The marker is drawn as one visual unit,
-    // so its number can never drift outside the ornament.
     const markerToken = '¤¤AYAH_MARKER¤¤';
     const combinedQuranText = ayahs
       .map(ayah => `${getCardAyahText(ayah)} ${markerToken}${ayah.numberInSurah}`)
@@ -923,7 +920,6 @@ export default function SurahDetail() {
     ctx.fillRect(-5, -5, 10, 10);
     ctx.restore();
 
-    // Draw each wrapped line while treating the ayah marker as a single visual token.
     const markerRegex = new RegExp(`${markerToken}(\\d+)`, 'g');
     let y = 455;
     ctx.save();
@@ -1293,24 +1289,28 @@ export default function SurahDetail() {
                   }`}
                   style={{ top: dropdownPos.top, left: dropdownPos.left }}
                 >
-                  {recitersList.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setReciter(r.id);
-                        setIsDropdownOpen(false);
-                        if (isPlaying) setIsPlaying(false); 
-                      }}
-                      className={`w-full ${isAr ? 'text-right' : 'text-left'} px-4 py-3 text-sm transition-colors min-h-[48px] ${
-                        reciter === r.id 
-                          ? (isDarkMode ? `bg-gray-900 text-[#E5C158] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#E5C158]` : `bg-[#FDFBF7] text-[#D4AF37] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#D4AF37]`) 
-                          : (isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-[#E5C158]" : "text-gray-600 hover:bg-gray-50 hover:text-[#D4AF37]")
-                      }`}
-                    >
-                      {r.name}
-                    </button>
-                  ))}
+                  {recitersList.map((r) => {
+                    const isFullDownloaded = localStorage.getItem(`offline_audio_full_${r.id}`) === 'true';
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReciter(r.id);
+                          setIsDropdownOpen(false);
+                          if (isPlaying) setIsPlaying(false);
+                        }}
+                        className={`w-full ${isAr ? 'text-right' : 'text-left'} px-4 py-3 text-sm transition-colors min-h-[48px] flex items-center justify-between gap-3 ${
+                          reciter === r.id 
+                            ? (isDarkMode ? `bg-gray-900 text-[#E5C158] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#E5C158]` : `bg-[#FDFBF7] text-[#D4AF37] font-bold ${isAr ? 'border-r-4' : 'border-l-4'} border-[#D4AF37]`) 
+                            : (isDarkMode ? "text-gray-300 hover:bg-gray-700 hover:text-[#E5C158]" : "text-gray-600 hover:bg-gray-50 hover:text-[#D4AF37]")
+                        }`}
+                      >
+                        <span>{r.name}</span>
+                        {isFullDownloaded && <CheckCircle size={17} className="text-green-500 shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -1788,7 +1788,7 @@ export default function SurahDetail() {
                     <div className="flex-1 h-px bg-[#D4A373]/60" />
                   </div>
 
-                  {/* Continuous Quran paragraph: no verse card, no separator, no metadata between ayahs. */}
+                  {}
                   <p
                     className="font-quran font-bold text-[#FBF3E7] text-justify px-1"
                     style={{

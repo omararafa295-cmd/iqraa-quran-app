@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate 
 import { 
   BookOpen, Compass, Clock, Moon, Sun, SunMoon, 
   Radio as RadioIcon, Mic, Download, Info, Bookmark, 
-  Trash2, X, ScrollText 
+  Trash2, X, ScrollText, Volume2
 } from "lucide-react";
 import SurahList from "./components/SurahList";
 import SurahDetail from "./components/SurahDetail";
@@ -18,6 +18,7 @@ import UpdateBanner from './components/UpdateBanner';
 import { sendKhatmaReminderNotification } from './utils/notificationHelper';
 import FloatingPlayer from "./components/FloatingPlayer";
 import Hadith from "./components/Hadith";
+import AudioDownloads from "./components/AudioDownloads";
 
 export const AppContext = createContext();
 
@@ -27,17 +28,15 @@ const TopBar = () => {
   const navigate = useNavigate();
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-  // iOS install states
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSInstall, setShowIOSInstall] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBookmarkDrawerOpen, setIsBookmarkDrawerOpen] = useState(false);
+  const [isAudioDrawerOpen, setIsAudioDrawerOpen] = useState(false);
   const dialogPushed = useRef(false);
 
-  // Detect Android/Chrome install prompt
   useEffect(() => {
     const handlePrompt = (e) => {
       e.preventDefault();
@@ -51,7 +50,6 @@ const TopBar = () => {
     };
   }, []);
 
-  // Detect iOS + standalone mode
   useEffect(() => {
     const checkDevice = () => {
       const ios =
@@ -96,16 +94,24 @@ const TopBar = () => {
     };
   }, []);
 
-  // Handle installation
-  const handleInstall = async () => {
+  useEffect(() => {
+    if (isModalOpen || isBookmarkDrawerOpen || isAudioDrawerOpen || showIOSInstall) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
 
-    // iOS
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isModalOpen, isBookmarkDrawerOpen, isAudioDrawerOpen, showIOSInstall]);
+
+  const handleInstall = async () => {
     if (isIOS) {
       setShowIOSInstall(true);
       return;
     }
 
-    // Android / Chrome / supported browsers
     if (deferredPrompt) {
       deferredPrompt.prompt();
 
@@ -153,7 +159,7 @@ const TopBar = () => {
   }, []);
 
   useEffect(() => {
-    const isAnyModalOpen = isModalOpen || isBookmarkDrawerOpen;
+    const isAnyModalOpen = isModalOpen || isBookmarkDrawerOpen || isAudioDrawerOpen;
     
     if (isAnyModalOpen) {
       if (window.location.hash !== '#dialog') {
@@ -181,6 +187,7 @@ const TopBar = () => {
       if (window.location.hash !== '#dialog') {
         setIsModalOpen(false);
         setIsBookmarkDrawerOpen(false);
+        setIsAudioDrawerOpen(false);
         dialogPushed.current = false;
       }
     };
@@ -190,7 +197,7 @@ const TopBar = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isModalOpen, isBookmarkDrawerOpen]);
+  }, [isModalOpen, isBookmarkDrawerOpen, isAudioDrawerOpen]);
 
   return (
     <>
@@ -199,10 +206,7 @@ const TopBar = () => {
         dir={isAr ? "ltr" : "rtl"}
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          
           <div className="flex items-center gap-2" dir="ltr">
-
-            {/* Install Button */}
             {!isStandalone && (deferredPrompt || isIOS) && (
               <button 
                 onClick={handleInstall}
@@ -220,7 +224,6 @@ const TopBar = () => {
               </button>
             )}
 
-            {/* Developer Info */}
             <button 
               onClick={() => setIsModalOpen(true)}
               className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
@@ -233,7 +236,6 @@ const TopBar = () => {
               <Info size={17} />
             </button>
 
-            {/* Language */}
             <button 
               onClick={() => setLang(isAr ? 'en' : 'ar')}
               className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm font-bold text-xs transition-colors ${
@@ -245,7 +247,6 @@ const TopBar = () => {
               {isAr ? 'EN' : 'ع'}
             </button>
           
-            {/* Theme */}
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
               className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
@@ -262,40 +263,73 @@ const TopBar = () => {
             </button>
           </div>
 
-          <button
-            onClick={() => setIsBookmarkDrawerOpen(true)}
-            className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
-              isDarkMode 
-                ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" 
-                : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-            }`}
-            title={isAr ? "العلامات المرجعية" : "Bookmarks"}
-          >
-            <Bookmark size={17} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAudioDrawerOpen(true)}
+              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
+                isDarkMode
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
+                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
+              }`}
+              title={isAr ? "الصوتيات" : "Audio Library"}
+            >
+              <Volume2 size={17} />
+            </button>
 
-            {bookmarks.length > 0 && (
-              <span
-                className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${
-                  isDarkMode
-                    ? "bg-[#E5C158] text-gray-900"
-                    : "bg-[#D4AF37] text-white"
-                }`}
-              >
-                {bookmarks.length}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => setIsBookmarkDrawerOpen(true)}
+              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
+                isDarkMode 
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" 
+                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
+              }`}
+              title={isAr ? "العلامات المرجعية" : "Bookmarks"}
+            >
+              <Bookmark size={17} />
 
+              {bookmarks.length > 0 && (
+                <span
+                  className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${
+                    isDarkMode
+                      ? "bg-[#E5C158] text-gray-900"
+                      : "bg-[#D4AF37] text-white"
+                  }`}
+                >
+                  {bookmarks.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Developer Modal */}
+      {isAudioDrawerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() => setIsAudioDrawerOpen(false)}
+        >
+          <div
+            className={`w-full max-w-sm h-full shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${
+              isDarkMode
+                ? "bg-gray-900 border-gray-800 text-gray-100"
+                : "bg-white border-[#F0EBE1] text-gray-800"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            <AudioDownloads
+              isDrawer
+              onClose={() => setIsAudioDrawerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
       <DeveloperModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
 
-      {/* iOS Install Instructions */}
       {showIOSInstall && (
         <div
           className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -310,7 +344,6 @@ const TopBar = () => {
             onClick={(e) => e.stopPropagation()}
             dir={isAr ? "rtl" : "ltr"}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3
@@ -345,10 +378,7 @@ const TopBar = () => {
               </button>
             </div>
 
-            {/* Steps */}
             <div className="space-y-3">
-
-              {/* Step 1 */}
               <div className="flex items-center gap-3">
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
@@ -367,7 +397,6 @@ const TopBar = () => {
                 </p>
               </div>
 
-              {/* Step 2 */}
               <div className="flex items-center gap-3">
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
@@ -386,7 +415,6 @@ const TopBar = () => {
                 </p>
               </div>
 
-              {/* Step 3 */}
               <div className="flex items-center gap-3">
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
@@ -404,10 +432,8 @@ const TopBar = () => {
                     : 'Enable "Open as Web App", then tap "Add"'}
                 </p>
               </div>
-
             </div>
 
-            {/* Hint */}
             <div
               className={`mt-5 rounded-2xl p-3 text-xs leading-6 ${
                 isDarkMode
@@ -419,19 +445,17 @@ const TopBar = () => {
                 ? "بعد التثبيت هتلاقي اقرأ على الشاشة الرئيسية، وهيفتح كتطبيق مستقل بدون شريط Safari."
                 : "After installation, Iqraa will appear on your Home Screen and open as a standalone app without Safari's toolbar."}
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Bookmarks Drawer */}
       {isBookmarkDrawerOpen && (
         <div 
           className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300"
           onClick={() => setIsBookmarkDrawerOpen(false)}
         >
           <div 
-            className={`w-full max-w-sm h-full shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right ${
+            className={`w-full max-w-sm h-full shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${
               isDarkMode 
                 ? "bg-gray-900 border-gray-800 text-gray-100" 
                 : "bg-white border-[#F0EBE1] text-gray-800"
@@ -474,7 +498,7 @@ const TopBar = () => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 scrollbar-thin">
               {bookmarks.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
                   <div
@@ -596,9 +620,7 @@ const BottomNav = () => {
         className="relative max-w-md mx-auto px-3 h-16 flex justify-between items-center"
         dir={isAr ? "rtl" : "ltr"}
       >
-        
         <div className="flex w-[39%] justify-between items-center">
-
           <Link
             to="/hadith"
             className={`flex flex-col items-center gap-1 p-1 transition-colors ${
@@ -677,7 +699,6 @@ const BottomNav = () => {
         </div>
 
         <div className="flex w-[39%] justify-between items-center">
-
           <Link
             to="/memorize"
             className={`flex flex-col items-center gap-1 p-1 transition-colors ${
@@ -719,7 +740,6 @@ const BottomNav = () => {
               {isAr ? 'القبلة' : 'Qibla'}
             </span>
           </Link>
-
         </div>
       </div>
     </div>
@@ -732,7 +752,6 @@ export default function App() {
   );
 
   const [installSuccess, setInstallSuccess] = useState(false);
-
   const [lang, setLang] = useState("ar"); 
   const [currentAudio, setCurrentAudio] = useState(null); 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -765,21 +784,21 @@ export default function App() {
     }
   }, [lang]);
 
- useEffect(() => {
-  const handleAppInstalled = () => {
-    setInstallSuccess(true);
+  useEffect(() => {
+    const handleAppInstalled = () => {
+      setInstallSuccess(true);
 
-    setTimeout(() => {
-      setInstallSuccess(false);
-    }, 4000);
-  };
+      setTimeout(() => {
+        setInstallSuccess(false);
+      }, 4000);
+    };
 
-  window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("appinstalled", handleAppInstalled);
 
-  return () => {
-    window.removeEventListener("appinstalled", handleAppInstalled);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
   
   return (
     <AppContext.Provider
@@ -806,50 +825,46 @@ export default function App() {
         }`}
       >
         <Router>
-         <UpdateBanner />
+          <UpdateBanner />
 
-{installSuccess && (
-  <div
-    className="fixed top-5 left-1/2 -translate-x-1/2 z-[200] 
-               animate-in fade-in slide-in-from-top-4 duration-300"
-    dir={lang === "ar" ? "rtl" : "ltr"}
-  >
-    <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-2xl 
-                  shadow-2xl border backdrop-blur-md
-                  ${
+          {installSuccess && (
+            <div
+              className="fixed top-5 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-4 duration-300"
+              dir={lang === "ar" ? "rtl" : "ltr"}
+            >
+              <div
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md ${
+                  isDarkMode
+                    ? "bg-gray-800/95 border-[#E5C158]/30 text-white"
+                    : "bg-white/95 border-[#D4AF37]/30 text-gray-800"
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center ${
                     isDarkMode
-                      ? "bg-gray-800/95 border-[#E5C158]/30 text-white"
-                      : "bg-white/95 border-[#D4AF37]/30 text-gray-800"
+                      ? "bg-[#E5C158]/15 text-[#E5C158]"
+                      : "bg-[#D4AF37]/10 text-[#D4AF37]"
                   }`}
-    >
-      <div
-        className={`w-9 h-9 rounded-full flex items-center justify-center
-                    ${
-                      isDarkMode
-                        ? "bg-[#E5C158]/15 text-[#E5C158]"
-                        : "bg-[#D4AF37]/10 text-[#D4AF37]"
-                    }`}
-      >
-        ✓
-      </div>
+                >
+                  ✓
+                </div>
 
-      <div>
-        <p className="font-bold text-sm">
-          {lang === "ar"
-            ? "تم تثبيت اقرأ بنجاح 🎉"
-            : "Iqraa installed successfully 🎉"}
-        </p>
+                <div>
+                  <p className="font-bold text-sm">
+                    {lang === "ar"
+                      ? "تم تثبيت اقرأ بنجاح 🎉"
+                      : "Iqraa installed successfully 🎉"}
+                  </p>
 
-        <p className="text-xs text-gray-400 mt-0.5">
-          {lang === "ar"
-            ? "يمكنك فتحه الآن من الشاشة الرئيسية."
-            : "You can now open it from your home screen."}
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {lang === "ar"
+                      ? "يمكنك فتحه الآن من الشاشة الرئيسية."
+                      : "You can now open it from your home screen."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <TopBar />
 
@@ -900,6 +915,7 @@ export default function App() {
               path="/hadith"
               element={<Hadith />}
             />
+            <Route path="/audio" element={<AudioDownloads />} />
           </Routes>
 
           <BottomNav />
