@@ -1,9 +1,35 @@
-import { createContext, useState, useEffect, useContext, useRef } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  BookOpen, Compass, Clock, Moon, Sun, SunMoon, 
-  Radio as RadioIcon, Mic, Download, Info, Bookmark, 
-  Trash2, X, ScrollText, Volume2
+import {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+} from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
+  BookOpen,
+  Compass,
+  Clock,
+  Moon,
+  Sun,
+  SunMoon,
+  Radio as RadioIcon,
+  Mic,
+  Download,
+  Info,
+  Bookmark,
+  Trash2,
+  X,
+  ScrollText,
+  Volume2,
+  CalendarDays,
 } from "lucide-react";
 import SurahList from "./components/SurahList";
 import SurahDetail from "./components/SurahDetail";
@@ -13,18 +39,27 @@ import Qibla from "./components/Qibla";
 import Azkar from "./components/Azkar";
 import Radio from "./components/Radio";
 import Memorize from "./components/Memorize";
-import DeveloperModal from './components/DeveloperModal';
-import UpdateBanner from './components/UpdateBanner';
-import { sendKhatmaReminderNotification } from './utils/notificationHelper';
+import DeveloperModal from "./components/DeveloperModal";
+import UpdateBanner from "./components/UpdateBanner";
+import { sendKhatmaReminderNotification } from "./utils/notificationHelper";
 import FloatingPlayer from "./components/FloatingPlayer";
 import Hadith from "./components/Hadith";
 import AudioDownloads from "./components/AudioDownloads";
+import IslamicCalendar from "./components/IslamicCalendar";
 
 export const AppContext = createContext();
 
 const TopBar = () => {
-  const { isDarkMode, setIsDarkMode, lang, setLang, bookmarks, setBookmarks } = useContext(AppContext);
-  const isAr = lang === 'ar';
+  const {
+    isDarkMode,
+    setIsDarkMode,
+    lang,
+    setLang,
+    bookmarks,
+    setBookmarks,
+  } = useContext(AppContext);
+
+  const isAr = lang === "ar";
   const navigate = useNavigate();
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -33,8 +68,13 @@ const TopBar = () => {
   const [showIOSInstall, setShowIOSInstall] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBookmarkDrawerOpen, setIsBookmarkDrawerOpen] = useState(false);
-  const [isAudioDrawerOpen, setIsAudioDrawerOpen] = useState(false);
+  const [isBookmarkDrawerOpen, setIsBookmarkDrawerOpen] =
+    useState(false);
+  const [isCalendarDrawerOpen, setIsCalendarDrawerOpen] =
+    useState(false);
+  const [isAudioDrawerOpen, setIsAudioDrawerOpen] =
+    useState(false);
+
   const dialogPushed = useRef(false);
 
   useEffect(() => {
@@ -43,25 +83,33 @@ const TopBar = () => {
       setDeferredPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handlePrompt);
+    window.addEventListener(
+      "beforeinstallprompt",
+      handlePrompt
+    );
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handlePrompt
+      );
     };
   }, []);
 
   useEffect(() => {
     const checkDevice = () => {
       const ios =
-        /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-        (
-          navigator.platform === "MacIntel" &&
-          navigator.maxTouchPoints > 1
-        );
+        /iPhone|iPad|iPod/i.test(
+          navigator.userAgent
+        ) ||
+        (navigator.platform === "MacIntel" &&
+          navigator.maxTouchPoints > 1);
 
       const standalone =
         window.navigator.standalone === true ||
-        window.matchMedia("(display-mode: standalone)").matches;
+        window.matchMedia(
+          "(display-mode: standalone)"
+        ).matches;
 
       setIsIOS(ios);
       setIsStandalone(standalone);
@@ -69,42 +117,87 @@ const TopBar = () => {
 
     checkDevice();
 
-    const mediaQuery = window.matchMedia("(display-mode: standalone)");
+    const mediaQuery = window.matchMedia(
+      "(display-mode: standalone)"
+    );
 
     const handleDisplayModeChange = () => {
       checkDevice();
     };
 
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", handleDisplayModeChange);
+      mediaQuery.addEventListener(
+        "change",
+        handleDisplayModeChange
+      );
     } else {
-      mediaQuery.addListener(handleDisplayModeChange);
+      mediaQuery.addListener(
+        handleDisplayModeChange
+      );
     }
 
-    window.addEventListener("pageshow", checkDevice);
+    window.addEventListener(
+      "pageshow",
+      checkDevice
+    );
 
     return () => {
       if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener("change", handleDisplayModeChange);
+        mediaQuery.removeEventListener(
+          "change",
+          handleDisplayModeChange
+        );
       } else {
-        mediaQuery.removeListener(handleDisplayModeChange);
+        mediaQuery.removeListener(
+          handleDisplayModeChange
+        );
       }
 
-      window.removeEventListener("pageshow", checkDevice);
+      window.removeEventListener(
+        "pageshow",
+        checkDevice
+      );
     };
   }, []);
 
   useEffect(() => {
-    if (isModalOpen || isBookmarkDrawerOpen || isAudioDrawerOpen || showIOSInstall) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    const isOverlayOpen =
+      isModalOpen ||
+      isBookmarkDrawerOpen ||
+      isAudioDrawerOpen ||
+      isCalendarDrawerOpen ||
+      showIOSInstall;
+
+    if (!isOverlayOpen) {
+      return;
     }
 
+    const bodyOverflow =
+      document.body.style.overflow;
+
+    const htmlOverflow =
+      document.documentElement.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    document.documentElement.style.overflow =
+      "hidden";
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow =
+        bodyOverflow;
+
+      document.documentElement.style.overflow =
+        htmlOverflow;
     };
-  }, [isModalOpen, isBookmarkDrawerOpen, isAudioDrawerOpen, showIOSInstall]);
+  }, [
+    isModalOpen,
+    isBookmarkDrawerOpen,
+    isAudioDrawerOpen,
+    isCalendarDrawerOpen,
+    showIOSInstall,
+  ]);
 
   const handleInstall = async () => {
     if (isIOS) {
@@ -115,211 +208,403 @@ const TopBar = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
 
-      const { outcome } = await deferredPrompt.userChoice;
+      const { outcome } =
+        await deferredPrompt.userChoice;
 
-      if (outcome === 'accepted') {
+      if (outcome === "accepted") {
         setDeferredPrompt(null);
       }
     }
   };
 
-  const deleteBookmark = (e, index) => {
+  const deleteBookmark = (
+    e,
+    index
+  ) => {
     e.stopPropagation();
 
-    const updated = bookmarks.filter((_, i) => i !== index);
+    const updated =
+      bookmarks.filter(
+        (_, i) =>
+          i !== index
+      );
 
     setBookmarks(updated);
-    localStorage.setItem("quran_bookmarks", JSON.stringify(updated));
+
+    localStorage.setItem(
+      "quran_bookmarks",
+      JSON.stringify(updated)
+    );
   };
 
-  const handleNavigateToBookmark = (b) => {
+  const handleNavigateToBookmark = (
+    b
+  ) => {
     setIsBookmarkDrawerOpen(false);
 
-    navigate(`/surah/${b.surahNumber}`, {
-      state: { 
-        targetPage: b.page !== undefined ? b.page : 0, 
-        startAyah: b.ayahNumberInSurah 
+    navigate(
+      `/surah/${b.surahNumber}`,
+      {
+        state: {
+          targetPage:
+            b.page !== undefined
+              ? b.page
+              : 0,
+          startAyah:
+            b.ayahNumberInSurah,
+        },
       }
-    });
+    );
   };
 
   useEffect(() => {
-    document.documentElement.dir = lang === 'ar' ? 'ltr' : 'rtl';
-    document.documentElement.lang = lang;
+    document.documentElement.dir =
+      lang === "ar"
+        ? "ltr"
+        : "rtl";
+
+    document.documentElement.lang =
+      lang;
   }, [lang]);
 
   useEffect(() => {
-    if (window.location.hash === '#dialog') {
+    if (
+      window.location.hash ===
+      "#dialog"
+    ) {
       window.history.replaceState(
         null,
-        '',
-        window.location.pathname + window.location.search
+        "",
+        window.location.pathname +
+        window.location.search
       );
     }
   }, []);
 
   useEffect(() => {
-    const isAnyModalOpen = isModalOpen || isBookmarkDrawerOpen || isAudioDrawerOpen;
-    
+    const isAnyModalOpen =
+      isModalOpen ||
+      isBookmarkDrawerOpen ||
+      isAudioDrawerOpen ||
+      isCalendarDrawerOpen;
+
     if (isAnyModalOpen) {
-      if (window.location.hash !== '#dialog') {
+      if (
+        window.location.hash !==
+        "#dialog"
+      ) {
         window.history.pushState(
           null,
-          '',
+          "",
           window.location.pathname +
           window.location.search +
-          '#dialog'
+          "#dialog"
         );
 
-        dialogPushed.current = true;
+        dialogPushed.current =
+          true;
       }
     } else {
       if (
-        window.location.hash === '#dialog' &&
+        window.location.hash ===
+        "#dialog" &&
         dialogPushed.current
       ) {
         window.history.back();
-        dialogPushed.current = false;
+
+        dialogPushed.current =
+          false;
       }
     }
 
     const handlePopState = () => {
-      if (window.location.hash !== '#dialog') {
+      if (
+        window.location.hash !==
+        "#dialog"
+      ) {
         setIsModalOpen(false);
-        setIsBookmarkDrawerOpen(false);
+        setIsBookmarkDrawerOpen(
+          false
+        );
         setIsAudioDrawerOpen(false);
-        dialogPushed.current = false;
+        setIsCalendarDrawerOpen(
+          false
+        );
+
+        dialogPushed.current =
+          false;
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener(
+        "popstate",
+        handlePopState
+      );
     };
-  }, [isModalOpen, isBookmarkDrawerOpen, isAudioDrawerOpen]);
+  }, [
+    isModalOpen,
+    isBookmarkDrawerOpen,
+    isAudioDrawerOpen,
+    isCalendarDrawerOpen,
+  ]);
 
   return (
     <>
       <div
         className="w-full pt-2 md:pt-4 pb-2 px-4 md:px-6 relative z-30"
-        dir={isAr ? "ltr" : "rtl"}
+        dir={
+          isAr
+            ? "ltr"
+            : "rtl"
+        }
       >
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2" dir="ltr">
-            {!isStandalone && (deferredPrompt || isIOS) && (
-              <button 
-                onClick={handleInstall}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full shadow-sm font-bold text-xs transition-colors ${
-                  isDarkMode
-                    ? "bg-[#E5C158] text-gray-900 hover:bg-[#d6b047]"
-                    : "bg-[#D4AF37] text-white hover:bg-[#bf9b2e]"
-                }`}
-              >
-                <Download size={15} />
+          <div
+            className="flex items-center gap-2"
+            dir="ltr"
+          >
+            {!isStandalone &&
+              (deferredPrompt ||
+                isIOS) && (
+                <button
+                  onClick={
+                    handleInstall
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full shadow-sm font-bold text-xs transition-colors ${isDarkMode
+                      ? "bg-[#E5C158] text-gray-900 hover:bg-[#d6b047]"
+                      : "bg-[#D4AF37] text-white hover:bg-[#bf9b2e]"
+                    }`}
+                >
+                  <Download
+                    size={15}
+                  />
 
-                <span className="hidden sm:inline">
-                  {isAr ? 'تثبيت' : 'Install'}
-                </span>
-              </button>
-            )}
+                  <span className="hidden sm:inline">
+                    {isAr
+                      ? "تثبيت"
+                      : "Install"}
+                  </span>
+                </button>
+              )}
 
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
-                isDarkMode
+            <button
+              onClick={() =>
+                setIsModalOpen(true)
+              }
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${isDarkMode
                   ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
                   : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-              }`}
-              title={isAr ? "معلومات المطور" : "Developer Info"}
+                }`}
+              title={
+                isAr
+                  ? "معلومات المطور"
+                  : "Developer Info"
+              }
             >
               <Info size={17} />
             </button>
 
-            <button 
-              onClick={() => setLang(isAr ? 'en' : 'ar')}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm font-bold text-xs transition-colors ${
-                isDarkMode
-                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
-                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-              }`}
-            >
-              {isAr ? 'EN' : 'ع'}
-            </button>
-          
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${
-                isDarkMode
-                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
-                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-              }`}
-              title={isAr ? "تبديل المظهر" : "Toggle Theme"}
-            >
-              {isDarkMode
-                ? <Sun size={17} />
-                : <Moon size={17} />
+            <button
+              onClick={() =>
+                setLang(
+                  isAr
+                    ? "en"
+                    : "ar"
+                )
               }
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm font-bold text-xs transition-colors ${isDarkMode
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
+                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
+                }`}
+            >
+              {isAr
+                ? "EN"
+                : "ع"}
+            </button>
+
+            <button
+              onClick={() =>
+                setIsDarkMode(
+                  !isDarkMode
+                )
+              }
+              className={`flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-colors ${isDarkMode
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
+                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
+                }`}
+              title={
+                isAr
+                  ? "تبديل المظهر"
+                  : "Toggle Theme"
+              }
+            >
+              {isDarkMode ? (
+                <Sun size={17} />
+              ) : (
+                <Moon
+                  size={17}
+                />
+              )}
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2 shrink-0"
+            dir="ltr"
+          >
             <button
-              onClick={() => setIsAudioDrawerOpen(true)}
-              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
-                isDarkMode
+              onClick={() =>
+                setIsCalendarDrawerOpen(
+                  true
+                )
+              }
+              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${isDarkMode
                   ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
                   : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-              }`}
-              title={isAr ? "الصوتيات" : "Audio Library"}
+                }`}
+              title={
+                isAr
+                  ? "التقويم"
+                  : "Calendar"
+              }
             >
-              <Volume2 size={17} />
+              <CalendarDays
+                size={17}
+              />
             </button>
 
             <button
-              onClick={() => setIsBookmarkDrawerOpen(true)}
-              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${
-                isDarkMode 
-                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700" 
+              onClick={() =>
+                setIsAudioDrawerOpen(
+                  true
+                )
+              }
+              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${isDarkMode
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
                   : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
-              }`}
-              title={isAr ? "العلامات المرجعية" : "Bookmarks"}
+                }`}
+              title={
+                isAr
+                  ? "الصوتيات"
+                  : "Audio Library"
+              }
             >
-              <Bookmark size={17} />
+              <Volume2
+                size={17}
+              />
+            </button>
 
-              {bookmarks.length > 0 && (
-                <span
-                  className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${
-                    isDarkMode
-                      ? "bg-[#E5C158] text-gray-900"
-                      : "bg-[#D4AF37] text-white"
-                  }`}
-                >
-                  {bookmarks.length}
-                </span>
-              )}
+            <button
+              onClick={() =>
+                setIsBookmarkDrawerOpen(
+                  true
+                )
+              }
+              className={`relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full shadow-sm transition-all ${isDarkMode
+                  ? "bg-gray-800 text-[#E5C158] border border-gray-700 hover:bg-gray-700"
+                  : "bg-white text-[#D4AF37] border border-[#F0EBE1] hover:bg-gray-50"
+                }`}
+              title={
+                isAr
+                  ? "العلامات المرجعية"
+                  : "Bookmarks"
+              }
+            >
+              <Bookmark
+                size={17}
+              />
+
+              {bookmarks.length >
+                0 && (
+                  <span
+                    className={`absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm animate-in zoom-in ${isDarkMode
+                        ? "bg-[#E5C158] text-gray-900"
+                        : "bg-[#D4AF37] text-white"
+                      }`}
+                  >
+                    {
+                      bookmarks.length
+                    }
+                  </span>
+                )}
             </button>
           </div>
         </div>
       </div>
 
-      {isAudioDrawerOpen && (
+      {isCalendarDrawerOpen && (
         <div
-          className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300"
-          onClick={() => setIsAudioDrawerOpen(false)}
+          className="fixed inset-0 z-[110] flex justify-end overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() =>
+            setIsCalendarDrawerOpen(
+              false
+            )
+          }
         >
           <div
-            className={`w-full max-w-sm h-full shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${
-              isDarkMode
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="islamic-calendar-title"
+            className={`w-full max-w-sm h-full min-h-0 overflow-hidden shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right ${isDarkMode
                 ? "bg-gray-900 border-gray-800 text-gray-100"
                 : "bg-white border-[#F0EBE1] text-gray-800"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-            dir={isAr ? "rtl" : "ltr"}
+              }`}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+            dir={
+              isAr
+                ? "rtl"
+                : "ltr"
+            }
+          >
+            <IslamicCalendar
+              onClose={() =>
+                setIsCalendarDrawerOpen(
+                  false
+                )
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {isAudioDrawerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() =>
+            setIsAudioDrawerOpen(
+              false
+            )
+          }
+        >
+          <div
+            className={`w-full max-w-sm h-full min-h-0 shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${isDarkMode
+                ? "bg-gray-900 border-gray-800 text-gray-100"
+                : "bg-white border-[#F0EBE1] text-gray-800"
+              }`}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+            dir={
+              isAr
+                ? "rtl"
+                : "ltr"
+            }
           >
             <AudioDownloads
               isDrawer
-              onClose={() => setIsAudioDrawerOpen(false)}
+              onClose={() =>
+                setIsAudioDrawerOpen(
+                  false
+                )
+              }
             />
           </div>
         </div>
@@ -327,31 +612,41 @@ const TopBar = () => {
 
       <DeveloperModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() =>
+          setIsModalOpen(false)
+        }
       />
 
       {showIOSInstall && (
         <div
           className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setShowIOSInstall(false)}
+          onClick={() =>
+            setShowIOSInstall(
+              false
+            )
+          }
         >
           <div
-            className={`w-full max-w-md rounded-3xl p-5 shadow-2xl ${
-              isDarkMode
+            className={`w-full max-w-md rounded-3xl p-5 shadow-2xl ${isDarkMode
                 ? "bg-gray-900 text-gray-100 border border-gray-800"
                 : "bg-white text-gray-800 border border-[#F0EBE1]"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-            dir={isAr ? "rtl" : "ltr"}
+              }`}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+            dir={
+              isAr
+                ? "rtl"
+                : "ltr"
+            }
           >
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3
-                  className={`text-lg font-bold ${
-                    isDarkMode
+                  className={`text-lg font-bold ${isDarkMode
                       ? "text-[#E5C158]"
                       : "text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
                   {isAr
                     ? "تثبيت اقرأ على iPhone"
@@ -366,13 +661,20 @@ const TopBar = () => {
               </div>
 
               <button
-                onClick={() => setShowIOSInstall(false)}
-                className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                  isDarkMode
+                onClick={() =>
+                  setShowIOSInstall(
+                    false
+                  )
+                }
+                className={`w-9 h-9 rounded-full flex items-center justify-center ${isDarkMode
                     ? "bg-gray-800 text-gray-400"
                     : "bg-gray-100 text-gray-500"
-                }`}
-                aria-label={isAr ? "إغلاق" : "Close"}
+                  }`}
+                aria-label={
+                  isAr
+                    ? "إغلاق"
+                    : "Close"
+                }
               >
                 <X size={18} />
               </button>
@@ -381,11 +683,10 @@ const TopBar = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
-                    isDarkMode
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${isDarkMode
                       ? "bg-[#E5C158]/15 text-[#E5C158]"
                       : "bg-[#D4AF37]/15 text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
                   1
                 </div>
@@ -399,11 +700,10 @@ const TopBar = () => {
 
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
-                    isDarkMode
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${isDarkMode
                       ? "bg-[#E5C158]/15 text-[#E5C158]"
                       : "bg-[#D4AF37]/15 text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
                   2
                 </div>
@@ -417,11 +717,10 @@ const TopBar = () => {
 
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${
-                    isDarkMode
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${isDarkMode
                       ? "bg-[#E5C158]/15 text-[#E5C158]"
                       : "bg-[#D4AF37]/15 text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
                   3
                 </div>
@@ -435,11 +734,10 @@ const TopBar = () => {
             </div>
 
             <div
-              className={`mt-5 rounded-2xl p-3 text-xs leading-6 ${
-                isDarkMode
+              className={`mt-5 rounded-2xl p-3 text-xs leading-6 ${isDarkMode
                   ? "bg-[#E5C158]/10 text-gray-300"
                   : "bg-[#D4AF37]/10 text-gray-600"
-              }`}
+                }`}
             >
               {isAr
                 ? "بعد التثبيت هتلاقي اقرأ على الشاشة الرئيسية، وهيفتح كتطبيق مستقل بدون شريط Safari."
@@ -450,65 +748,85 @@ const TopBar = () => {
       )}
 
       {isBookmarkDrawerOpen && (
-        <div 
-          className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm transition-all duration-300"
-          onClick={() => setIsBookmarkDrawerOpen(false)}
+        <div
+          className="fixed inset-0 z-[100] flex justify-end overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() =>
+            setIsBookmarkDrawerOpen(
+              false
+            )
+          }
         >
-          <div 
-            className={`w-full max-w-sm h-full shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${
-              isDarkMode 
-                ? "bg-gray-900 border-gray-800 text-gray-100" 
+          <div
+            className={`w-full max-w-sm h-full min-h-0 shadow-2xl border-l flex flex-col transform transition-all duration-300 animate-in slide-in-from-right overflow-hidden ${isDarkMode
+                ? "bg-gray-900 border-gray-800 text-gray-100"
                 : "bg-white border-[#F0EBE1] text-gray-800"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-            dir={isAr ? "rtl" : "ltr"}
+              }`}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+            dir={
+              isAr
+                ? "rtl"
+                : "ltr"
+            }
           >
             <div
-              className={`p-4 flex items-center justify-between border-b ${
-                isDarkMode ? "border-gray-800" : "border-gray-100"
-              }`}
+              className={`p-4 flex items-center justify-between border-b shrink-0 ${isDarkMode
+                  ? "border-gray-800"
+                  : "border-gray-100"
+                }`}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isDarkMode
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDarkMode
                       ? "bg-[#E5C158]/20 text-[#E5C158]"
                       : "bg-[#D4AF37]/20 text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
-                  <Bookmark size={18} />
+                  <Bookmark
+                    size={18}
+                  />
                 </div>
 
                 <h3
-                  className={`font-bold text-base md:text-lg ${
-                    isDarkMode
+                  className={`font-bold text-base md:text-lg ${isDarkMode
                       ? "text-[#E5C158]"
                       : "text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
-                  {isAr ? "العلامات المرجعية" : "Bookmarks"} ({bookmarks.length})
+                  {isAr
+                    ? "العلامات المرجعية"
+                    : "Bookmarks"}{" "}
+                  ({bookmarks.length})
                 </h3>
               </div>
 
               <button
-                onClick={() => setIsBookmarkDrawerOpen(false)}
+                onClick={() =>
+                  setIsBookmarkDrawerOpen(
+                    false
+                  )
+                }
                 className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 scrollbar-thin">
-              {bookmarks.length === 0 ? (
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-3 scrollbar-thin">
+              {bookmarks.length ===
+                0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
                   <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border border-dashed ${
-                      isDarkMode
+                    className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border border-dashed ${isDarkMode
                         ? "border-gray-700 bg-gray-800/50"
                         : "border-gray-200 bg-gray-50"
-                    }`}
+                      }`}
                   >
-                    <Bookmark size={28} className="opacity-40" />
+                    <Bookmark
+                      size={28}
+                      className="opacity-40"
+                    />
                   </div>
 
                   <h4 className="font-bold text-sm mb-1">
@@ -524,67 +842,100 @@ const TopBar = () => {
                   </p>
                 </div>
               ) : (
-                bookmarks.map((b, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleNavigateToBookmark(b)}
-                    className={`p-3.5 rounded-2xl border shadow-sm cursor-pointer transition-all duration-200 hover:scale-[1.01] flex items-center justify-between ${
-                      isDarkMode 
-                        ? "bg-gray-800/80 border-gray-700/80 hover:border-[#E5C158]/60 hover:bg-gray-800" 
-                        : "bg-white border-[#F0EBE1] hover:border-[#D4AF37]/60 hover:bg-[#FDFBF7]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs font-quran ${
-                          isDarkMode
-                            ? "bg-gray-900 text-[#E5C158]"
-                            : "bg-[#FDFBF7] text-[#D4AF37]"
+                bookmarks.map(
+                  (
+                    b,
+                    index
+                  ) => (
+                    <div
+                      key={index}
+                      onClick={() =>
+                        handleNavigateToBookmark(
+                          b
+                        )
+                      }
+                      className={`p-3.5 rounded-2xl border shadow-sm cursor-pointer transition-all duration-200 hover:scale-[1.01] flex items-center justify-between ${isDarkMode
+                          ? "bg-gray-800/80 border-gray-700/80 hover:border-[#E5C158]/60 hover:bg-gray-800"
+                          : "bg-white border-[#F0EBE1] hover:border-[#D4AF37]/60 hover:bg-[#FDFBF7]"
                         }`}
-                      >
-                        {b.ayahNumberInSurah}
-                      </div>
-
-                      <div className="flex flex-col truncate">
-                        <span
-                          className={`font-bold text-sm truncate font-quran ${
-                            isDarkMode
-                              ? "text-gray-100"
-                              : "text-gray-800"
-                          }`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs font-quran ${isDarkMode
+                              ? "bg-gray-900 text-[#E5C158]"
+                              : "bg-[#FDFBF7] text-[#D4AF37]"
+                            }`}
                         >
-                          {isAr
-                            ? b.surahName
-                            : b.surahEnglishName}
-                        </span>
+                          {
+                            b.ayahNumberInSurah
+                          }
+                        </div>
 
-                        <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
-                          <span>
+                        <div className="flex flex-col truncate">
+                          <span
+                            className={`font-bold text-sm truncate font-quran ${isDarkMode
+                                ? "text-gray-100"
+                                : "text-gray-800"
+                              }`}
+                          >
                             {isAr
-                              ? `الآية ${b.ayahNumberInSurah}`
-                              : `Ayah ${b.ayahNumberInSurah}`}
+                              ? b.surahName
+                              : b.surahEnglishName}
                           </span>
 
-                          <span>•</span>
+                          <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+                            <span>
+                              {isAr
+                                ? `الآية ${b.ayahNumberInSurah}`
+                                : `Ayah ${b.ayahNumberInSurah}`}
+                            </span>
 
-                          <span>
-                            {isAr
-                              ? `صفحة ${b.page !== undefined ? b.page + 1 : 1}`
-                              : `Page ${b.page !== undefined ? b.page + 1 : 1}`}
-                          </span>
+                            <span>
+                              •
+                            </span>
+
+                            <span>
+                              {isAr
+                                ? `صفحة ${b.page !==
+                                  undefined
+                                  ? b.page +
+                                  1
+                                  : 1
+                                }`
+                                : `Page ${b.page !==
+                                  undefined
+                                  ? b.page +
+                                  1
+                                  : 1
+                                }`}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <button
-                      onClick={(e) => deleteBookmark(e, index)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                      title={isAr ? "حذف العلامة" : "Delete"}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
+                      <button
+                        onClick={(
+                          e
+                        ) =>
+                          deleteBookmark(
+                            e,
+                            index
+                          )
+                        }
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        title={
+                          isAr
+                            ? "حذف العلامة"
+                            : "Delete"
+                        }
+                      >
+                        <Trash2
+                          size={16}
+                        />
+                      </button>
+                    </div>
+                  )
+                )
               )}
             </div>
           </div>
@@ -595,105 +946,167 @@ const TopBar = () => {
 };
 
 const BottomNav = () => {
-  const location = useLocation();
-  const { isDarkMode, lang } = useContext(AppContext);
-  const isAr = lang === 'ar';
-  
-  if (
-    location.pathname.includes('/surah/') ||
-    location.pathname.includes('/juz/')
-  ) return null;
+  const location =
+    useLocation();
 
-  const activeColorClass = isDarkMode
-    ? 'text-[#E5C158]'
-    : 'text-[#D4AF37]';
+  const {
+    isDarkMode,
+    lang,
+  } = useContext(
+    AppContext
+  );
+
+  const isAr =
+    lang === "ar";
+
+  if (
+    location.pathname.includes(
+      "/surah/"
+    ) ||
+    location.pathname.includes(
+      "/juz/"
+    )
+  ) {
+    return null;
+  }
+
+  const activeColorClass =
+    isDarkMode
+      ? "text-[#E5C158]"
+      : "text-[#D4AF37]";
 
   return (
     <div
-      className={`fixed bottom-0 left-0 w-full border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 rounded-t-3xl pb-safe transition-colors ${
-        isDarkMode
+      className={`fixed bottom-0 left-0 w-full border-t shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 rounded-t-3xl pb-safe transition-colors ${isDarkMode
           ? "bg-gray-900 border-gray-800"
           : "bg-white border-[#F0EBE1]"
-      }`}
+        }`}
     >
       <div
         className="relative max-w-md mx-auto px-3 h-16 flex justify-between items-center"
-        dir={isAr ? "rtl" : "ltr"}
+        dir={
+          isAr
+            ? "rtl"
+            : "ltr"
+        }
       >
         <div className="flex w-[39%] justify-between items-center">
           <Link
             to="/hadith"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/hadith'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/hadith"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
-            <ScrollText size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'الأحاديث' : 'Hadiths'}
+            <ScrollText
+              size={20}
+            />
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "الأحاديث"
+                : "Hadiths"}
             </span>
           </Link>
 
           <Link
             to="/azkar"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/azkar'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/azkar"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
-            <SunMoon size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'الأذكار' : 'Azkar'}
+            <SunMoon
+              size={20}
+            />
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "الأذكار"
+                : "Azkar"}
             </span>
           </Link>
 
           <Link
             to="/radio"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/radio'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/radio"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
-            <RadioIcon size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'الراديو' : 'Radio'}
+            <RadioIcon
+              size={20}
+            />
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "الراديو"
+                : "Radio"}
             </span>
           </Link>
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 -top-8 z-50">
-          <Link 
-            to="/" 
-            className={`flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full border-[6px] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${
-              location.pathname === '/' 
-                ? (
-                    isDarkMode
-                      ? 'bg-[#E5C158] border-gray-900 text-gray-900 shadow-[#E5C158]/20'
-                      : 'bg-[#D4AF37] border-white text-white shadow-[#D4AF37]/30'
-                  )
-                : (
-                    isDarkMode
-                      ? 'bg-gray-800 border-gray-900 text-gray-400 hover:text-[#E5C158]'
-                      : 'bg-[#FDFBF7] border-white text-gray-400 hover:text-[#D4AF37]'
-                  )
-            }`}
-            title={isAr ? 'القرآن الكريم' : 'Quran'}
+          <Link
+            to="/"
+            className={`flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full border-[6px] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${location.pathname ===
+                "/"
+                ? isDarkMode
+                  ? "bg-[#E5C158] border-gray-900 text-gray-900 shadow-[#E5C158]/20"
+                  : "bg-[#D4AF37] border-white text-white shadow-[#D4AF37]/30"
+                : isDarkMode
+                  ? "bg-gray-800 border-gray-900 text-gray-400 hover:text-[#E5C158]"
+                  : "bg-[#FDFBF7] border-white text-gray-400 hover:text-[#D4AF37]"
+              }`}
+            title={
+              isAr
+                ? "القرآن الكريم"
+                : "Quran"
+            }
           >
-            <BookOpen 
-              size={24} 
-              strokeWidth={location.pathname === '/' ? 2.5 : 2} 
-              className={location.pathname === '/' ? "animate-pulse" : ""} 
+            <BookOpen
+              size={24}
+              strokeWidth={
+                location.pathname ===
+                  "/"
+                  ? 2.5
+                  : 2
+              }
+              className={
+                location.pathname ===
+                  "/"
+                  ? "animate-pulse"
+                  : ""
+              }
             />
 
             <span
-              className={`text-[10px] font-bold mt-1 ${
-                !isAr && 'font-sans tracking-wide'
-              }`}
+              className={`text-[10px] font-bold mt-1 ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
             >
-              {isAr ? 'القرآن' : 'Quran'}
+              {isAr
+                ? "القرآن"
+                : "Quran"}
             </span>
           </Link>
         </div>
@@ -701,43 +1114,71 @@ const BottomNav = () => {
         <div className="flex w-[39%] justify-between items-center">
           <Link
             to="/memorize"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/memorize'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/memorize"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
             <Mic size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'التسميع' : 'Memorize'}
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "التسميع"
+                : "Memorize"}
             </span>
           </Link>
 
           <Link
             to="/prayer"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/prayer'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/prayer"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
-            <Clock size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'المواقيت' : 'Prayers'}
+            <Clock
+              size={20}
+            />
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "المواقيت"
+                : "Prayers"}
             </span>
           </Link>
 
           <Link
             to="/qibla"
-            className={`flex flex-col items-center gap-1 p-1 transition-colors ${
-              location.pathname === '/qibla'
+            className={`flex flex-col items-center gap-1 p-1 transition-colors ${location.pathname ===
+                "/qibla"
                 ? activeColorClass
-                : 'text-gray-400 hover:text-gray-500'
-            }`}
+                : "text-gray-400 hover:text-gray-500"
+              }`}
           >
-            <Compass size={20} />
-            <span className={`text-[9px] font-bold ${!isAr && 'font-sans tracking-wide'}`}>
-              {isAr ? 'القبلة' : 'Qibla'}
+            <Compass
+              size={20}
+            />
+
+            <span
+              className={`text-[9px] font-bold ${!isAr
+                  ? "font-sans tracking-wide"
+                  : ""
+                }`}
+            >
+              {isAr
+                ? "القبلة"
+                : "Qibla"}
             </span>
           </Link>
         </div>
@@ -747,20 +1188,49 @@ const BottomNav = () => {
 };
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("darkMode") === "true"
+  const [
+    isDarkMode,
+    setIsDarkMode,
+  ] = useState(
+    localStorage.getItem(
+      "darkMode"
+    ) === "true"
   );
 
-  const [installSuccess, setInstallSuccess] = useState(false);
-  const [lang, setLang] = useState("ar"); 
-  const [currentAudio, setCurrentAudio] = useState(null); 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isRadioPlaying, setIsRadioPlaying] = useState(false);
+  const [
+    installSuccess,
+    setInstallSuccess,
+  ] = useState(false);
 
-  const [bookmarks, setBookmarks] = useState(() => {
+  const [
+    lang,
+    setLang,
+  ] = useState("ar");
+
+  const [
+    currentAudio,
+    setCurrentAudio,
+  ] = useState(null);
+
+  const [
+    isPlaying,
+    setIsPlaying,
+  ] = useState(false);
+
+  const [
+    isRadioPlaying,
+    setIsRadioPlaying,
+  ] = useState(false);
+
+  const [
+    bookmarks,
+    setBookmarks,
+  ] = useState(() => {
     try {
       return JSON.parse(
-        localStorage.getItem("quran_bookmarks") || "[]"
+        localStorage.getItem(
+          "quran_bookmarks"
+        ) || "[]"
       );
     } catch {
       return [];
@@ -768,61 +1238,77 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("darkMode", isDarkMode);
+    localStorage.setItem(
+      "darkMode",
+      isDarkMode
+    );
   }, [isDarkMode]);
 
   useEffect(() => {
-    const khatma = JSON.parse(
-      localStorage.getItem('khatmaPlan')
-    );
+    const khatma =
+      JSON.parse(
+        localStorage.getItem(
+          "khatmaPlan"
+        )
+      );
 
     if (khatma) {
       sendKhatmaReminderNotification(
         khatma,
-        lang === 'ar'
+        lang === "ar"
       );
     }
   }, [lang]);
 
   useEffect(() => {
-    const handleAppInstalled = () => {
-      setInstallSuccess(true);
+    const handleAppInstalled =
+      () => {
+        setInstallSuccess(
+          true
+        );
 
-      setTimeout(() => {
-        setInstallSuccess(false);
-      }, 4000);
-    };
+        setTimeout(() => {
+          setInstallSuccess(
+            false
+          );
+        }, 4000);
+      };
 
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener(
+      "appinstalled",
+      handleAppInstalled
+    );
 
     return () => {
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener(
+        "appinstalled",
+        handleAppInstalled
+      );
     };
   }, []);
-  
+
   return (
     <AppContext.Provider
-      value={{ 
+      value={{
         isDarkMode,
-        setIsDarkMode, 
+        setIsDarkMode,
         lang,
-        setLang, 
+        setLang,
         currentAudio,
-        setCurrentAudio, 
+        setCurrentAudio,
         isPlaying,
-        setIsPlaying, 
+        setIsPlaying,
         isRadioPlaying,
         setIsRadioPlaying,
         bookmarks,
-        setBookmarks
+        setBookmarks,
       }}
     >
       <div
-        className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${
-          isDarkMode
+        className={`min-h-screen font-sans pb-24 transition-colors duration-300 ${isDarkMode
             ? "bg-gray-900 text-white"
             : "bg-[#FFFdf9] text-gray-900"
-        }`}
+          }`}
       >
         <Router>
           <UpdateBanner />
@@ -830,21 +1316,23 @@ export default function App() {
           {installSuccess && (
             <div
               className="fixed top-5 left-1/2 -translate-x-1/2 z-[200] animate-in fade-in slide-in-from-top-4 duration-300"
-              dir={lang === "ar" ? "rtl" : "ltr"}
+              dir={
+                lang === "ar"
+                  ? "rtl"
+                  : "ltr"
+              }
             >
               <div
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md ${
-                  isDarkMode
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md ${isDarkMode
                     ? "bg-gray-800/95 border-[#E5C158]/30 text-white"
                     : "bg-white/95 border-[#D4AF37]/30 text-gray-800"
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                    isDarkMode
+                  className={`w-9 h-9 rounded-full flex items-center justify-center ${isDarkMode
                       ? "bg-[#E5C158]/15 text-[#E5C158]"
                       : "bg-[#D4AF37]/10 text-[#D4AF37]"
-                  }`}
+                    }`}
                 >
                   ✓
                 </div>
@@ -873,49 +1361,73 @@ export default function App() {
           <Routes>
             <Route
               path="/"
-              element={<SurahList />}
+              element={
+                <SurahList />
+              }
             />
 
             <Route
               path="/surah/:id"
-              element={<SurahDetail />}
+              element={
+                <SurahDetail />
+              }
             />
 
             <Route
               path="/juz/:id"
-              element={<JuzDetail />}
+              element={
+                <JuzDetail />
+              }
             />
 
             <Route
               path="/prayer"
-              element={<PrayerTimes />}
+              element={
+                <PrayerTimes />
+              }
             />
 
             <Route
               path="/qibla"
-              element={<Qibla />}
+              element={
+                <Qibla />
+              }
             />
 
             <Route
               path="/azkar"
-              element={<Azkar />}
+              element={
+                <Azkar />
+              }
             />
 
             <Route
               path="/radio"
-              element={<Radio />}
+              element={
+                <Radio />
+              }
             />
 
             <Route
               path="/memorize"
-              element={<Memorize />}
+              element={
+                <Memorize />
+              }
             />
 
             <Route
               path="/hadith"
-              element={<Hadith />}
+              element={
+                <Hadith />
+              }
             />
-            <Route path="/audio" element={<AudioDownloads />} />
+
+            <Route
+              path="/audio"
+              element={
+                <AudioDownloads />
+              }
+            />
           </Routes>
 
           <BottomNav />
