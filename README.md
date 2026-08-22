@@ -330,3 +330,9 @@ npm run preview
 <sub>© 2026 Omar Mounir Arafa — All rights reserved</sub>
 
 </div>
+
+---
+
+## 📄 الترخيص
+
+هذا المشروع مرخّص بموجب **MIT License** — راجع ملف [LICENSE](LICENSE) للتفاصيل.
